@@ -1,4 +1,19 @@
-const sanitizeInput = (str) => str.replace(/[<>]/g, '');
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .trim();
+}
+
+function sanitizeForAttribute(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/["'&<>/`]/g, '').trim();
+}
 
 async function getStitchedData() {
   const res = await fetch('/api/data/stitched');
@@ -36,4 +51,4 @@ function groupByCity(stitchedData) {
   return grouped;
 }
 
-export { getStitchedData, getLocations, getPizzerias, getPrices, groupByCity, sanitizeInput };
+export { getStitchedData, getLocations, getPizzerias, getPrices, groupByCity, sanitizeInput, sanitizeForAttribute };

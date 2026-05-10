@@ -7,7 +7,8 @@
     "phone": "+39 081 877 2443",
     "category": "traditional",
     "rating": 4.8,
-    "description": "Pizza a cm: 30cm=8€, 50cm=15€. Legendary spot for thick, tray-served pizza and incredible rotisserie.",
+    "description": "Pizza by cm: 30cm=8€, 50cm=15€. Legendary spot for thick, tray-served pizza and incredible rotisserie.",
+    "descriptionIt": "Pizza a cm: 30cm=8€, 50cm=15€. Posto leggendario per la pizza a metro e l'incredibile rosticceria.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -28,6 +29,7 @@
     "category": "gourmet",
     "rating": 4.5,
     "description": "Sophisticated dining in Sorrento's main square.",
+    "descriptionIt": "Cena sofisticata nella piazza principale di Sorrento.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -43,6 +45,7 @@
     "category": "wood-fired",
     "rating": 4.4,
     "description": "Authentic atmosphere in the old town's alleys.",
+    "descriptionIt": "Atmosfera autentica tra i vicoli del centro storico.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -63,6 +66,7 @@
     "category": "traditional",
     "rating": 4.6,
     "description": "High-quality ingredients and a true local landmark in Piano.",
+    "descriptionIt": "Ingredienti di alta qualità e un vero punto di riferimento locale a Piano.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -83,6 +87,7 @@
     "category": "gourmet",
     "rating": 4.7,
     "description": "Contemporary gourmet pizza with excellent dough research.",
+    "descriptionIt": "Pizza gourmet contemporanea con un'eccellente ricerca sugli impasti.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -102,7 +107,8 @@
     "frazione": "Marina di Cassano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g616172-d2312057-Reviews-Ristorante_L_Approdo-Piano_di_Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20L'Approdo%20Via%20Marina%20di%20Cassano%2C%2016%2F20%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20L'Approdo%20Via%20Marina%20di%20Cassano%2C%2016%2F20%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento",
+    "descriptionIt": "Pittoresca terrazza vista mare a Marina di Cassano."
   },
   {
     "id": "pz-007",
@@ -117,7 +123,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g1057024-d2109504-Reviews-Ristorante_Pizzeria_Ninuccio-Meta_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20Ninuccio%20Via%20Casa%20Iaccarino%2C%2031%2C%2080062%20Meta%20NA%20Meta"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20Ninuccio%20Via%20Casa%20Iaccarino%2C%2031%2C%2080062%20Meta%20NA%20Meta",
+    "descriptionIt": "Famosa per i suoi enormi crocché e l'atmosfera locale autentica."
   },
   {
     "id": "pz-008",
@@ -132,7 +139,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g1187498-d10200595-Reviews-Pizzeria_Rosaria-Meta_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20Rosaria%20Via%20del%20Lauro%2C%204%2C%2080062%20Meta%20NA%20Meta"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20Rosaria%20Via%20del%20Lauro%2C%204%2C%2080062%20Meta%20NA%20Meta",
+    "descriptionIt": "Amato panificio e pizzeria a Meta."
   },
   {
     "id": "pz-009",
@@ -147,7 +155,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g10200595-d14002677-Reviews-Dal_Ceppone-Meta_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Dal%20Ceppone%20Via%20Guglielmo%20Marconi%2C%2048%2C%2080062%20Meta%20NA%20Meta"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Dal%20Ceppone%20Via%20Guglielmo%20Marconi%2C%2048%2C%2080062%20Meta%20NA%20Meta",
+    "descriptionIt": "Storico locale di Meta con interni accoglienti."
   },
   {
     "id": "pz-010",
@@ -162,7 +171,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g616195-d2627465-Reviews-Pizza_a_Metro_Da_Gigino-Vico_Equense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizza%20a%20Metro%20da%20Gigino%20Via%20Nicotera%2C%2015%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizza%20a%20Metro%20da%20Gigino%20Via%20Nicotera%2C%2015%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense",
+    "descriptionIt": "Pizza a metro: 30cm=8€, 50cm=15€. La mundialmente famosa Università della Pizza a Vico Equense."
   },
   {
     "id": "pz-011",
@@ -177,7 +187,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-Titos_Ristorante_Pizzeria-Vico_Equense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Titos%20Ristorante%20Pizzeria%20Via%20Gaetano%20Filangieri%2C%2067%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Titos%20Ristorante%20Pizzeria%20Via%20Gaetano%20Filangieri%2C%2067%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense",
+    "descriptionIt": "Qualità moderna, vivace e costante nel centro di Vico Equense."
   },
   {
     "id": "pz-012",
@@ -192,7 +203,8 @@
     "frazione": "Moiano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194883-d10667086-Reviews-Il_Covo_del_Buongustaio-Vico_Equense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Il%20Covo%20del%20Buongustaio%20Via%20Paradiso%2C%2021%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Il%20Covo%20del%20Buongustaio%20Via%20Paradiso%2C%2021%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense",
+    "descriptionIt": "Posizione panoramica sulle colline di Moiano."
   },
   {
     "id": "pz-013",
@@ -207,7 +219,8 @@
     "frazione": "Sant'Agata sui Due Golfi",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g644245-d1161684-Reviews-Ristorante_Lo_Stuzzichino-Sant_Agata_sui_Due_Golfi_Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Lo%20Stuzzichino%20Via%20Deserto%2C%201%2FA%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Lo%20Stuzzichino%20Via%20Deserto%2C%201%2FA%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Istituzione pluripremiata di Sant'Agata con ingredienti locali di alta qualità."
   },
   {
     "id": "pz-014",
@@ -222,7 +235,8 @@
     "frazione": "Schiazzano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194819-d2669652-Reviews-Da_Francesco-Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20da%20Francesco%20Salita%20Schiazzano%2C%203%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20da%20Francesco%20Salita%20Schiazzano%2C%203%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Autentica pizza napoletana nel tranquillo fascino di Schiazzano."
   },
   {
     "id": "pz-016",
@@ -232,12 +246,13 @@
     "phone": "+39 366 351 2886",
     "category": "wood-fired",
     "rating": 4.5,
-    "description": "Nuova sede a Piano di Sorrento con splendida vista mare. Pizze d'autore e grandi classici.",
+    "description": "New location in Piano di Sorrento with splendid sea view. Signature pizzas and great classics.",
     "status": "open",
     "frazione": "Cassano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g616172-d7065853-Reviews-Anima_e_Pizza-Piano_di_Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Anima%20e%20Pizza%20Via%20Ripa%20di%20Cassano%2C%2014%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Anima%20e%20Pizza%20Via%20Ripa%20di%20Cassano%2C%2014%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento",
+    "descriptionIt": "Nuova sede a Piano di Sorrento con splendida vista mare. Pizze d'autore e grandi classici."
   },
   {
     "id": "pz-017",
@@ -248,6 +263,7 @@
     "category": "gourmet",
     "rating": 4.7,
     "description": "Creative masterpieces by Antonino Esposito.",
+    "descriptionIt": "Capolavori creativi di Antonino Esposito.",
     "status": "closed",
     "frazione": null,
     "imageUrl": null,
@@ -267,7 +283,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d11767762-Reviews-Frankie_s_Pizza_Bar-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Frankie's%20Pizza%20Bar%20Via%20Torquato%20Tasso%2C%204%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Frankie's%20Pizza%20Bar%20Via%20Torquato%20Tasso%2C%204%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Splendida vista mare e pizze gourmet con ingredienti locali."
   },
   {
     "id": "pz-020",
@@ -282,7 +299,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d11657843-Reviews-Il_Ruttino-Sant_Agnello_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Il%20Ruttino%20Corso%20Italia%2C%20203%2C%2080065%20Sant'Agnello%20NA%20Sant'Agnello"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Il%20Ruttino%20Corso%20Italia%2C%20203%2C%2080065%20Sant'Agnello%20NA%20Sant'Agnello",
+    "descriptionIt": "Pizzeria boutique con menù creativo e giardino interno."
   },
   {
     "id": "pz-021",
@@ -297,7 +315,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g616172-d2204047-Reviews-Ristorante_Zio_Sam-Piano_di_Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Zio%20Sam%20Via%20dei%20Platani%2C%202%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Zio%20Sam%20Via%20dei%20Platani%2C%202%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento",
+    "descriptionIt": "Specialità locali e pizza tradizionale a Massa Lubrense."
   },
   {
     "id": "pz-022",
@@ -312,7 +331,8 @@
     "frazione": "Marina Piccola",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2279148-Reviews-Antonino_Esposito_Pizza_e_Cucina-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Antonino%20Esposito%20-%20Pizza%20e%20Cucina%20Piazza%20Marinai%20D'Italia%2C%202%2C%2080067%20Sorrento%20NA"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Antonino%20Esposito%20-%20Pizza%20e%20Cucina%20Piazza%20Marinai%20D'Italia%2C%202%2C%2080067%20Sorrento%20NA",
+    "descriptionIt": "Pizzeria gourmet con ingredienti ricercati e ampia scelta di birre artigianali."
   },
   {
     "id": "pz-023",
@@ -327,7 +347,8 @@
     "frazione": "Marina di Meta",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g1057024-d21330937-Reviews-Don_Giovanni-Meta_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Don%20Giovanni%20Via%20Caracciolo%2C%20189%2C%2080062%20Meta%20NA%20Meta"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Don%20Giovanni%20Via%20Caracciolo%2C%20189%2C%2080062%20Meta%20NA%20Meta",
+    "descriptionIt": "Locale rustico e accogliente nel cuore di Sant'Agata."
   },
   {
     "id": "pz-024",
@@ -342,7 +363,8 @@
     "frazione": "Sant'Agata sui Due Golfi",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194819-d17441458-Reviews-Tonno_Campani_by_Gocce-Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Tonno%20%26%20Campani%20Via%20Nastro%20d'Oro%2C%205%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Tonno%20%26%20Campani%20Via%20Nastro%20d'Oro%2C%205%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Pizza tradizionale nel suggestivo borgo di Marina della Lobra."
   },
   {
     "id": "pz-025",
@@ -357,7 +379,8 @@
     "frazione": "Schiazzano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194857-d3524675-Reviews-L_Antico_Scantinato-Massa_Lubrense_Sorrento_Peninsula_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=L'Antico%20Scantinato%20Piazzetta%20Schiazzano%2C%204%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=L'Antico%20Scantinato%20Piazzetta%20Schiazzano%2C%204%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Gemma rustica e accogliente nel villaggio di Schiazzano."
   },
   {
     "id": "pz-029",
@@ -372,7 +395,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g616172-d13532389-Reviews-Pizzeria_49-Piano_di_Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=PIZZERIA%2049%20Via%20S.%20Michele%2C%206%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=PIZZERIA%2049%20Via%20S.%20Michele%2C%206%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento",
+    "descriptionIt": "Pizzeria moderna molto apprezzata a Piano di Sorrento."
   },
   {
     "id": "pz-036",
@@ -387,7 +411,8 @@
     "frazione": "Marina Piccola",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d3575191-Reviews-Ristorante_Pizzeria_Tasso-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20Tasso%20Via%20Correale%2C%2011%2Fd%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20Tasso%20Via%20Correale%2C%2011%2Fd%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Locale tradizionale vicino al porto di Sorrento."
   },
   {
     "id": "pz-037",
@@ -398,6 +423,7 @@
     "category": "traditional",
     "rating": 4.6,
     "description": "Famous for its large selection and friendly service.",
+    "descriptionIt": "Famoso per l'ampia scelta e il servizio cordiale.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -413,6 +439,7 @@
     "category": "wood-fired",
     "rating": 4.3,
     "description": "Historic spot in the alleys of Sorrento.",
+    "descriptionIt": "Posto storico nei vicoli di Sorrento.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -428,6 +455,7 @@
     "category": "traditional",
     "rating": 4.6,
     "description": "Cozy and authentic in the lively Via Fuoro.",
+    "descriptionIt": "Accogliente e autentico nella vivace Via Fuoro.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -443,6 +471,7 @@
     "category": "gourmet",
     "rating": 4.5,
     "description": "Modern take on pizza with local produce.",
+    "descriptionIt": "Versione moderna della pizza con prodotti locali.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -462,7 +491,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1150707-Reviews-L_Abate-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=L'Abate%20Piazza%20Sant'Antonino%2C%2024%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=L'Abate%20Piazza%20Sant'Antonino%2C%2024%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Ristorante classico sorrentino con posti a sedere all'aperto."
   },
   {
     "id": "pz-043",
@@ -473,6 +503,7 @@
     "category": "traditional",
     "rating": 4.7,
     "description": "Famous for its creative half-and-half options.",
+    "descriptionIt": "Famoso per le sue creative opzioni metà e metà.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -492,7 +523,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1199823-Reviews-Ristorante_Pizzeria_S_Antonino-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20S.%20Antonino%20Via%20S.%20Maria%20delle%20Grazie%2C%206%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20S.%20Antonino%20Via%20S.%20Maria%20delle%20Grazie%2C%206%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Autentico e in posizione centrale."
   },
   {
     "id": "pz-061",
@@ -506,7 +538,8 @@
     "description": "Storica pizzeria ora chiusa definitivamente.",
     "frazione": "Cassano",
     "imageUrl": null,
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Braccio%20Di%20Ferro%20Via%20Ripa%20Di%20Cassano%2C%208%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Braccio%20Di%20Ferro%20Via%20Ripa%20Di%20Cassano%2C%208%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento",
+    "descriptionIt": "Storica pizzeria ora chiusa definitivamente."
   },
   {
     "id": "pz-062",
@@ -521,22 +554,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g662283-d12642130-Reviews-All_Angolo_2-Piano_di_Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20All'Angolo%20Via%20Madonna%20Di%20Rossella%2C%2025%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento"
-  },
-  {
-    "id": "pz-081",
-    "name": "Da Cardone",
-    "address": "Via Le Pietre, 23, 80069 Vico Equense NA",
-    "cityId": "vico-equense",
-    "phone": "+39 081 802 7576",
-    "category": "traditional",
-    "rating": 4.5,
-    "description": "Authentic vicana pizza with local produce.",
-    "status": "open",
-    "frazione": null,
-    "imageUrl": null,
-    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g662660-d2325852-Reviews-Pizzeria_Da_Cardone-Vico_Equense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Da%20Cardone%20Via%20Le%20Pietre%2C%2023%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20All'Angolo%20Via%20Madonna%20Di%20Rossella%2C%2025%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento",
+    "descriptionIt": "Atmosfera accogliente in una zona tranquilla di Piano."
   },
   {
     "id": "pz-083",
@@ -551,11 +570,12 @@
     "frazione": "Moiano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d3238477-Reviews-Pizzeria_All_Angolo-Vico_Equense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20All'Angolo%20Via%20Raffaele%20Bosco%2C%20485%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20All'Angolo%20Via%20Raffaele%20Bosco%2C%20485%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense",
+    "descriptionIt": "Famosa per l'eccellente impasto a Moiano."
   },
   {
     "id": "pz-091",
-    "name": "Ma Che Bontà",
+    "name": "Frate Cosimo",
     "address": "Via Marina di Seiano, 80069 Vico Equense NA",
     "cityId": "vico-equense",
     "phone": "+39 081 802 8585",
@@ -566,7 +586,8 @@
     "frazione": "Seiano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g666324-d2508104-Reviews-Ma_Che_Bonta-Vico_Equense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ma%20Che%20Bont%C3%A0%20Via%20Marina%20di%20Seiano%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ma%20Che%20Bont%C3%A0%20Via%20Marina%20di%20Seiano%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense",
+    "descriptionIt": "Deliziosa pizza nel suggestivo borgo di Seiano."
   },
   {
     "id": "pz-102",
@@ -581,7 +602,8 @@
     "frazione": "Ticciano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g662660-d2325350-Reviews-Anema_e_Core-Vico_Equense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Anema%20e%20Core%20da%20zio%20claudio%20Piazza%20Ticciano%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Anema%20e%20Core%20da%20zio%20claudio%20Piazza%20Ticciano%2C%2080069%20Vico%20Equense%20NA%20Vico%20Equense",
+    "descriptionIt": "Un pilastro della comunità di Ticciano."
   },
   {
     "id": "pz-105",
@@ -595,7 +617,8 @@
     "description": "Storica pizzeria della famiglia a Mortora, ora chiusa definitivamente.",
     "frazione": null,
     "imageUrl": null,
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=La%20Betania%20Via%20Mortora%2C%2031%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=La%20Betania%20Via%20Mortora%2C%2031%2C%2080063%20Piano%20di%20Sorrento%20NA%20Piano%20di%20Sorrento",
+    "descriptionIt": "Storica pizzeria della famiglia a Mortora, ora chiusa definitivamente."
   },
   {
     "id": "pz-106",
@@ -610,7 +633,8 @@
     "frazione": "Marina Grande",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d33410094-Reviews-Marinato_Pizza_E_Mare-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=MARINATO%20PIZZA%20E%20MARE%20Via%20Marina%20Grande%2C%201%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=MARINATO%20PIZZA%20E%20MARE%20Via%20Marina%20Grande%2C%201%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Bellissima vista su Marina Grande. Pizzeria e cucina di mare."
   },
   {
     "id": "pz-107",
@@ -625,7 +649,8 @@
     "frazione": "Marina Grande",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1034552-Reviews-Ristorante_Zi_Ntonio_Mare-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=RISTORANTE%20ZI'NTONIO%20MARE%20Via%20Marina%20Grande%2C%20180%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=RISTORANTE%20ZI'NTONIO%20MARE%20Via%20Marina%20Grande%2C%20180%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Storico ristorante sul mare a Marina Grande."
   },
   {
     "id": "pz-109",
@@ -640,7 +665,8 @@
     "frazione": "Casarlano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d10538742-Reviews-Antico_Frantoio-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=ANTICO%20FRANTOIO%20Via%20Casarlano%2C%205%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=ANTICO%20FRANTOIO%20Via%20Casarlano%2C%205%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Atmosfera autentica nelle colline di Sorrento."
   },
   {
     "id": "pz-110",
@@ -655,7 +681,8 @@
     "frazione": "Casarlano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d5964388-Reviews-Il_Tirabuscio-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=IL%20TIRABUSCI%C3%92%20Via%20Casarlano%2C%2019%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=IL%20TIRABUSCI%C3%92%20Via%20Casarlano%2C%2019%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Cucina tipica e pizza di qualità a Casarlano."
   },
   {
     "id": "pz-115",
@@ -670,7 +697,8 @@
     "frazione": "Marina del Cantone",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194819-d3533308-Reviews-Baia_Nerano-Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=BAIA%20NERANO%20Via%20Cantone%2C%2049%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=BAIA%20NERANO%20Via%20Cantone%2C%2049%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Mangiare in riva al mare a Nerano."
   },
   {
     "id": "pz-123",
@@ -685,7 +713,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d4834341-Reviews-Da_Ciro_Taverna_Napoletana-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Da%20Ciro%20Taverna%20Napoletana%20Via%20Fuoro%2C%2065%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Da%20Ciro%20Taverna%20Napoletana%20Via%20Fuoro%2C%2065%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Sapori classici in un vicolo dello shopping. Autentica taverna napoletana."
   },
   {
     "id": "pz-124",
@@ -700,7 +729,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2257917-Reviews-Ristorante_La_Basilica-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20La%20Basilica%20Via%20Sant'Antonino%2C%2028%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20La%20Basilica%20Via%20Sant'Antonino%2C%2028%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Cucina elegante e ottima pizza vicino alla Cattedrale."
   },
   {
     "id": "pz-130",
@@ -715,7 +745,8 @@
     "frazione": "Termini",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194819-d8462873-Reviews-Grace-Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=GRACE%20Largo%20Vescovado%2C%206%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=GRACE%20Largo%20Vescovado%2C%206%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Sapori autentici a Termini."
   },
   {
     "id": "pz-133",
@@ -730,7 +761,8 @@
     "frazione": "Nerano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194783-d1100588-Reviews-Quattro_Passi-Nerano_Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Quattro%20Passi%20Via%20Vespucci%2C%2013%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Quattro%20Passi%20Via%20Vespucci%2C%2013%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Pizza artigianale di alto livello."
   },
   {
     "id": "pz-134",
@@ -745,7 +777,8 @@
     "frazione": "Marina del Cantone",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g662660-d1181515-Reviews-Lo_Scoglio-Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Lo%20Scoglio%20Marina%20del%20Cantone%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Lo%20Scoglio%20Marina%20del%20Cantone%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Mito di Nerano."
   },
   {
     "id": "pz-135",
@@ -760,7 +793,8 @@
     "frazione": "Nerano",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g1187425-d1187426-Reviews-La_Conca_del_Sogno-Nerano_Massa_Lubrense_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Conca%20del%20Sogno%20Nerano%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Conca%20del%20Sogno%20Nerano%2C%2080061%20Massa%20Lubrense%20NA%20Massa%20Lubrense",
+    "descriptionIt": "Lusso estremo e pizze da sogno."
   },
   {
     "id": "pz-140",
@@ -775,7 +809,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1034546-Reviews-Ristorante_O_Canonico_1898-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20'O%20Canonico%201898%20Piazza%20Tasso%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20'O%20Canonico%201898%20Piazza%20Tasso%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Locale storico in Piazza Tasso."
   },
   {
     "id": "pz-141",
@@ -790,7 +825,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1034551-Reviews-Ristorante_Museo_Caruso-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Museo%20Caruso%20Via%20Sant'Antonino%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Museo%20Caruso%20Via%20Sant'Antonino%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Dedicato al tenore Caruso."
   },
   {
     "id": "pz-142",
@@ -805,7 +841,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d8591873-Reviews-Refood-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Refood%20Via%20Sant'Antonino%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Refood%20Via%20Sant'Antonino%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Ristorante moderno e creativo nel centro di Sorrento."
   },
   {
     "id": "pz-145",
@@ -820,7 +857,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1891446-Reviews-Ristorante_Zi_Ntonio-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Zi'Ntonio%20Via%20De%20Maio%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Zi'Ntonio%20Via%20De%20Maio%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Ristorante celebre al centro."
   },
   {
     "id": "pz-147",
@@ -835,7 +873,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d18154012-Reviews-Ristorante_Lorelei-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Lorelei%20Via%20Gildino%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Lorelei%20Via%20Gildino%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Esperienza di lusso con vista."
   },
   {
     "id": "pz-148",
@@ -850,7 +889,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1034549-Reviews-O_Parrucchiano-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=O'Parrucchiano%20La%20Favorita%20Corso%20Italia%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=O'Parrucchiano%20La%20Favorita%20Corso%20Italia%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Famoso giardino di limoni."
   },
   {
     "id": "pz-149",
@@ -865,7 +905,8 @@
     "frazione": "Marina Piccola",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1189490-Reviews-Ristorante_Ruccio-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Bar%20Ruccio%20Marina%20Piccola%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Bar%20Ruccio%20Marina%20Piccola%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Atmosfera portuale a Marina Piccola."
   },
   {
     "id": "pz-150",
@@ -880,7 +921,8 @@
     "frazione": "Marina Piccola",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2228913-Reviews-Scogliera_Kitchen_and_Bar-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Scogliera%20Kitchen%20%26%20Bar%20Piazza%20Marinai%20d'Italia%2C%202%2Fa%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Scogliera%20Kitchen%20%26%20Bar%20Piazza%20Marinai%20d'Italia%2C%202%2Fa%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Cenare sulla scogliera a Marina Piccola."
   },
   {
     "id": "pz-155",
@@ -895,7 +937,8 @@
     "frazione": "Marina Grande",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d6539586-Reviews-Soul_Fish_Restaurant-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Soul%20%26%20Fish%20Via%20Marina%20Grande%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Soul%20%26%20Fish%20Via%20Marina%20Grande%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Pizza e pesce contemporaneo."
   },
   {
     "id": "pz-158",
@@ -910,7 +953,8 @@
     "frazione": "Marina Grande",
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d23912959-Reviews-Porta_Marina_Seafood-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Porta%20Marina%20Seafood%20Via%20Marina%20Grande%2C%2064%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Porta%20Marina%20Seafood%20Via%20Marina%20Grande%2C%2064%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Autentiche vibrazioni del porto a Marina Grande."
   },
   {
     "id": "pz-159",
@@ -925,7 +969,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2317638-Reviews-L_Orangerie_Poolside_Bar_Restaurant-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=L'Orangerie%20Poolside%20Bar%20%26%20Restaurant%20Piazza%20Tasso%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=L'Orangerie%20Poolside%20Bar%20%26%20Restaurant%20Piazza%20Tasso%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Pizza di lusso all'Orangerie, Grand Hotel Excelsior Vittoria."
   },
   {
     "id": "pz-160",
@@ -942,7 +987,8 @@
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2325367-Reviews-Ristorante_Sorrento-Sorrento_Province_of_Naples_Campania.html",
     "cityName": "Sorrento",
     "cityRegion": "Penisola Sorrentina",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Sorrento%20Via%20Padre%20Reginaldo%20Giuliani%2C%2064%2F66%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Sorrento%20Via%20Padre%20Reginaldo%20Giuliani%2C%2064%2F66%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Ristorante italiano classico e pizzeria nel cuore di Sorrento."
   },
   {
     "id": "pz-161",
@@ -959,7 +1005,8 @@
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d23605151-Reviews-La_Cazzarola-Sorrento_Province_of_Naples_Campania.html",
     "cityName": "Sorrento",
     "cityRegion": "Penisola Sorrentina",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=La%20Cazzarola%20Via%20Padre%20Reginaldo%20Giuliani%2C%2041%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=La%20Cazzarola%20Via%20Padre%20Reginaldo%20Giuliani%2C%2041%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Autentica trattoria nel centro storico di Sorrento."
   },
   {
     "id": "pz-162",
@@ -976,7 +1023,8 @@
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2325389-Reviews-Ristorante_Le_Grazie-Sorrento_Province_of_Naples_Campania.html",
     "cityName": "Sorrento",
     "cityRegion": "Penisola Sorrentina",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20Le%20Grazie%20Via%20Santa%20Maria%20delle%20Grazie%2C%2028%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante%20Pizzeria%20Le%20Grazie%20Via%20Santa%20Maria%20delle%20Grazie%2C%2028%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Classica pizzeria a conduzione familiare nel centro storico di Sorrento."
   },
   {
     "id": "pz-163",
@@ -993,7 +1041,8 @@
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d24263628-Reviews-Pizza_Azz-Sorrento_Province_of_Naples_Campania.html",
     "cityName": "Sorrento",
     "cityRegion": "Penisola Sorrentina",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizza%20Azz%20Via%20Luigi%20De%20Maio%2C%2027%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizza%20Azz%20Via%20Luigi%20De%20Maio%2C%2027%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Autentico street food napoletano nel cuore di Sorrento."
   },
   {
     "id": "pz-164",
@@ -1010,7 +1059,8 @@
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1189498-Reviews-Ristorante_da_Filippo-Sorrento_Province_of_Naples_Campania.html",
     "cityName": "Sorrento",
     "cityRegion": "Penisola Sorrentina",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20Da%20Filippo%20Via%20Cesarano%2C%2080%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20Da%20Filippo%20Via%20Cesarano%2C%2080%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Storico ristorante a conduzione familiare sulle colline di Sorrento."
   },
   {
     "id": "pz-165",
@@ -1027,7 +1077,8 @@
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d12354784-Reviews-A_Marenna-Sorrento_Province_of_Naples_Campania.html",
     "cityName": "Sorrento",
     "cityRegion": "Penisola Sorrentina",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=A'Marenna%20Via%20Fuoro%2C%2087%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=A'Marenna%20Via%20Fuoro%2C%2087%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Posto locale autentico famoso per il panuozzo e la pizza a lievitazione naturale."
   },
   {
     "id": "pz-166",
@@ -1044,7 +1095,8 @@
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d1193187-Reviews-La_Fenice-Sorrento_Province_of_Naples_Campania.html",
     "cityName": "Sorrento",
     "cityRegion": "Penisola Sorrentina",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20La%20Fenice%20Via%20degli%20Archi%2C%2010%2C%2080067%20Sorrento%20NA%20Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria%20La%20Fenice%20Via%20degli%20Archi%2C%2010%2C%2080067%20Sorrento%20NA%20Sorrento",
+    "descriptionIt": "Pizzeria tranquilla e accogliente in un vicolo caratteristico del centro storico."
   },
   {
     "id": "pz-167",
@@ -1055,6 +1107,7 @@
     "category": "traditional",
     "rating": 4.3,
     "description": "Historic takeaway and sit-down spot in the heart of Sorrento center.",
+    "descriptionIt": "Storica pizzeria e rosticceria da asporto e con seduta nel cuore del centro di Sorrento.",
     "status": "open",
     "frazione": null,
     "imageUrl": null,
@@ -1074,7 +1127,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2325338-Reviews-Cafe_Latino-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Cafe+Latino+Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Cafe+Latino+Sorrento",
+    "descriptionIt": "Elegante ristorante con giardino e pizzeria sulla strada principale di Sorrento."
   },
   {
     "id": "pz-169",
@@ -1089,7 +1143,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d1531631-Reviews-Da_Peppino-Sant_Agnello_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Da+Peppino+Sant'Agnello"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Da+Peppino+Sant'Agnello",
+    "descriptionIt": "Istituzione a conduzione familiare famosa per il pollo allo spiedo e l'ottima pizza al forno a legna."
   },
   {
     "id": "pz-170",
@@ -1104,7 +1159,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d2325338-Reviews-Moonlight-Sant_Agnello_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante+Moonlight+Sant'Agnello"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante+Moonlight+Sant'Agnello",
+    "descriptionIt": "Incantevole ristorante con terrazza, ampia scelta di pizze e frutti di mare."
   },
   {
     "id": "pz-171",
@@ -1119,7 +1175,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d7895067-Reviews-Mi_Ami_Trattoria_Pizzeria-Sant_Agnello_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Mi+Ami+Trattoria+Pizzeria+Sant'Agnello"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Mi+Ami+Trattoria+Pizzeria+Sant'Agnello",
+    "descriptionIt": "Trattoria-pizzeria moderna e accogliente popolare tra i locali."
   },
   {
     "id": "pz-172",
@@ -1134,7 +1191,8 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2260654-Reviews-Bar_Veneruso-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Bar+Veneruso+Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Bar+Veneruso+Sorrento",
+    "descriptionIt": "Storico bar e pasticceria a Sorrento, offre anche ottimi snack e pasti leggeri tra cui la pizza."
   },
   {
     "id": "pz-173",
@@ -1149,6 +1207,497 @@
     "frazione": null,
     "imageUrl": null,
     "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g187782-d2251953-Reviews-Fauno_Bar-Sorrento_Province_of_Naples_Campania.html",
-    "maps_url": "https://www.google.com/maps/search/?api=1&query=Fauno+Bar+Sorrento"
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Fauno+Bar+Sorrento",
+    "descriptionIt": "Il bar più famoso di Sorrento, situato nella piazza principale."
+  },
+  {
+    "id": "pz-174",
+    "name": "Bar L'Archetto - Pizzeria",
+    "address": "Via Maiano, 72, 80065 Sant'Agnello NA",
+    "cityId": "sant-agnello",
+    "phone": "+39 081 877 2863",
+    "category": "traditional",
+    "rating": 4.7,
+    "description": "Highly appreciated by locals, with very high scores for pizza quality.",
+    "descriptionIt": "Molto apprezzata dai locali, con punteggi altissimi per la qualità della pizza.",
+    "status": "open",
+    "frazione": "Maiano",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d6874680-Reviews-Bar_L_Archetto_Pizzeria-Sant_Agnello_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Bar+L'Archetto+Sant'Agnello"
+  },
+  {
+    "id": "pz-175",
+    "name": "Pizzeria Fermento",
+    "address": "Via Trasaella, 62, 80065 Sant'Agnello NA",
+    "cityId": "sant-agnello",
+    "phone": "+39 377 316 3798",
+    "category": "traditional",
+    "rating": 4.5,
+    "description": "Located in the hilly area of Trasaella, it is known for its digestible doughs and youthful atmosphere.",
+    "descriptionIt": "Situata nella zona collinare di Trasaella, è nota per gli impasti digeribili e l'ambiente giovane.",
+    "status": "open",
+    "frazione": "Trasaella",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d33118760-Reviews-Pizzeria_Fermento_trasaella-Sant_Agnello_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Fermento+Trasaella"
+  },
+  {
+    "id": "pz-176",
+    "name": "Il Buon Boccone",
+    "address": "Corso Italia, 51, 80065 Sant'Agnello NA",
+    "cityId": "sant-agnello",
+    "phone": "+39 366 251 6572",
+    "category": "traditional",
+    "rating": 4.4,
+    "description": "Central family-run spot, ideal for takeaway pizzas and quick meals.",
+    "descriptionIt": "Locale a conduzione familiare molto centrale, ideale per pizze da asporto e pasti veloci.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d6179767-Reviews-Il_Buon_Boccone-Sant_Agnello_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Il+Buon+Boccone+Sant'Agnello"
+  },
+  {
+    "id": "pz-177",
+    "name": "Jolly Blu",
+    "address": "Corso Italia, 34, 80065 Sant'Agnello NA",
+    "cityId": "sant-agnello",
+    "phone": "+39 333 868 3108",
+    "category": "traditional",
+    "rating": 4.3,
+    "description": "Another historical landmark along Corso Italia.",
+    "descriptionIt": "Altro punto di riferimento storico lungo il Corso Italia.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d1147162-Reviews-Jolly_Blu-Sant_Agnello_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Jolly+Blu+Sant'Agnello"
+  },
+  {
+    "id": "pz-178",
+    "name": "Forneria de Palmo",
+    "address": "Via San Giuseppe, 2, 80065 Sant'Agnello NA",
+    "cityId": "sant-agnello",
+    "phone": "+39 081 878 2174",
+    "category": "traditional",
+    "rating": 4.6,
+    "description": "Excellent for pizza by the slice and high-quality local baked goods.",
+    "descriptionIt": "Eccellente per la pizza a taglio e prodotti da forno locali di alta qualità.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d12910796-Reviews-Forneria_de_Palmo-Sant_Agnello_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Forneria+de+Palmo+Sant'Agnello"
+  },
+  {
+    "id": "pz-179",
+    "name": "Mezzaluna",
+    "address": "Via Pietrapiana, 7, 80065 Sant'Agnello NA",
+    "cityId": "sant-agnello",
+    "phone": "+39 081 533 3229",
+    "category": "traditional",
+    "rating": 4.5,
+    "description": "Located in Colli di Fontanelle, it offers a splendid view and excellent local cuisine.",
+    "descriptionIt": "Situata ai Colli di Fontanelle, offre una splendida vista e ottima cucina locale.",
+    "status": "open",
+    "frazione": "Colli di Fontanelle",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d6691604-Reviews-Ristorante_Pizzeria_Mezzaluna-Sant_Agnello_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ristorante+Pizzeria+Mezzaluna+Sant'Agnello"
+  },
+  {
+    "id": "pz-180",
+    "name": "Il Capanno",
+    "address": "Via Gargiulo, 12, 80065 Sant'Agnello NA",
+    "cityId": "sant-agnello",
+    "phone": "+39 081 807 4355",
+    "category": "traditional",
+    "rating": 4.4,
+    "description": "Historical pizzeria with a cozy atmosphere.",
+    "descriptionIt": "Storica pizzeria con ambiente accogliente.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194907-d3167195-Reviews-Il_Capanno-Sant_Agnello_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Il+Capanno+Sant'Agnello"
+  },
+  {
+    "id": "pz-181",
+    "name": "Rosticceria Bar Liana",
+    "address": "Via delle Rose, 57, 80063 Piano di Sorrento NA",
+    "cityId": "piano",
+    "phone": "+39 081 878 8220",
+    "category": "traditional",
+    "rating": 4.6,
+    "description": "Historic rotisserie and pizzeria. Famous for its 'panuozzi', pizzas, and a wide variety of handmade fried snacks like potato croquettes.",
+    "descriptionIt": "Storica rosticceria e pizzeria. Celebre per i suoi panuozzi, pizze e l'ampia scelta di fritti artigianali come i crocchè di patate.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g616172-d13205546-Reviews-Rosticceria_Bar_Liana-Piano_di_Sorrento_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Rosticceria+Bar+Liana+Piano+di+Sorrento",
+    "margheritaPrice": 5.5,
+    "lastUpdated": "2026-05-10T14:56:23.506Z",
+    "priceSource": "official-menu",
+    "cityName": "Piano di Sorrento",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-182",
+    "name": "Pizzeria Da Franco",
+    "address": "Corso Filangieri, 94, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 801 6245",
+    "category": "traditional",
+    "rating": 4.5,
+    "description": "Historic pizzeria and rotisserie beloved by residents for its authenticity and reasonable prices.",
+    "descriptionIt": "Storica pizzeria e rosticceria molto amata dai residenti per l'autenticità e i prezzi contenuti.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1537280-Reviews-Pizzeria_da_Franco-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Da+Franco+Vico+Equense",
+    "margheritaPrice": 6,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-183",
+    "name": "Pizzeria Al Buco",
+    "address": "Via Roma, 19, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 801 6075",
+    "category": "traditional",
+    "rating": 4.4,
+    "description": "Famous for generous portions and the typical 'Turkish pizza'.",
+    "descriptionIt": "Celebre per le porzioni generose e la tipica 'pizza turca'.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1100344-Reviews-Pizzeria_Al_Buco-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Al+Buco+Vico+Equense",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-184",
+    "name": "Pizzeria Tiziano",
+    "address": "Corso Filangieri, 132, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 879 8138",
+    "category": "traditional",
+    "rating": 4.3,
+    "description": "Very popular spot in the center of Vico, known for its light dough and great value.",
+    "descriptionIt": "Locale molto popolare nel centro di Vico, noto per l'impasto leggero e l'ottimo rapporto qualità-prezzo.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-Pizzeria_Tiziano-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Tiziano+Vico+Equense",
+    "margheritaPrice": 7,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-186",
+    "name": "Terramia",
+    "address": "Via Roma, 42, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 879 8830",
+    "category": "gourmet",
+    "rating": 4.6,
+    "description": "Elegant restaurant and pizzeria focusing on high-quality local ingredients.",
+    "descriptionIt": "Elegante ristorante e pizzeria focalizzato su ingredienti locali di alta qualità.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d2325380-Reviews-Terramia-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Terramia+Vico+Equense",
+    "margheritaPrice": 9,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-187",
+    "name": "Ma Che Bontà",
+    "address": "Corso Filangieri, 102, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 879 8064",
+    "category": "traditional",
+    "rating": 4.4,
+    "description": "Known for its 'pizza a metro' and variety of toppings in a friendly environment.",
+    "descriptionIt": "Nota per la sua pizza a metro e la varietà di condimenti in un ambiente amichevole.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d3527264-Reviews-Ma_Che_Bonta-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Ma+Che+Bonta+Vico+Equense",
+    "margheritaPrice": 7.5,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-188",
+    "name": "Da Cardillo",
+    "address": "Via dei Campi, 32, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 802 8585",
+    "category": "traditional",
+    "rating": 4.5,
+    "description": "A local gem in the Fornacelle area, famous for its light dough and panoramic views.",
+    "descriptionIt": "Una gemma locale nella zona di Fornacelle, famosa per l'impasto leggero e la vista panoramica.",
+    "status": "open",
+    "frazione": "Fornacelle",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-Pizzeria_Cardillo-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Cardillo+Vico+Equense",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-189",
+    "name": "O' Sole Mio",
+    "address": "Via Seiano, 17, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 802 8130",
+    "category": "traditional",
+    "rating": 4.3,
+    "description": "Traditional flavors in a panoramic spot in Seiano.",
+    "descriptionIt": "Sapori tradizionali in un punto panoramico a Seiano.",
+    "status": "open",
+    "frazione": "Seiano",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-O_Sole_Mio-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=O+Sole+Mio+Vico+Equense",
+    "margheritaPrice": 7,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-191",
+    "name": "Pizzeria Toto",
+    "address": "Via San Ciro, 5, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 879 0048",
+    "category": "traditional",
+    "rating": 4.5,
+    "description": "Authentic family-run pizzeria in the heart of Vico, known for its consistency and quality.",
+    "descriptionIt": "Autentica pizzeria a conduzione familiare nel cuore di Vico, nota per la costanza e la qualità.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d3386001-Reviews-Pizzeria_Tottoi-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Tottoi+Vico+Equense",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T14:59:30.182Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-192",
+    "name": "Saporì",
+    "address": "Via Santa Maria Vecchia, 2, 80066 Seiano NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 802 8341",
+    "category": "gourmet",
+    "rating": 4.6,
+    "description": "Modern gourmet pizzeria with refined ingredients and highly digestible dough.",
+    "descriptionIt": "Locale moderno con ingredienti ricercati e impasti ad alta digeribilità.",
+    "status": "open",
+    "frazione": "Seiano",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-Sapori-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Sapori+Seiano+Vico+Equense",
+    "margheritaPrice": 9,
+    "lastUpdated": "2026-05-10T15:42:16.826Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-193",
+    "name": "O' Saraceno",
+    "address": "Via Murrano, 14, 80066 Seiano NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 802 8511",
+    "category": "traditional",
+    "rating": 4.4,
+    "description": "Historic panoramic terrace in Seiano, perfect for pizza and seafood.",
+    "descriptionIt": "Storica terrazza panoramica su Seiano, ideale per pizza e piatti di mare.",
+    "status": "open",
+    "frazione": "Seiano",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d2109504-Reviews-O_Saraceno-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=O+Saraceno+Seiano+Vico+Equense",
+    "margheritaPrice": 7.5,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-194",
+    "name": "Mustafà",
+    "address": "Via Marina di Equa, 32, 80066 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 801 5066",
+    "category": "traditional",
+    "rating": 4.5,
+    "description": "Famous seafront venue in Marina di Equa, known for its hospitality and tradition.",
+    "descriptionIt": "Celebre locale fronte mare a Marina di Equa, noto per l'accoglienza e la tradizione.",
+    "status": "open",
+    "frazione": "Marina di Equa",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1544383-Reviews-Mustafa-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Mustafa+Marina+di+Equa+Vico+Equense",
+    "margheritaPrice": 8,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-195",
+    "name": "Aequa",
+    "address": "Via Marina di Equa, 34, 80066 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 801 5065",
+    "category": "traditional",
+    "rating": 4.3,
+    "description": "Elegant seaside venue, great for a pizza at sunset.",
+    "descriptionIt": "Locale elegante sulla spiaggia, ottimo per una pizza al tramonto.",
+    "status": "open",
+    "frazione": "Marina di Equa",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-Aequa-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Aequa+Marina+di+Equa+Vico+Equense",
+    "margheritaPrice": 8.5,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-196",
+    "name": "La Piazzetta",
+    "address": "Via Santa Maria del Toro, 2, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 801 5396",
+    "category": "traditional",
+    "rating": 4.4,
+    "description": "Cozy pizzeria in the town center, highly appreciated by locals.",
+    "descriptionIt": "Pizzeria accogliente nel centro cittadino, molto apprezzata dai residenti.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-La_Piazzetta-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=La+Piazzetta+Vico+Equense",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-197",
+    "name": "All'Angolo",
+    "address": "Corso Filangieri, 10, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 879 8122",
+    "category": "traditional",
+    "rating": 4.2,
+    "description": "Historical spot at the beginning of the center, great for a quick and tasty pizza.",
+    "descriptionIt": "Punto storico all'inizio del centro, ottimo per una pizza veloce e saporita.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1537280-Reviews-All_Angolo-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=All+Angolo+Vico+Equense",
+    "margheritaPrice": 6,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-198",
+    "name": "Il Casale del Golfo",
+    "address": "Via Raffaele Bosco, 497, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 802 3122",
+    "category": "restaurant",
+    "rating": 4.5,
+    "description": "Wonderful panoramic view and traditional pizza in the upper hills.",
+    "descriptionIt": "Splendida vista panoramica e pizza tradizionale nelle colline alte.",
+    "status": "open",
+    "frazione": "Moiano",
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d2325380-Reviews-Il_Casale_del_Golfo-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Il+Casale+del+Golfo+Vico+Equense",
+    "margheritaPrice": 7.5,
+    "lastUpdated": "2026-05-10T15:42:16.831Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-199",
+    "name": "Pizzeria Da Cardone",
+    "address": "Via le Pietre, 13, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 801 5396",
+    "category": "traditional",
+    "rating": 4.4,
+    "description": "Authentic local flavor in a quiet street.",
+    "descriptionIt": "Sapore locale autentico in una strada tranquilla.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-Pizzeria_Da_Cardone-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Pizzeria+Da+Cardone+Vico+Equense",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T15:42:16.831Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
+  },
+  {
+    "id": "pz-200",
+    "name": "Tigabelas",
+    "address": "Via S. Ciro, 52, 80069 Vico Equense NA",
+    "cityId": "vico-equense",
+    "phone": "+39 081 1889 1234",
+    "category": "gourmet",
+    "rating": 4.5,
+    "description": "Innovative and modern, popular for its creative approach to pizza.",
+    "descriptionIt": "Innovativa e moderna, popolare per il suo approccio creativo alla pizza.",
+    "status": "open",
+    "frazione": null,
+    "imageUrl": null,
+    "tripadvisor": "https://www.tripadvisor.it/Restaurant_Review-g194947-d1597942-Reviews-Tigabelas-Vico_Equense_Province_of_Naples_Campania.html",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Tigabelas+Vico+Equense",
+    "margheritaPrice": 9.5,
+    "lastUpdated": "2026-05-10T15:42:16.831Z",
+    "priceSource": "estimated",
+    "cityName": "Vico Equense",
+    "cityRegion": "Penisola Sorrentina"
   }
 ]

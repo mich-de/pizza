@@ -1,7 +1,7 @@
 services:
-  pizza-penisola:
+  pizza-radar:
     build: .
-    container_name: pizza-penisola
+    container_name: pizza-radar
     restart: unless-stopped
     ports:
       - "3001:3001"

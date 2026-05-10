@@ -131,20 +131,20 @@ function ReportPriceSection({ selected, t }) {
           className="w-full flex items-center justify-center gap-2 bg-surface-variant text-primary font-headline font-bold uppercase py-3 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:text-on-secondary hover:border-secondary transition-colors"
         >
           <span className="material-symbols-outlined">edit_note</span>
-          Segnala prezzo errato
+          {t('prices.reportWrongPrice')}
         </button>
       ) : (
         <div>
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-headline font-black uppercase text-base text-primary flex items-center gap-2">
               <span className="material-symbols-outlined text-secondary">edit_note</span>
-              Segnala prezzo errato
+              {t('prices.reportWrongPrice')}
             </h4>
             <button
               onClick={() => setOpen(false)}
               className="font-label text-xs font-bold uppercase text-on-surface-variant hover:text-primary transition-colors"
             >
-              Annulla
+              {t('common.cancel')}
             </button>
           </div>
           <PriceProposalForm
@@ -203,7 +203,7 @@ export function EditRow({ row, editForm, setEditForm, onSave, onCancel, t }) {
       </td>
       <td className="p-4 text-center">
         <div className="flex items-center gap-2 justify-center">
-          <button onClick={onSave} className="bg-primary text-on-primary font-headline font-bold uppercase py-1 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container hover:text-on-primary-container transition-colors text-xs">OK</button>
+          <button onClick={onSave} className="bg-primary text-on-primary font-headline font-bold uppercase py-1 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container hover:text-on-primary-container transition-colors text-xs">{t('admin.ok')}</button>
           <button onClick={onCancel} className="bg-surface text-primary font-headline font-bold uppercase py-1 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs">{t('admin.cancel')}</button>
         </div>
       </td>

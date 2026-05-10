@@ -256,14 +256,6 @@
     "source": "piatti-menu"
   },
   {
-    "id": "pr-new-pz-081",
-    "pizzeriaId": "pz-081",
-    "margheritaPrice": 7.4,
-    "currency": "EUR",
-    "lastUpdated": "2026-04-30",
-    "source": "estimated"
-  },
-  {
     "id": "pr-new-pz-083",
     "pizzeriaId": "pz-083",
     "margheritaPrice": 9.3,
@@ -338,7 +330,7 @@
   {
     "id": "pr-new-pz-124",
     "pizzeriaId": "pz-124",
-    "margheritaPrice": 9.0,
+    "margheritaPrice": 9,
     "currency": "EUR",
     "lastUpdated": "2026-05-10T01:51:00.000Z",
     "source": "admin-manual"
@@ -538,7 +530,7 @@
   {
     "id": "pr-new-pz-169",
     "pizzeriaId": "pz-169",
-    "margheritaPrice": 6.0,
+    "margheritaPrice": 6,
     "currency": "EUR",
     "lastUpdated": "2026-05-07T23:18:00.000Z",
     "source": "admin-manual"
@@ -546,7 +538,7 @@
   {
     "id": "pr-new-pz-170",
     "pizzeriaId": "pz-170",
-    "margheritaPrice": 8.0,
+    "margheritaPrice": 8,
     "currency": "EUR",
     "lastUpdated": "2026-05-07T23:18:00.000Z",
     "source": "admin-manual"
@@ -574,5 +566,298 @@
     "currency": "EUR",
     "lastUpdated": "2026-05-10T01:46:00.000Z",
     "source": "admin-manual"
+  },
+  {
+    "id": "pr-new-pz-174",
+    "pizzeriaId": "pz-174",
+    "margheritaPrice": 6.5,
+    "currency": "EUR",
+    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "source": "estimated"
+  },
+  {
+    "id": "pr-new-pz-175",
+    "pizzeriaId": "pz-175",
+    "margheritaPrice": 7,
+    "currency": "EUR",
+    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "source": "estimated"
+  },
+  {
+    "id": "pr-new-pz-176",
+    "pizzeriaId": "pz-176",
+    "margheritaPrice": 5.5,
+    "currency": "EUR",
+    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "source": "estimated"
+  },
+  {
+    "id": "pr-new-pz-177",
+    "pizzeriaId": "pz-177",
+    "margheritaPrice": 6,
+    "currency": "EUR",
+    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "source": "estimated"
+  },
+  {
+    "id": "pr-new-pz-178",
+    "pizzeriaId": "pz-178",
+    "margheritaPrice": 5,
+    "currency": "EUR",
+    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "source": "estimated"
+  },
+  {
+    "id": "pr-new-pz-179",
+    "pizzeriaId": "pz-179",
+    "margheritaPrice": 7.5,
+    "currency": "EUR",
+    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "source": "estimated"
+  },
+  {
+    "id": "pr-new-pz-180",
+    "pizzeriaId": "pz-180",
+    "margheritaPrice": 7,
+    "currency": "EUR",
+    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "source": "estimated"
+  },
+  {
+    "pizzeriaId": "pz-181",
+    "margheritaPrice": 5.5,
+    "lastUpdated": "2026-05-10T14:56:23.506Z",
+    "source": "official-menu",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.506Z",
+        "price": 5.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-182",
+    "margheritaPrice": 6,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.509Z",
+        "price": 6
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-183",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.509Z",
+        "price": 6.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-184",
+    "margheritaPrice": 7,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.509Z",
+        "price": 7
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-186",
+    "margheritaPrice": 9,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.509Z",
+        "price": 9
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-187",
+    "margheritaPrice": 7.5,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.509Z",
+        "price": 7.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-188",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.509Z",
+        "price": 6.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-189",
+    "margheritaPrice": 7,
+    "lastUpdated": "2026-05-10T14:56:23.509Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:56:23.509Z",
+        "price": 7
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-191",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T14:59:30.182Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T14:59:30.182Z",
+        "price": 6.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-192",
+    "margheritaPrice": 9,
+    "lastUpdated": "2026-05-10T15:42:16.826Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.826Z",
+        "price": 9
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-193",
+    "margheritaPrice": 7.5,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.830Z",
+        "price": 7.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-194",
+    "margheritaPrice": 8,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.830Z",
+        "price": 8
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-195",
+    "margheritaPrice": 8.5,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.830Z",
+        "price": 8.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-196",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.830Z",
+        "price": 6.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-197",
+    "margheritaPrice": 6,
+    "lastUpdated": "2026-05-10T15:42:16.830Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.830Z",
+        "price": 6
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-198",
+    "margheritaPrice": 7.5,
+    "lastUpdated": "2026-05-10T15:42:16.831Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.831Z",
+        "price": 7.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-199",
+    "margheritaPrice": 6.5,
+    "lastUpdated": "2026-05-10T15:42:16.831Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.831Z",
+        "price": 6.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-200",
+    "margheritaPrice": 9.5,
+    "lastUpdated": "2026-05-10T15:42:16.831Z",
+    "source": "estimated",
+    "history": [
+      {
+        "date": "2026-05-10T15:42:16.831Z",
+        "price": 9.5
+      }
+    ]
+  },
+  {
+    "pizzeriaId": "pz-017",
+    "margheritaPrice": 0,
+    "lastUpdated": "2026-05-10T16:04:11.384Z",
+    "source": "system",
+    "history": []
+  },
+  {
+    "pizzeriaId": "pz-061",
+    "margheritaPrice": 0,
+    "lastUpdated": "2026-05-10T16:04:11.384Z",
+    "source": "system",
+    "history": []
+  },
+  {
+    "pizzeriaId": "pz-105",
+    "margheritaPrice": 0,
+    "lastUpdated": "2026-05-10T16:04:11.384Z",
+    "source": "system",
+    "history": []
   }
 ]

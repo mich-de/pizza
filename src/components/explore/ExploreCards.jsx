@@ -1,21 +1,4 @@
-import { useState } from 'react';
-import { CATEGORY_BADGE_COLORS } from '../../config/exploreConfig';
-import PriceProposalForm from './PriceProposalForm';
-
-function PriceQuickReport({ pizzeriaId, pizzeriaName, currentPrice, onReport }) {
-  return (
-    <button
-      onClick={(e) => { e.stopPropagation(); onReport?.(); }}
-      className="inline-flex items-center gap-1 text-xs font-headline font-bold uppercase tracking-widest text-on-secondary bg-secondary border-2 border-primary px-2 py-1 hover:bg-secondary-container hover:text-secondary transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"
-    >
-      <span className="material-symbols-outlined text-sm">edit_note</span>
-      Segnala prezzo
-    </button>
-  );
-}
-
-
-export default function ExploreCards({ filtered, stats, t, lang, onSelect, onReportPrice }) {
+export default function ExploreCards({ filtered, t, lang, onSelect, onReportPrice }) {
 
   const handleCardClick = (pz) => {
     onSelect?.(pz);
@@ -27,63 +10,63 @@ export default function ExploreCards({ filtered, stats, t, lang, onSelect, onRep
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-      {filtered.map((pz, idx) => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      {filtered.map((pz) => (
         <article
           key={pz.id}
           onClick={() => handleCardClick(pz)}
-          className="bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex flex-col group relative overflow-hidden hover:-translate-y-1 transition-transform cursor-pointer"
+          className="bg-surface border border-outline-variant rounded-sm flex flex-col group relative overflow-hidden hover-lift cursor-pointer"
         >
           <div className="p-4 flex-1 flex flex-col">
             <div className="flex items-start justify-between mb-1">
-              <div className="flex-1">
-                <h3 className="text-xl font-headline font-black uppercase group-hover:text-tertiary transition-colors leading-tight">{pz.name}</h3>
-                <p className="font-body text-on-surface-variant text-xs flex items-center gap-1 mt-0.5">
-                  <span className="material-symbols-outlined text-sm">location_on</span>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-display font-bold group-hover:text-primary transition-colors leading-tight truncate">{pz.name}</h3>
+                <p className="font-body text-on-surface-variant text-xs flex items-center gap-1 mt-0.5 truncate">
+                  <span className="material-symbols-outlined text-sm flex-shrink-0">location_on</span>
                   {pz.frazione ? `${pz.frazione}, ${pz.address}` : pz.address}
                 </p>
                 <p className="font-body text-on-surface-variant text-xs">{pz.cityName}</p>
               </div>
               <div className="text-right flex-shrink-0 ml-2">
-                <div className="font-headline font-bold text-lg text-primary">
+                <div className="font-display font-bold text-lg text-primary">
                   {t('common.euro')}{pz.margheritaPrice?.toFixed(2)}
                 </div>
-                <div className="flex items-center justify-end gap-1 font-label font-bold text-xs">
-                  <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                <div className="flex items-center justify-end gap-1 font-label font-semibold text-xs text-primary/70">
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                   {pz.rating}
                 </div>
               </div>
             </div>
-            <p className="font-body text-on-surface-variant text-xs mb-3 flex-1">{lang === 'it' ? (pz.descriptionIt || pz.description) : pz.description}</p>
-            <div className="border-t-2 border-primary pt-3 mt-auto flex items-center justify-between">
+            <p className="font-body text-sm text-on-surface-variant mb-3 flex-1 leading-relaxed">{lang === 'it' ? (pz.descriptionIt || pz.description) : pz.description}</p>
+            <div className="border-t border-outline-variant pt-3 mt-auto flex items-center justify-between">
               <button
                 onClick={(e) => handleReportClick(pz, e)}
-                className="inline-flex items-center gap-1 text-xs font-headline font-bold uppercase tracking-widest text-on-secondary bg-secondary border-2 border-primary px-2 py-1 hover:bg-secondary-container hover:text-secondary transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"
+                className="inline-flex items-center gap-1 text-[11px] font-label font-medium tracking-wider text-primary bg-primary/5 border border-primary/20 rounded-sm px-2.5 py-1 hover:bg-primary hover:text-on-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">edit_note</span>
-                Segnala prezzo
+                {t('explore.reportPrice')}
               </button>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <a
                   href={pz.maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pz.name + ' ' + pz.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 bg-primary text-on-primary font-label font-bold uppercase text-xs py-1.5 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-colors"
+                  className="flex items-center gap-1 bg-primary text-on-primary font-label font-medium text-[11px] py-1.5 px-2.5 rounded-sm hover:opacity-90 transition-opacity"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <span className="material-symbols-outlined text-sm">map</span>
-                  Maps
+                  {t('explore.maps')}
                 </a>
                 {pz.tripadvisor && (
                   <a
                     href={pz.tripadvisor}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 bg-[#34E0A1] text-[#0d4030] font-label font-bold uppercase text-xs py-1.5 px-3 border-2 border-[#1a9b6e] shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-[#1a9b6e] hover:text-white transition-colors"
+                    className="flex items-center gap-1 bg-tertiary/10 text-tertiary font-label font-medium text-[11px] py-1.5 px-2.5 rounded-sm border border-tertiary/20 hover:bg-tertiary hover:text-on-tertiary transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <span className="material-symbols-outlined text-sm">travel_explore</span>
-                    TripAdvisor
+                    {t('explore.tripAdvisor')}
                   </a>
                 )}
               </div>

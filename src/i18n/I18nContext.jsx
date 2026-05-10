@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
-const I18nContext = createContext();
+export const I18nContext = createContext();
 
 const STORAGE_KEY = 'pizza-peninsula-lang';
 
@@ -20,7 +20,6 @@ export function I18nProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     loadTranslations(lang).then((data) => {
       setTranslations(data);
       setLoading(false);

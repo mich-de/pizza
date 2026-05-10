@@ -29,7 +29,6 @@ export function useStitchedData() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     setError(null);
 
     fetchJSON(`${API_BASE}/data/stitched`)
@@ -101,7 +100,6 @@ export function useAllData() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     setError(null);
 
     Promise.all([
@@ -147,71 +145,4 @@ export function useAllData() {
   return { pizzerias, prices, locations, loading, error };
 }
 
-export async function fetchComments(postId) {
-  const url = postId ? `${API_BASE}/comments?postId=${postId}` : `${API_BASE}/comments`;
-  const res = await fetchWithRetry(url);
-  return res.json();
-}
 
-export async function submitComment(payload) {
-  const res = await fetch(`${API_BASE}/comments`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Errore invio commento');
-  return data;
-}
-
-export async function fetchCaptcha() {
-  const res = await fetch(`${API_BASE}/comments/captcha`);
-  return res.json();
-}
-
-export async function fetchPriceProposals(token) {
-  const res = await fetch(`${API_BASE}/price-proposals?token=${token}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Errore caricamento proposte');
-  return data;
-}
-
-export async function approvePriceProposal(payload, token) {
-  const res = await fetch(`${API_BASE}/admin/approve-price?token=${token}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Errore approvazione');
-  return data;
-}
-
-export async function rejectProposal(id, token) {
-  const res = await fetch(`${API_BASE}/admin/reject-proposal/${id}?token=${token}`, {
-    method: 'DELETE',
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Errore rifiuto');
-  return data;
-}
-
-export async function createPizzeria(payload, token) {
-  const res = await fetch(`${API_BASE}/pizzerias/single?token=${token}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Errore creazione');
-  return data;
-}
-
-export async function deletePizzeria(id, token) {
-  const res = await fetch(`${API_BASE}/pizzerias/${id}?token=${token}`, {
-    method: 'DELETE',
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Errore eliminazione');
-  return data;
-}

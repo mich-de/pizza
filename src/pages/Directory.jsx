@@ -1,8 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { useStitchedData } from '../hooks/useDataFetch';
+import { checkAuth } from '../services/authService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PageHeader } from '../components/ui';
+import VenueEditModal from '../components/explore/VenueEditModal';
 
 const CATEGORY_COLORS = {
   traditional: { bg: '#C2410C', text: '#fff' },
@@ -39,6 +41,23 @@ export default function Directory() {
   const [filter, setFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [admin, setAdmin] = useState(null);
+  const [editVenue, setEditVenue] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [towns, setTowns] = useState([]);
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((msg, isError = false) => {
+    setToast({ msg, isError });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    checkAuth().then(user => {
+      if (user?.role === 'admin') setAdmin(user);
+    });
+    fetch('/data/towns.json').then(r => r.json()).then(setTowns).catch(() => {});
+  }, []);
 
   const CATEGORIES = useMemo(() => [
     { key: 'all', label: t('directory.all') },
@@ -76,26 +95,35 @@ export default function Directory() {
         subtitle={t('directory.subtitle')}
       >
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary">search</span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60">search</span>
           <input
-            className="bg-surface-bright border-2 border-primary py-2 pl-10 pr-4 font-label uppercase focus:outline-none focus:border-secondary w-64"
+            className="bg-surface border border-outline-variant rounded-sm py-2 pl-10 pr-4 font-label text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary w-64 placeholder:text-on-surface-variant/40"
             placeholder={t('directory.search')}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        {admin && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 bg-primary text-on-primary font-headline font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container hover:text-on-primary-container transition-colors text-sm"
+          >
+            <span className="material-symbols-outlined text-lg">add</span>
+            {t('admin.addNew')}
+          </button>
+        )}
       </PageHeader>
 
-      <div className="mb-8 flex flex-wrap gap-4">
+      <div className="mb-6 flex flex-wrap gap-2">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.key}
             onClick={() => setFilter(cat.key)}
-            className={`border-2 border-primary px-6 py-2 font-label font-bold uppercase transition-colors ${
+            className={`px-4 py-1.5 font-label font-medium text-sm tracking-wider rounded-sm transition-colors ${
               filter === cat.key
-                ? 'bg-primary-container text-on-primary-container shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]'
-                : 'bg-surface text-primary hover:bg-secondary-container'
+                ? 'bg-primary text-on-primary'
+                : 'bg-surface text-on-surface-variant border border-outline-variant hover:bg-surface-variant'
             }`}
           >
             {cat.label}
@@ -103,23 +131,23 @@ export default function Directory() {
         ))}
       </div>
 
-      <div className="mb-8 bg-primary text-on-primary p-6 border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="mb-8 bg-primary text-on-primary border border-primary/30 rounded-sm p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
-            <span className="material-symbols-outlined text-4xl text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
+            <span className="material-symbols-outlined text-3xl text-on-primary/60" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
             <div>
-              <p className="font-label text-xs uppercase tracking-widest text-primary-container">{t('directory.total')}</p>
-              <p className="font-headline text-4xl font-black">{data.length}</p>
+              <p className="font-label text-xs tracking-wider text-on-primary/60">{t('directory.total')}</p>
+              <p className="font-display text-3xl font-bold">{data.length}</p>
               {activeFiltersCount > 0 && (
-                <p className="font-label text-xs uppercase text-primary-container/70">
-                  {filtered.length} {filtered.length === 1 ? 'pizzeria' : 'pizzerie'} con filtri attivi
+                <p className="font-label text-xs text-on-primary/50">
+                  {filtered.length} {filtered.length === 1 ? t('directory.pizzeriaSingular') : t('directory.pizzeriaPlural')} {t('directory.withFilters')}
                 </p>
               )}
             </div>
           </div>
-          <div className="border-t-2 md:border-t-0 md:border-l-2 border-primary-container pt-4 md:pt-0 md:pl-6">
-            <p className="font-label text-xs uppercase tracking-widest text-primary-container mb-3">{t('directory.byTown')}</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="border-t md:border-t-0 md:border-l border-on-primary/20 pt-4 md:pt-0 md:pl-5">
+            <p className="font-label text-xs tracking-wider text-on-primary/60 mb-2">{t('directory.byTown')}</p>
+            <div className="flex flex-wrap gap-1.5">
               {cities.map((city) => {
                 if (city === 'all') {
                   const isActive = cityFilter === 'all';
@@ -127,10 +155,10 @@ export default function Directory() {
                     <button
                       key="all"
                       onClick={() => setCityFilter('all')}
-                      className={`px-3 py-1 border-2 font-label font-bold uppercase text-sm cursor-pointer transition-colors ${
+                      className={`px-2.5 py-1 font-label font-medium text-xs tracking-wider rounded-sm transition-colors ${
                         isActive
-                          ? 'bg-primary-container text-primary border-primary-container'
-                          : 'border-primary-container/50 text-primary-container/50 hover:text-primary-container hover:border-primary-container/70'
+                          ? 'bg-on-primary/15 text-on-primary'
+                          : 'text-on-primary/50 hover:text-on-primary hover:bg-on-primary/10'
                       }`}
                     >
                       {t('directory.all')} ({data.length})
@@ -144,15 +172,15 @@ export default function Directory() {
                   <button
                     key={city}
                     onClick={() => setCityFilter(cityFilter === city ? 'all' : city)}
-                    className={`px-3 py-1 border-2 font-label font-bold uppercase text-sm cursor-pointer transition-colors ${
+                    className={`px-2.5 py-1 font-label font-medium text-xs tracking-wider rounded-sm transition-colors ${
                       isActive
-                        ? 'bg-primary-container text-primary border-primary-container'
-                        : 'border-primary-container/50 text-primary-container/50 hover:text-primary-container hover:border-primary-container/70'
+                        ? 'bg-on-primary/15 text-on-primary'
+                        : 'text-on-primary/50 hover:text-on-primary hover:bg-on-primary/10'
                     }`}
                   >
-                    {city} <span className="font-headline font-black">{count}</span>
+                    {city} <span className="font-semibold">{count}</span>
                     {(cityFilter !== 'all' || search !== '') && filteredCount !== count && (
-                      <span className="text-primary-container/60">/{filteredCount}</span>
+                      <span className="text-on-primary/40">/{filteredCount}</span>
                     )}
                   </button>
                 );
@@ -162,58 +190,76 @@ export default function Directory() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filtered.map((pz) => (
           <article
             key={pz.id}
-            className="bg-surface-bright border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex flex-col group relative overflow-hidden hover:-translate-y-1 transition-transform"
+            className="bg-surface border border-outline-variant rounded-sm flex flex-col group relative overflow-hidden hover-lift"
           >
-            <div className="h-48 border-b-4 border-primary relative overflow-hidden">
+            <div className="h-44 border-b border-outline-variant relative overflow-hidden bg-surface-variant">
               {pz.imageUrl ? (
                 <img
                   alt={pz.name}
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
                   src={pz.imageUrl}
                   loading="lazy"
                 />
               ) : (
                 <PlaceholderImage pz={pz} />
               )}
-              <div className={`absolute top-4 right-4 px-3 py-1 font-label font-bold uppercase border-2 border-primary text-sm transform rotate-1 ${CATEGORY_BADGE_COLORS[pz.category] || 'bg-primary text-on-primary'}`}>
+              <div className={`absolute top-3 right-3 px-2.5 py-1 font-label font-medium text-[11px] tracking-wider rounded-sm ${CATEGORY_BADGE_COLORS[pz.category] || 'bg-primary/90 text-on-primary'}`}>
                 {pz.category === 'traditional' ? t('common.traditional') : pz.category === 'gourmet' ? t('common.gourmet') : pz.category === 'wood-fired' ? t('common.woodFired') : t('common.restaurant')}
               </div>
               {pz.isNew && (
-                <div className="absolute top-4 left-4 bg-tertiary text-on-tertiary px-2 py-1 font-label font-bold uppercase text-xs border-2 border-primary flex items-center gap-1">
+                <div className="absolute top-3 left-3 bg-tertiary/90 text-on-tertiary px-2 py-1 font-label font-medium text-[11px] tracking-wider rounded-sm flex items-center gap-1">
                   <span className="material-symbols-outlined text-sm">fiber_new</span>
-                  Nuovo
+                  {t('common.new')}
                 </div>
               )}
             </div>
-            <div className="p-6 flex-1 flex flex-col">
-              <h3 className="text-3xl font-headline font-black uppercase mb-2 group-hover:text-tertiary transition-colors">{pz.name}</h3>
-              <p className="font-body text-on-surface-variant mb-1 text-sm flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">location_on</span>
+            <div className="p-5 flex-1 flex flex-col">
+              <h3 className="text-2xl font-display font-bold mb-1.5 group-hover:text-primary transition-colors leading-tight">{pz.name}</h3>
+              <p className="font-body text-sm text-on-surface-variant mb-0.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm text-on-surface-variant/60">location_on</span>
                 {pz.frazione ? `${pz.frazione}, ${pz.address}` : pz.address}
               </p>
-              <p className="font-body text-on-surface-variant text-xs mb-4">{pz.cityName}</p>
-              <p className="font-body text-on-surface-variant mb-6 flex-1 text-sm">{lang === 'it' ? (pz.descriptionIt || pz.description) : pz.description}</p>
-              <div className="flex items-center justify-between border-t-2 border-primary pt-4 mt-auto">
-                <div className="flex items-center gap-2 font-label font-bold">
-                  <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  {pz.rating}
+              <p className="font-body text-xs text-on-surface-variant/70 mb-3">{pz.cityName}</p>
+              <p className="font-body text-sm text-on-surface-variant mb-5 flex-1 leading-relaxed">{lang === 'it' ? (pz.descriptionIt || pz.description) : pz.description}</p>
+              <div className="flex items-center justify-between border-t border-outline-variant pt-4 mt-auto">
+                <div className="flex items-center gap-1.5 text-primary/70">
+                  <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                  <span className="font-label font-semibold text-sm">{pz.rating}</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant">🍕 Margherita</div>
-                  <div className="font-headline font-black text-xl text-primary">
+                  <div className="font-label text-[10px] font-medium tracking-wider text-on-surface-variant/60">{t('common.margherita')}</div>
+                  <div className="font-display font-bold text-lg text-primary">
                     {t('common.euro')}{pz.margheritaPrice?.toFixed(2)}
                   </div>
                 </div>
               </div>
+              {admin && (
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => setEditVenue(pz)}
+                    className="flex-1 flex items-center justify-center gap-1 bg-surface text-primary font-headline font-bold uppercase text-xs py-2 border-2 border-primary hover:bg-primary hover:text-on-primary transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">edit</span>
+                    {t('admin.edit')}
+                  </button>
+                  <button
+                    onClick={() => { setEditVenue(pz); }}
+                    className="flex-1 flex items-center justify-center gap-1 bg-secondary text-on-tertiary font-headline font-bold uppercase text-xs py-2 border-2 border-primary hover:bg-error-container transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                    {t('common.delete')}
+                  </button>
+                </div>
+              )}
               <a
                 href={pz.maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pz.name + ' ' + pz.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 flex items-center justify-center gap-2 bg-primary text-on-primary font-label font-bold uppercase text-sm py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-colors"
+                className="mt-3 flex items-center justify-center gap-2 bg-primary text-on-primary font-label font-medium text-sm py-2 rounded-sm hover:opacity-90 transition-opacity"
               >
                 {t('directory.maps')}
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -224,11 +270,36 @@ export default function Directory() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="bg-surface-bright border-4 border-primary p-12 text-center shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <span className="material-symbols-outlined text-5xl text-primary mb-4 block">search_off</span>
-          <p className="font-headline font-black text-2xl uppercase">{t('directory.noResults')}</p>
-          <p className="font-body text-on-surface-variant mt-2">{t('directory.noResultsDesc')}</p>
+        <div className="bg-surface border border-outline-variant rounded-sm p-12 text-center">
+          <span className="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4 block">search_off</span>
+          <p className="font-display font-bold text-2xl text-on-surface-variant">{t('directory.noResults')}</p>
+          <p className="font-body text-sm text-on-surface-variant/60 mt-2">{t('directory.noResultsDesc')}</p>
         </div>
+      )}
+
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] ${toast.isError ? 'bg-secondary text-on-tertiary' : 'bg-primary text-on-primary'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {(editVenue || showAdd) && (
+        <VenueEditModal
+          venue={editVenue}
+          towns={towns}
+          onClose={() => { setEditVenue(null); setShowAdd(false); }}
+          onSaved={() => {
+            setEditVenue(null);
+            setShowAdd(false);
+            showToast(t('admin.toastPizzeriaUpdated'));
+            setTimeout(() => window.location.reload(), 800);
+          }}
+          onDeleted={() => {
+            setEditVenue(null);
+            showToast(t('admin.toastPizzeriaDeleted'));
+            setTimeout(() => window.location.reload(), 800);
+          }}
+        />
       )}
     </div>
   );

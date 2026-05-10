@@ -28,10 +28,11 @@ async function fetchWithAuth(url, options = {}) {
 }
 
 export default function AdminProposals({ onDataChange }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [proposals, setProposals] = useState([]);
   const [pendingComments, setPendingComments] = useState([]);
+  const [pendingFeedPosts, setPendingFeedPosts] = useState([]);
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,13 +56,19 @@ export default function AdminProposals({ onDataChange }) {
     setError(null);
     try {
       const res = await fetchWithAuth('/api/admin/proposals');
-      if (!res.ok) throw new Error('Errore caricamento dati');
+      if (!res.ok) throw new Error(t('admin.toastLoadError'));
       const data = await res.json();
       setProposals(data.proposals || []);
       setPendingComments(data.pendingComments || []);
 
       const venuesRes = await fetch(`${API_BASE}/api/data/venues`, { credentials: 'include' });
       if (venuesRes.ok) setVenues(await venuesRes.json());
+
+      const feedPostsRes = await fetchWithAuth('/api/admin/feed-posts');
+      if (feedPostsRes.ok) {
+        const allFeedPosts = await feedPostsRes.json();
+        setPendingFeedPosts(allFeedPosts.filter(p => !p.approved));
+      }
     } catch (err) {
       if (err.message === 'SESSION_EXPIRED') {
         navigate('/login');
@@ -90,8 +97,8 @@ export default function AdminProposals({ onDataChange }) {
           author: proposal.author,
         }),
       });
-      if (!res.ok) throw new Error('Errore approvazione');
-      showToast('Prezzo approvato');
+      if (!res.ok) throw new Error(t('admin.toastApprovalError'));
+      showToast(t('admin.toastPriceApproved'));
       fetchData();
       onDataChange?.();
     } catch (err) {
@@ -109,8 +116,8 @@ export default function AdminProposals({ onDataChange }) {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': csrfToken },
       });
-      if (!res.ok) throw new Error('Errore rifiuto');
-      showToast('Proposta rifiutata');
+      if (!res.ok) throw new Error(t('admin.toastRejectError'));
+      showToast(t('admin.toastProposalRejected'));
       fetchData();
       onDataChange?.();
     } catch (err) {
@@ -126,8 +133,42 @@ export default function AdminProposals({ onDataChange }) {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
       });
-      if (!res.ok) throw new Error('Errore approvazione commento');
-      showToast('Commento approvato');
+      if (!res.ok) throw new Error(t('admin.toastCommentApprovalError'));
+      showToast(t('admin.toastCommentApproved'));
+      fetchData();
+      onDataChange?.();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+    setConfirmAction(null);
+  };
+
+  const handleApproveFeedPost = async (id) => {
+    try {
+      const csrfToken = await fetchCSRF();
+      const res = await fetchWithAuth(`/api/admin/approve-feed-post/${id}`, {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': csrfToken },
+      });
+      if (!res.ok) throw new Error(t('admin.toastApprovalError'));
+      showToast(t('admin.toastPostApproved'));
+      fetchData();
+      onDataChange?.();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+    setConfirmAction(null);
+  };
+
+  const handleRejectFeedPost = async (id) => {
+    try {
+      const csrfToken = await fetchCSRF();
+      const res = await fetchWithAuth(`/api/admin/reject-feed-post/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': csrfToken },
+      });
+      if (!res.ok) throw new Error(t('admin.toastRejectError'));
+      showToast(t('admin.toastPostRejected'));
       fetchData();
       onDataChange?.();
     } catch (err) {
@@ -143,8 +184,8 @@ export default function AdminProposals({ onDataChange }) {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': csrfToken },
       });
-      if (!res.ok) throw new Error('Errore rifiuto commento');
-      showToast('Commento rifiutato');
+      if (!res.ok) throw new Error(t('admin.toastCommentRejectError'));
+      showToast(t('admin.toastCommentRejected'));
       fetchData();
       onDataChange?.();
     } catch (err) {
@@ -167,14 +208,14 @@ export default function AdminProposals({ onDataChange }) {
         <div>
           <h1 className="font-headline font-black text-3xl uppercase text-primary">{t('nav.approvals')}</h1>
           <p className="font-body text-on-surface-variant mt-1">
-            {proposals.length} proposte + {pendingComments.length} commenti in attesa
+            {t('admin.proposalsSummary', { proposals: proposals.length, comments: pendingComments.length, posts: pendingFeedPosts.length })}
           </p>
         </div>
         <button
           onClick={fetchData}
           className="flex items-center gap-2 bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors"
         >
-          <span className="material-symbols-outlined">refresh</span> Aggiorna
+          <span className="material-symbols-outlined">refresh</span> {t('admin.refresh')}
         </button>
       </div>
 
@@ -188,7 +229,7 @@ export default function AdminProposals({ onDataChange }) {
         <section className="mb-10">
           <h2 className="font-headline font-black text-xl uppercase text-primary mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary">chat_bubble</span>
-            Commenti in attesa ({pendingComments.length})
+            {t('admin.commentsPendingTitle')} ({pendingComments.length})
           </h2>
           <div className="space-y-3">
             {pendingComments.map(c => (
@@ -196,17 +237,17 @@ export default function AdminProposals({ onDataChange }) {
                 {confirmAction?.type === 'comment' && confirmAction.id === c.id && (
                   <div className="absolute inset-0 bg-surface/95 border-2 border-primary p-4 flex flex-col items-center justify-center z-10">
                     <p className="font-headline font-bold text-sm text-primary mb-3">
-                      {confirmAction.action === 'approve' ? 'Approvare' : 'Rifiutare'} questo commento?
+                      {t('admin.confirmPrompt', { action: confirmAction.action === 'approve' ? t('admin.confirmApprove') : t('admin.confirmReject'), item: 'commento' })}
                     </p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => confirmAction.action === 'approve' ? handleApproveComment(c.id) : handleRejectComment(c.id)}
                         className={`font-label font-bold uppercase py-2 px-4 border-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm ${confirmAction.action === 'approve' ? 'bg-tertiary text-on-tertiary border-primary' : 'bg-error text-on-error border-error'}`}
                       >
-                        Conferma
+                        {t('common.confirm')}
                       </button>
                       <button onClick={() => setConfirmAction(null)} className="bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm">
-                        Annulla
+                        {t('common.cancel')}
                       </button>
                     </div>
                   </div>
@@ -215,7 +256,7 @@ export default function AdminProposals({ onDataChange }) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-headline font-bold text-sm text-primary">{c.author}</span>
-                      <span className="text-xs text-on-surface-variant">{new Date(c.createdAt).toLocaleString('it-IT')}</span>
+                      <span className="text-xs text-on-surface-variant">{new Date(c.createdAt).toLocaleString(lang === 'it' ? 'it-IT' : 'en-US')}</span>
                     </div>
                     <p className="font-body text-sm text-on-surface">{c.content}</p>
                     <p className="text-xs text-on-surface-variant mt-1">Post: {c.postId}</p>
@@ -225,13 +266,13 @@ export default function AdminProposals({ onDataChange }) {
                       onClick={() => setConfirmAction({ type: 'comment', id: c.id, action: 'approve' })}
                       className="bg-tertiary text-on-tertiary font-label font-bold uppercase py-2 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-tertiary-container transition-colors text-xs"
                     >
-                      <span className="material-symbols-outlined text-sm">check_circle</span> Pubblica
+                      <span className="material-symbols-outlined text-sm">check_circle</span> {t('admin.publish')}
                     </button>
                     <button
                       onClick={() => setConfirmAction({ type: 'comment', id: c.id, action: 'reject' })}
                       className="bg-error text-on-error font-label font-bold uppercase py-2 px-3 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
                     >
-                      <span className="material-symbols-outlined text-sm">cancel</span> Nascondi
+                      <span className="material-symbols-outlined text-sm">cancel</span> {t('admin.hide')}
                     </button>
                   </div>
                 </div>
@@ -244,14 +285,14 @@ export default function AdminProposals({ onDataChange }) {
       <section>
         <h2 className="font-headline font-black text-xl uppercase text-primary mb-4 flex items-center gap-2">
           <span className="material-symbols-outlined text-tertiary">edit_note</span>
-          Proposte di Prezzo ({proposals.length})
+          {t('admin.proposalsTitle')} ({proposals.length})
         </h2>
 
         {proposals.length === 0 && (
           <div className="bg-surface-variant border-2 border-primary p-12 text-center">
             <span className="material-symbols-outlined text-6xl text-primary/30">task_alt</span>
-            <p className="font-headline font-black text-2xl text-primary mt-4">Nessuna proposta</p>
-            <p className="font-body text-on-surface-variant mt-2">Le nuove proposte appariranno qui</p>
+            <p className="font-headline font-black text-2xl text-primary mt-4">{t('admin.noProposals')}</p>
+            <p className="font-body text-on-surface-variant mt-2">{t('admin.noProposalsDesc')}</p>
           </div>
         )}
 
@@ -261,7 +302,7 @@ export default function AdminProposals({ onDataChange }) {
               {confirmAction?.type === 'proposal' && confirmAction.id === p.id && (
                 <div className="absolute inset-0 bg-surface/95 border-2 border-primary p-4 flex flex-col items-center justify-center z-10">
                   <p className="font-headline font-bold text-sm text-primary mb-3">
-                    {confirmAction.action === 'approve' ? 'Approvare' : 'Rifiutare'} questa proposta?
+                    {t('admin.confirmPrompt', { action: confirmAction.action === 'approve' ? t('admin.confirmApprove') : t('admin.confirmReject'), item: 'proposta' })}
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -269,10 +310,10 @@ export default function AdminProposals({ onDataChange }) {
                       disabled={saving}
                       className={`font-label font-bold uppercase py-2 px-4 border-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm disabled:opacity-50 ${confirmAction.action === 'approve' ? 'bg-tertiary text-on-tertiary border-primary' : 'bg-error text-on-error border-error'}`}
                     >
-                      {saving ? 'Salvando...' : 'Conferma'}
+                      {saving ? (t('admin.saving')) : t('common.confirm')}
                     </button>
                     <button onClick={() => setConfirmAction(null)} className="bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm">
-                      Annulla
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
@@ -280,15 +321,15 @@ export default function AdminProposals({ onDataChange }) {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <h3 className="font-headline font-bold text-lg text-primary mb-1">{getVenueName(p.pizzeriaId)}</h3>
-                  <p className="text-xs text-on-surface-variant mb-2">{p.author} · {new Date(p.createdAt).toLocaleString('it-IT')}</p>
+                  <p className="text-xs text-on-surface-variant mb-2">{p.author} · {new Date(p.createdAt).toLocaleString(lang === 'it' ? 'it-IT' : 'en-US')}</p>
                   <div className="flex items-center gap-6">
                     <div>
-                      <p className="text-xs font-black font-headline uppercase text-on-surface-variant">Attuale</p>
+                      <p className="text-xs font-black font-headline uppercase text-on-surface-variant">{t('admin.current')}</p>
                       <p className="font-headline font-bold text-lg text-on-surface-variant">€{p.currentPrice?.toFixed(2) || '---'}</p>
                     </div>
                     <span className="material-symbols-outlined text-2xl text-secondary">arrow_forward</span>
                     <div>
-                      <p className="text-xs font-black font-headline uppercase text-primary">Proposto</p>
+                      <p className="text-xs font-black font-headline uppercase text-primary">{t('admin.proposed')}</p>
                       <p className="font-headline font-bold text-lg text-primary">€{p.proposedPrice.toFixed(2)}</p>
                     </div>
                     <div>
@@ -305,13 +346,13 @@ export default function AdminProposals({ onDataChange }) {
                     disabled={saving}
                     className="bg-tertiary text-on-tertiary font-label font-bold uppercase py-2 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-tertiary-container transition-colors text-xs disabled:opacity-50"
                   >
-                    <span className="material-symbols-outlined text-sm">check_circle</span> Pubblica
-                  </button>
-                  <button
-                    onClick={() => setConfirmAction({ type: 'proposal', id: p.id, action: 'reject' })}
-                    className="bg-error text-on-error font-label font-bold uppercase py-2 px-3 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
-                  >
-                    <span className="material-symbols-outlined text-sm">cancel</span> Nascondi
+                      <span className="material-symbols-outlined text-sm">check_circle</span> {t('admin.publish')}
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction({ type: 'proposal', id: p.id, action: 'reject' })}
+                      className="bg-error text-on-error font-label font-bold uppercase py-2 px-3 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
+                    >
+                      <span className="material-symbols-outlined text-sm">cancel</span> {t('admin.hide')}
                   </button>
                 </div>
               </div>
@@ -319,6 +360,67 @@ export default function AdminProposals({ onDataChange }) {
           ))}
         </div>
       </section>
+
+      {pendingFeedPosts.length > 0 && (
+        <section className="mb-10">
+          <h2 className="font-headline font-black text-xl uppercase text-primary mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined text-secondary">add_a_photo</span>
+            {t('admin.feedPostsTitle')} ({pendingFeedPosts.length})
+          </h2>
+          <div className="space-y-3">
+            {pendingFeedPosts.map(p => (
+              <div key={p.id} className="bg-surface border-2 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] relative">
+                {confirmAction?.type === 'feedPost' && confirmAction.id === p.id && (
+                  <div className="absolute inset-0 bg-surface/95 border-2 border-primary p-4 flex flex-col items-center justify-center z-10">
+                    <p className="font-headline font-bold text-sm text-primary mb-3">
+                      {t('admin.confirmPrompt', { action: confirmAction.action === 'approve' ? t('admin.confirmApprove') : t('admin.confirmReject'), item: 'post' })}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => confirmAction.action === 'approve' ? handleApproveFeedPost(p.id) : handleRejectFeedPost(p.id)}
+                        className={`font-label font-bold uppercase py-2 px-4 border-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm ${confirmAction.action === 'approve' ? 'bg-tertiary text-on-tertiary border-primary' : 'bg-error text-on-error border-error'}`}
+                      >
+                        {t('common.confirm')}
+                      </button>
+                      <button onClick={() => setConfirmAction(null)} className="bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm">
+                        {t('common.cancel')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-headline font-bold text-sm text-primary">{p.author}</span>
+                      <span className="text-xs text-on-surface-variant">{new Date(p.createdAt).toLocaleString(lang === 'it' ? 'it-IT' : 'en-US')}</span>
+                    </div>
+                    <h3 className="font-headline font-bold text-lg text-secondary mt-1">{p.title}</h3>
+                    {p.description_it || p.description_en || p.description ? (
+                      <p className="font-body text-sm text-on-surface mt-1">
+                        {lang === 'it' ? (p.description_it || p.description) : (p.description_en || p.description)}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setConfirmAction({ type: 'feedPost', id: p.id, action: 'approve' })}
+                      className="bg-tertiary text-on-tertiary font-label font-bold uppercase py-2 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-tertiary-container transition-colors text-xs"
+                    >
+                      <span className="material-symbols-outlined text-sm">check_circle</span> {t('admin.publishBtn')}
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction({ type: 'feedPost', id: p.id, action: 'reject' })}
+                      className="bg-error text-on-error font-label font-bold uppercase py-2 px-3 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
+                    >
+                      <span className="material-symbols-outlined text-sm">cancel</span> {t('admin.hideBtn')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

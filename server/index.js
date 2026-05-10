@@ -8,27 +8,29 @@ import { readFileSync, writeFileSync, existsSync, renameSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger, format, transports } from 'winston';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHmac } from 'crypto';
 import { hashPassword, verifyPassword } from './utils/password.js';
-import { generateAccessToken, generateRefreshToken, ACCESS_EXPIRES_MS, REFRESH_EXPIRES_MS } from './utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, ACCESS_EXPIRES_MS, REFRESH_EXPIRES_MS } from './utils/jwt.js';
 import { createRefreshToken, validateRefreshToken, revokeRefreshToken } from './utils/refreshTokens.js';
 import { createSecret, createKeyUri, createQRCodeDataURI, verifyTOTP } from './utils/totp.js';
 import { authMiddleware, requireRole } from './middleware/auth.js';
 import { csrfMiddleware, csrfToken } from './middleware/csrf.js';
 import { auditLog, getAuditLog } from './utils/auditLog.js';
+import sanitizeHtml from 'sanitize-html';
+import { z } from 'zod';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = join(__dirname, '..');
 const PRIVATE_DIR = join(__dirname, 'private');
-const LOGS_DIR = join(__dirname, 'logs');
 
 const app = express();
+export { app };
 app.use(compression());
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-me';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-me';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'peninsula-ovserver';
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || null;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3001')
@@ -42,6 +44,7 @@ const PRICES_PATH = join(DATA_DIR, 'prices.json');
 const COMMENTS_PATH = join(PRIVATE_DIR, 'comments.json');
 const PROPOSALS_PATH = join(PRIVATE_DIR, 'price-proposals.json');
 const ADMINS_PATH = join(PRIVATE_DIR, 'admins.json');
+const FEED_POSTS_PATH = join(PRIVATE_DIR, 'feed-posts.json');
 
 const BANNED_WORDS = [
   'buy now', 'click here', 'cheap meds', 'viagra', 'cialis',
@@ -57,6 +60,115 @@ const MIN_CONTENT_LENGTH = 5;
 const MAX_CONTENT_LENGTH = 500;
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 30;
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const ACCOUNT_LOCKOUT_MS = 15 * 60 * 1000;
+const CAPTCHA_TTL_MS = 10 * 60 * 1000;
+
+// --- Zod Schemas ---
+const LoginSchema = z.object({
+  username: z.string().min(1).max(100),
+  password: z.string().min(1).max(200),
+});
+
+const CommentSchema = z.object({
+  postId: z.string().min(1).max(50),
+  author: z.string().min(MIN_NAME_LENGTH).max(MAX_NAME_LENGTH),
+  content: z.string().min(MIN_CONTENT_LENGTH).max(MAX_CONTENT_LENGTH),
+  proposedPrice: z.number().positive().max(100).optional(),
+  honeypot: z.string().optional(),
+  mathAnswer: z.number(),
+  captchaToken: z.string().min(1),
+});
+
+const FeedPostSchema = z.object({
+  author: z.string().min(2).max(30),
+  title: z.string().min(3).max(100),
+  description: z.string().max(500).optional().default(''),
+  honeypot: z.string().optional(),
+  mathAnswer: z.number(),
+  captchaToken: z.string().min(1),
+});
+
+// --- Login Rate Limiting & Account Lockout ---
+const loginAttemptMap = new Map();
+
+function checkLoginRateLimit(ip) {
+  const now = Date.now();
+  if (!loginAttemptMap.has(ip)) loginAttemptMap.set(ip, []);
+  const attempts = loginAttemptMap.get(ip).filter(t => t > now - LOGIN_WINDOW_MS);
+  loginAttemptMap.set(ip, attempts);
+  if (attempts.length >= MAX_LOGIN_ATTEMPTS) {
+    const waitSeconds = Math.ceil((attempts[0] + LOGIN_WINDOW_MS - now) / 1000);
+    return { allowed: false, waitSeconds };
+  }
+  return { allowed: true };
+}
+
+function recordLoginAttempt(ip) {
+  const now = Date.now();
+  if (!loginAttemptMap.has(ip)) loginAttemptMap.set(ip, []);
+  loginAttemptMap.get(ip).push(now);
+}
+
+function clearLoginAttempts(ip) {
+  loginAttemptMap.delete(ip);
+}
+
+function checkAccountLockout(admin) {
+  if (!admin.lockedUntil) return { locked: false };
+  if (Date.now() < new Date(admin.lockedUntil).getTime()) {
+    const waitSeconds = Math.ceil((new Date(admin.lockedUntil).getTime() - Date.now()) / 1000);
+    return { locked: true, waitSeconds };
+  }
+  return { locked: false };
+}
+
+function recordFailedLogin(admin, admins) {
+  admin.failedAttempts = (admin.failedAttempts || 0) + 1;
+  if (admin.failedAttempts >= MAX_LOGIN_ATTEMPTS) {
+    admin.lockedUntil = new Date(Date.now() + ACCOUNT_LOCKOUT_MS).toISOString();
+    admin.failedAttempts = 0;
+  }
+  safeWriteJSON(ADMINS_PATH, admins);
+}
+
+function clearFailedLogins(admin, admins) {
+  if (admin.failedAttempts || admin.lockedUntil) {
+    admin.failedAttempts = 0;
+    delete admin.lockedUntil;
+    safeWriteJSON(ADMINS_PATH, admins);
+  }
+}
+
+// --- Server-side Captcha ---
+function createCaptchaToken(answer) {
+  const expires = Date.now() + CAPTCHA_TTL_MS;
+  const payload = `${answer}:${expires}`;
+  const sig = createHmac('sha256', JWT_SECRET).update(payload).digest('hex');
+  return `${payload}:${sig}`;
+}
+
+function verifyCaptchaToken(token, userAnswer) {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split(':');
+  if (parts.length !== 3) return false;
+  const [answer, expires, sig] = parts;
+  const expectedSig = createHmac('sha256', JWT_SECRET).update(`${answer}:${expires}`).digest('hex');
+  if (sig !== expectedSig) return false;
+  if (Date.now() > parseInt(expires)) return false;
+  return parseInt(answer) === userAnswer;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, attempts] of loginAttemptMap.entries()) {
+    const cleaned = attempts.filter(t => t > now - LOGIN_WINDOW_MS);
+    if (cleaned.length === 0) loginAttemptMap.delete(ip);
+    else loginAttemptMap.set(ip, cleaned);
+  }
+}, 5 * 60 * 1000);
 
 const logger = createLogger({
   level: 'info',
@@ -96,14 +208,12 @@ function sanitize(str) {
 }
 
 function removeDangerousContent(str) {
-  let cleaned = str;
-  cleaned = cleaned.replace(/<[^>]*>/g, '');
-  cleaned = cleaned.replace(/javascript:/gi, '');
-  cleaned = cleaned.replace(/on\w+\s*=/gi, '');
-  cleaned = cleaned.replace(/\[url=/gi, '[link=');
-  cleaned = cleaned.replace(/\[img/gi, '[image');
-  return cleaned;
+  return sanitizeHtml(str, {
+    allowedTags: [],
+    allowedAttributes: {},
+  });
 }
+
 
 function containsBannedWords(str) {
   const lower = str.toLowerCase();
@@ -178,11 +288,11 @@ function safeReadJSON(filePath, fallback = []) {
   return withFileLock(filePath, () => readJSON(filePath, fallback));
 }
 
-function stitchData(includeUnapproved = false) {
-  const towns = readJSON(TOWNS_PATH, []);
-  const venues = readJSON(VENUES_PATH, []);
-  const prices = readJSON(PRICES_PATH, []);
-  const proposals = readJSON(PROPOSALS_PATH, []);
+async function stitchData(includeUnapproved = false) {
+  const towns = await safeReadJSON(TOWNS_PATH, []);
+  const venues = await safeReadJSON(VENUES_PATH, []);
+  const prices = await safeReadJSON(PRICES_PATH, []);
+  const proposals = await safeReadJSON(PROPOSALS_PATH, []);
 
   return venues
     .filter(v => {
@@ -259,7 +369,7 @@ setInterval(() => {
 }, 60 * 1000);
 
 async function seedAdmin() {
-  const admins = readJSON(ADMINS_PATH, []);
+  const admins = await safeReadJSON(ADMINS_PATH, []);
   let changed = false;
 
   for (const admin of admins) {
@@ -298,7 +408,7 @@ async function seedAdmin() {
   }
 
   if (changed) {
-    atomicWriteJSON(ADMINS_PATH, admins);
+    await safeWriteJSON(ADMINS_PATH, admins);
   }
 }
 
@@ -352,21 +462,105 @@ app.get('/api/csrf-token', csrfToken);
 
 app.post('/api/auth/login', apiRateLimit, async (req, res) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Campi mancanti' });
+    const parsed = LoginSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Campi mancanti o non validi' });
+    const { username, password } = parsed.data;
 
-    const admins = readJSON(ADMINS_PATH, []);
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+
+    // Login-specific rate limiting (production only — dev can retry freely)
+app.post('/api/admin/regenerate-key', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const apiKey = randomBytes(32).toString('hex');
+    const admins = await safeReadJSON(ADMINS_PATH, []);
+    const idx = admins.findIndex(a => a.id === req.user.userId);
+    if (idx === -1) return res.status(404).json({ error: 'Utente non trovato' });
+    admins[idx].apiKey = createHmac('sha256', JWT_SECRET).update(apiKey).digest('hex');
+    await safeWriteJSON(ADMINS_PATH, admins);
+    auditLog(req.user.userId, 'regenerate_api_key', 'admin', { ip: req.ip });
+    res.json({ success: true, apiKey });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.post('/api/admin/validate-json', apiRateLimit, requireRole('admin'), async (_req, res) => {
+  try {
+    const towns = await safeReadJSON(TOWNS_PATH, []);
+    const venues = await safeReadJSON(VENUES_PATH, []);
+    const prices = await safeReadJSON(PRICES_PATH, []);
+    const errors = [];
+
+    const townIds = new Set(towns.map(t => t.id));
+    const venueIds = new Set(venues.map(v => v.id));
+
+    venues.forEach((v, i) => {
+      if (!v.id) errors.push(`Venue[${i}]: id mancante`);
+      if (!v.name) errors.push(`Venue[${i}]: name mancante`);
+      if (!v.cityId || !townIds.has(v.cityId)) errors.push(`Venue[${i}] (${v.name || '?'}): cityId "${v.cityId}" non trovato in towns`);
+    });
+
+    prices.forEach((p, i) => {
+      if (!p.pizzeriaId || !venueIds.has(p.pizzeriaId)) errors.push(`Price[${i}]: pizzeriaId "${p.pizzeriaId}" non trovato in venues`);
+      if (typeof p.margheritaPrice !== 'number' || p.margheritaPrice < 0) errors.push(`Price[${i}]: margheritaPrice non valido`);
+    });
+
+    auditLog(_req.user.userId, 'validate_json', 'admin', { ip: _req.ip });
+    res.json({ success: true, valid: errors.length === 0, errors });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.get('/api/admin/export-data', apiRateLimit, requireRole('admin'), async (_req, res) => {
+  try {
+    const towns = await safeReadJSON(TOWNS_PATH, []);
+    const venues = await safeReadJSON(VENUES_PATH, []);
+    const prices = await safeReadJSON(PRICES_PATH, []);
+    const data = { towns, venues, prices, exportedAt: new Date().toISOString() };
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="pizza-data-export.json"');
+    res.json(data);
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.post('/api/admin/purge-cache', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    auditLog(req.user.userId, 'purge_cache', 'admin', { ip: req.ip });
+    res.json({ success: true, message: 'Cache invalidata' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+if (NODE_ENV === 'production') {
+      const loginRL = checkLoginRateLimit(clientIp);
+      if (!loginRL.allowed) {
+        logger.warn('Login rate limit exceeded', { ip: clientIp, username });
+        return res.status(429).json({ error: `Troppi tentativi. Riprova tra ${loginRL.waitSeconds} secondi.`, retryAfter: loginRL.waitSeconds });
+      }
+    }
+
+    const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.username === username);
     if (!admin) {
-      logger.warn('Login fallito - utente non trovato', { username, ip: req.ip });
+      recordLoginAttempt(clientIp);
+      logger.warn('Login fallito - utente non trovato', { username, ip: clientIp });
       return res.status(401).json({ error: 'Credenziali non valide' });
+    }
+
+    // Account lockout check
+    const lockout = checkAccountLockout(admin);
+    if (lockout.locked) {
+      logger.warn('Login bloccato - account locked', { username, ip: clientIp });
+      return res.status(423).json({ error: `Account temporaneamente bloccato. Riprova tra ${lockout.waitSeconds} secondi.`, retryAfter: lockout.waitSeconds });
     }
 
     const valid = await verifyPassword(password, admin.passwordHash);
     if (!valid) {
-      logger.warn('Login fallito - password errata', { username, ip: req.ip });
+      recordLoginAttempt(clientIp);
+      recordFailedLogin(admin, admins);
+      logger.warn('Login fallito - password errata', { username, ip: clientIp, failedAttempts: admin.failedAttempts });
       return res.status(401).json({ error: 'Credenziali non valide' });
     }
+
+    // Successful auth — clear lockout counters
+    clearLoginAttempts(clientIp);
+    clearFailedLogins(admin, admins);
 
     if (admin.twoFASecret) {
       const tempToken = randomBytes(32).toString('hex');
@@ -376,7 +570,7 @@ app.post('/api/auth/login', apiRateLimit, async (req, res) => {
         role: admin.role,
         createdAt: Date.now(),
       });
-      logger.info('2FA richiesta', { userId: admin.id, username: admin.username, ip: req.ip });
+      logger.info('2FA richiesta', { userId: admin.id, username: admin.username, ip: clientIp });
       return res.json({
         success: true,
         requires2FA: true,
@@ -404,8 +598,8 @@ app.post('/api/auth/login', apiRateLimit, async (req, res) => {
       path: '/',
     });
 
-    auditLog(admin.id, 'login', 'auth', { ip: req.ip });
-    logger.info('Login riuscito', { userId: admin.id, username: admin.username, ip: req.ip });
+    auditLog(admin.id, 'login', 'auth', { ip: clientIp });
+    logger.info('Login riuscito', { userId: admin.id, username: admin.username, ip: clientIp });
 
     res.json({
       success: true,
@@ -417,7 +611,7 @@ app.post('/api/auth/login', apiRateLimit, async (req, res) => {
   }
 });
 
-app.post('/api/auth/refresh', apiRateLimit, (req, res) => {
+app.post('/api/auth/refresh', apiRateLimit, async (req, res) => {
   try {
     const oldRefreshToken = req.cookies?.refreshToken;
     if (!oldRefreshToken) return res.status(401).json({ error: 'Token mancante' });
@@ -476,7 +670,9 @@ app.post('/api/auth/logout', apiRateLimit, (req, res) => {
       try {
         const decoded = verifyRefreshToken(refreshToken);
         revokeRefreshToken(decoded.tokenId);
-      } catch {}
+      } catch (err) {
+        logger.debug('Logout token revocation failed', { error: err.message });
+      }
     }
     res.clearCookie('accessToken', { path: '/' });
     res.clearCookie('refreshToken', { path: '/' });
@@ -487,7 +683,7 @@ app.post('/api/auth/logout', apiRateLimit, (req, res) => {
   }
 });
 
-app.post('/api/auth/2fa/verify-login', apiRateLimit, (req, res) => {
+app.post('/api/auth/2fa/verify-login', apiRateLimit, async (req, res) => {
   try {
     const { tempToken, code } = req.body;
     if (!tempToken || !code) return res.status(400).json({ error: 'Dati mancanti' });
@@ -495,7 +691,7 @@ app.post('/api/auth/2fa/verify-login', apiRateLimit, (req, res) => {
     const pending = pending2FALogins.get(tempToken);
     if (!pending) return res.status(401).json({ error: 'Sessione scaduta' });
 
-    const admins = readJSON(ADMINS_PATH, []);
+    const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === pending.userId);
     if (!admin || !admin.twoFASecret) {
       pending2FALogins.delete(tempToken);
@@ -546,9 +742,9 @@ app.post('/api/auth/2fa/verify-login', apiRateLimit, (req, res) => {
 app.use(authMiddleware);
 app.use(csrfMiddleware);
 
-app.get('/api/auth/2fa/status', apiRateLimit, requireRole('admin'), (req, res) => {
+app.get('/api/auth/2fa/status', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const admins = readJSON(ADMINS_PATH, []);
+    const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
 
@@ -564,7 +760,7 @@ app.get('/api/auth/2fa/status', apiRateLimit, requireRole('admin'), (req, res) =
 
 app.post('/api/auth/2fa/setup', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const admins = readJSON(ADMINS_PATH, []);
+    const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
 
@@ -577,7 +773,7 @@ app.post('/api/auth/2fa/setup', apiRateLimit, requireRole('admin'), async (req, 
     const qrCode = await createQRCodeDataURI(keyUri);
 
     admin.twoFATempSecret = secret;
-    safeWriteJSON(ADMINS_PATH, admins);
+    await safeWriteJSON(ADMINS_PATH, admins);
 
     res.json({
       secret,
@@ -590,12 +786,12 @@ app.post('/api/auth/2fa/setup', apiRateLimit, requireRole('admin'), async (req, 
   }
 });
 
-app.post('/api/auth/2fa/verify-setup', apiRateLimit, requireRole('admin'), (req, res) => {
+app.post('/api/auth/2fa/verify-setup', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { code } = req.body;
     if (!code) return res.status(400).json({ error: 'Codice mancante' });
 
-    const admins = readJSON(ADMINS_PATH, []);
+    const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
 
@@ -609,7 +805,7 @@ app.post('/api/auth/2fa/verify-setup', apiRateLimit, requireRole('admin'), (req,
 
     admin.twoFASecret = secret;
     delete admin.twoFATempSecret;
-    safeWriteJSON(ADMINS_PATH, admins);
+    await safeWriteJSON(ADMINS_PATH, admins);
 
     auditLog(admin.id, '2fa_enabled', 'auth', { ip: req.ip });
     logger.info('2FA attivata', { userId: admin.id, username: admin.username });
@@ -621,12 +817,12 @@ app.post('/api/auth/2fa/verify-setup', apiRateLimit, requireRole('admin'), (req,
   }
 });
 
-app.post('/api/auth/2fa/disable', apiRateLimit, requireRole('admin'), (req, res) => {
+app.post('/api/auth/2fa/disable', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Password obbligatoria' });
 
-    const admins = readJSON(ADMINS_PATH, []);
+    const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
 
@@ -634,14 +830,14 @@ app.post('/api/auth/2fa/disable', apiRateLimit, requireRole('admin'), (req, res)
       return res.status(400).json({ error: '2FA non attiva' });
     }
 
-    const validPassword = verifyPassword(password, admin.passwordHash);
+    const validPassword = await verifyPassword(password, admin.passwordHash);
     if (!validPassword) {
       return res.status(401).json({ error: 'Password non valida' });
     }
 
     delete admin.twoFASecret;
     delete admin.twoFATempSecret;
-    safeWriteJSON(ADMINS_PATH, admins);
+    await safeWriteJSON(ADMINS_PATH, admins);
 
     auditLog(admin.id, '2fa_disabled', 'auth', { ip: req.ip });
     logger.info('2FA disattivata', { userId: admin.id, username: admin.username });
@@ -653,10 +849,10 @@ app.post('/api/auth/2fa/disable', apiRateLimit, requireRole('admin'), (req, res)
   }
 });
 
-app.get('/api/data/stitched', apiRateLimit, (req, res) => {
+app.get('/api/data/stitched', apiRateLimit, async (req, res) => {
   try {
     const isAdmin = req.user?.role === 'admin';
-    const stitched = stitchData(isAdmin);
+    const stitched = await stitchData(isAdmin);
     res.json(stitched);
   } catch (err) {
     logger.error('Errore stitching', { error: err.message });
@@ -664,18 +860,18 @@ app.get('/api/data/stitched', apiRateLimit, (req, res) => {
   }
 });
 
-app.get('/api/data/towns', apiRateLimit, (_req, res) => {
-  try { res.json(readJSON(TOWNS_PATH, [])); }
+app.get('/api/data/towns', apiRateLimit, async (_req, res) => {
+  try { res.json(await safeReadJSON(TOWNS_PATH, [])); }
   catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.get('/api/data/venues', apiRateLimit, (_req, res) => {
-  try { res.json(readJSON(VENUES_PATH, [])); }
+app.get('/api/data/venues', apiRateLimit, async (_req, res) => {
+  try { res.json(await safeReadJSON(VENUES_PATH, [])); }
   catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.get('/api/data/prices', apiRateLimit, (_req, res) => {
-  try { res.json(readJSON(PRICES_PATH, [])); }
+app.get('/api/data/prices', apiRateLimit, async (_req, res) => {
+  try { res.json(await safeReadJSON(PRICES_PATH, [])); }
   catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
@@ -683,9 +879,9 @@ app.post('/api/prices', (_req, res) => {
   res.status(403).json({ error: 'Scrittura diretta non consentita. Usa le proposte.' });
 });
 
-app.get('/api/comments', apiRateLimit, (req, res) => {
+app.get('/api/comments', apiRateLimit, async (req, res) => {
   try {
-    const comments = readJSON(COMMENTS_PATH, []);
+    const comments = await safeReadJSON(COMMENTS_PATH, []);
     const isAdmin = req.user?.role === 'admin';
     const { postId, type } = req.query;
     let filtered = comments;
@@ -703,14 +899,15 @@ app.get('/api/comments', apiRateLimit, (req, res) => {
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.post('/api/comments', apiRateLimit, (req, res) => {
+app.post('/api/comments', apiRateLimit, async (req, res) => {
   try {
-    const { postId, author, content, proposedPrice, honeypot, mathAnswer } = req.body;
+    const parsed = CommentSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Campi mancanti o non validi' });
+    const { postId, author, content, proposedPrice, honeypot, mathAnswer, captchaToken } = parsed.data;
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
 
     if (honeypot && honeypot.trim() !== '') return res.status(400).json({ error: 'Richiesta non valida' });
-    if (!postId || !author || !content) return res.status(400).json({ error: 'Campi mancanti' });
-    if (typeof mathAnswer !== 'number') return res.status(400).json({ error: 'Verifica fallita' });
+    if (!verifyCaptchaToken(captchaToken, mathAnswer)) return res.status(400).json({ error: 'Verifica captcha fallita' });
 
     const sanitizedAuthor = sanitize(removeDangerousContent(author)).replace(/&amp;/g, '&');
     const sanitizedContent = sanitize(removeDangerousContent(content)).replace(/&amp;/g, '&');
@@ -728,7 +925,7 @@ app.post('/api/comments', apiRateLimit, (req, res) => {
       return res.status(400).json({ error: 'Contenuto non consentito' });
     }
 
-    const existingComments = readJSON(COMMENTS_PATH, []);
+    const existingComments = await safeReadJSON(COMMENTS_PATH, []);
     if (isDuplicateComment(existingComments, sanitizedAuthor, sanitizedContent)) {
       return res.status(400).json({ error: 'Commento duplicato' });
     }
@@ -752,13 +949,12 @@ app.post('/api/comments', apiRateLimit, (req, res) => {
     };
 
     existingComments.push(newComment);
-    safeWriteJSON(COMMENTS_PATH, existingComments);
+    await safeWriteJSON(COMMENTS_PATH, existingComments);
     recordComment(clientIp);
 
     if (typeof proposedPrice === 'number' && proposedPrice > 0 && proposedPrice <= 100) {
-      const proposals = readJSON(PROPOSALS_PATH, []);
-      const prices = readJSON(PRICES_PATH, []);
-      const priceEntry = prices.find(p => p.pizzeriaId === postId);
+      const proposals = await safeReadJSON(PROPOSALS_PATH, []);
+      const priceEntry = (await safeReadJSON(PRICES_PATH, [])).find(p => p.pizzeriaId === postId);
       const currentPrice = priceEntry ? priceEntry.margheritaPrice : null;
 
       proposals.push({
@@ -771,7 +967,7 @@ app.post('/api/comments', apiRateLimit, (req, res) => {
         createdAt: new Date().toISOString(),
         reviewed: false,
       });
-      safeWriteJSON(PROPOSALS_PATH, proposals);
+      await safeWriteJSON(PROPOSALS_PATH, proposals);
     }
 
     logger.info('Commento creato', { postId, author: sanitizedAuthor, ip: clientIp });
@@ -793,19 +989,21 @@ app.get('/api/comments/captcha', (_req, res) => {
     if (a < b) { answer = b - a; question = `${b} - ${a} = ?`; }
     else { answer = a - b; question = `${a} - ${b} = ?`; }
   }
-  res.json({ question, answer });
+  // Answer is signed server-side — never exposed to the client
+  const captchaToken = createCaptchaToken(answer);
+  res.json({ question, captchaToken });
 });
 
-app.get('/api/admin/proposals', apiRateLimit, requireRole('admin'), (_req, res) => {
+app.get('/api/admin/proposals', apiRateLimit, requireRole('admin'), async (_req, res) => {
   try {
-    const proposals = readJSON(PROPOSALS_PATH, []);
-    const comments = readJSON(COMMENTS_PATH, []);
+    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
+    const comments = await safeReadJSON(COMMENTS_PATH, []);
     const pendingComments = comments.filter(c => !c.approved);
     res.json({ proposals, pendingComments });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.post('/api/admin/approve-price', apiRateLimit, requireRole('admin'), (req, res) => {
+app.post('/api/admin/approve-price', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { pizzeriaId, proposedPrice, author } = req.body;
     if (!pizzeriaId || proposedPrice == null) return res.status(400).json({ error: 'Dati mancanti' });
@@ -813,7 +1011,7 @@ app.post('/api/admin/approve-price', apiRateLimit, requireRole('admin'), (req, r
     const price = Number(proposedPrice);
     if (isNaN(price) || price < 0 || price > 100) return res.status(400).json({ error: 'Prezzo non valido' });
 
-    const prices = readJSON(PRICES_PATH, []);
+    const prices = await safeReadJSON(PRICES_PATH, []);
     const idx = prices.findIndex(p => p.pizzeriaId === pizzeriaId);
     if (idx !== -1) {
       prices[idx].margheritaPrice = price;
@@ -828,11 +1026,11 @@ app.post('/api/admin/approve-price', apiRateLimit, requireRole('admin'), (req, r
         source: 'user-proposal',
       });
     }
-    safeWriteJSON(PRICES_PATH, prices);
+    await safeWriteJSON(PRICES_PATH, prices);
 
-    const proposals = readJSON(PROPOSALS_PATH, []);
+    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
     const filtered = proposals.filter(p => !(p.pizzeriaId === pizzeriaId && p.author === author));
-    safeWriteJSON(PROPOSALS_PATH, filtered);
+    await safeWriteJSON(PROPOSALS_PATH, filtered);
 
     auditLog(req.user.userId, 'approve_price', 'price', { pizzeriaId, price, ip: req.ip });
     logger.info('Prezzo approvato', { userId: req.user.userId, pizzeriaId, price });
@@ -844,61 +1042,58 @@ app.post('/api/admin/approve-price', apiRateLimit, requireRole('admin'), (req, r
   }
 });
 
-app.post('/api/admin/approve-comment/:id', apiRateLimit, requireRole('admin'), (req, res) => {
+app.post('/api/admin/approve-comment/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const comments = readJSON(COMMENTS_PATH, []);
+    const comments = await safeReadJSON(COMMENTS_PATH, []);
     const idx = comments.findIndex(c => String(c.id) === String(id));
     if (idx === -1) return res.status(404).json({ error: 'Commento non trovato' });
 
     comments[idx].approved = true;
-    safeWriteJSON(COMMENTS_PATH, comments);
+    await safeWriteJSON(COMMENTS_PATH, comments);
 
     auditLog(req.user.userId, 'approve_comment', 'comment', { commentId: id, ip: req.ip });
     res.json({ success: true, message: 'Commento approvato' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.delete('/api/admin/reject-proposal/:id', apiRateLimit, requireRole('admin'), (req, res) => {
+app.delete('/api/admin/reject-proposal/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const proposals = readJSON(PROPOSALS_PATH, []);
+    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
     const filtered = proposals.filter(p => String(p.id) !== String(id));
-    safeWriteJSON(PROPOSALS_PATH, filtered);
+    await safeWriteJSON(PROPOSALS_PATH, filtered);
 
     auditLog(req.user.userId, 'reject_proposal', 'proposal', { proposalId: id, ip: req.ip });
     res.json({ success: true, message: 'Proposta rifiutata' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.delete('/api/admin/reject-comment/:id', apiRateLimit, requireRole('admin'), (req, res) => {
+app.delete('/api/admin/reject-comment/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const comments = readJSON(COMMENTS_PATH, []);
+    const comments = await safeReadJSON(COMMENTS_PATH, []);
     const filtered = comments.filter(c => String(c.id) !== String(id));
-    safeWriteJSON(COMMENTS_PATH, filtered);
+    await safeWriteJSON(COMMENTS_PATH, filtered);
 
     auditLog(req.user.userId, 'reject_comment', 'comment', { commentId: id, ip: req.ip });
     res.json({ success: true, message: 'Commento rifiutato' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.get('/api/feed', apiRateLimit, (req, res) => {
+app.get('/api/feed', apiRateLimit, async (req, res) => {
   try {
-    const comments = readJSON(COMMENTS_PATH, []).filter(c => c.approved);
-    const proposals = readJSON(PROPOSALS_PATH, []);
-    const prices = readJSON(PRICES_PATH, []);
-    const venues = readJSON(VENUES_PATH, []);
+    const comments = (await safeReadJSON(COMMENTS_PATH, [])).filter(c => c.approved);
+    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
+    const prices = await safeReadJSON(PRICES_PATH, []);
+    const venues = await safeReadJSON(VENUES_PATH, []);
     const auditRaw = getAuditLog(200);
-    const towns = readJSON(TOWNS_PATH, []);
+    const towns = await safeReadJSON(TOWNS_PATH, []);
 
     const venueMap = {};
     venues.forEach(v => { venueMap[v.id] = v; });
     const townMap = {};
     towns.forEach(t => { townMap[t.id] = t; });
-
-    const priceMap = {};
-    prices.forEach(p => { priceMap[p.pizzeriaId] = p.margheritaPrice; });
 
     const feedItems = [];
 
@@ -934,7 +1129,7 @@ app.get('/api/feed', apiRateLimit, (req, res) => {
     });
 
     auditRaw.forEach(entry => {
-      if (['approve_price', 'approve_comment', 'login', '2fa_enabled', 'update_pizzeria', 'create_pizzeria'].includes(entry.action)) {
+        if (['approve_price', 'approve_comment', 'approve_feed_post', 'edit_feed_post', 'login', '2fa_enabled', 'update_pizzeria', 'create_pizzeria'].includes(entry.action)) {
         feedItems.push({
           id: `audit-${entry.id}`,
           type: 'activity',
@@ -954,11 +1149,11 @@ app.get('/api/feed', apiRateLimit, (req, res) => {
   }
 });
 
-app.get('/api/feed/export', apiRateLimit, requireRole('admin'), (req, res) => {
+app.get('/api/feed/export', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const comments = readJSON(COMMENTS_PATH, []).filter(c => c.approved && c.type === 'review');
-    const venues = readJSON(VENUES_PATH, []);
-    const towns = readJSON(TOWNS_PATH, []);
+    const comments = (await safeReadJSON(COMMENTS_PATH, [])).filter(c => c.approved && c.type === 'review');
+    const venues = await safeReadJSON(VENUES_PATH, []);
+    const towns = await safeReadJSON(TOWNS_PATH, []);
     const venueMap = {};
     venues.forEach(v => { venueMap[v.id] = v; });
     const townMap = {};
@@ -1003,11 +1198,160 @@ app.get('/api/feed/export', apiRateLimit, requireRole('admin'), (req, res) => {
   }
 });
 
-app.get('/api/activity', apiRateLimit, (req, res) => {
+app.get('/api/feed/posts', apiRateLimit, async (req, res) => {
+  try {
+    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
+    const approved = posts.filter(p => p.approved);
+    const formatted = approved.map(p => ({
+      id: `#USR-${String(p.id).padStart(3, '0')}`,
+      title_it: p.title,
+      title_en: p.title,
+      author: p.author.startsWith('@') ? p.author : `@${p.author.replace(/\s+/g, '')}`,
+      time: (() => {
+        const diff = Date.now() - new Date(p.createdAt).getTime();
+        const hrs = Math.floor(diff / 3600000);
+        if (hrs < 1) return `${Math.floor(diff / 60000)}m`;
+        if (hrs < 24) return `${hrs}H`;
+        return `${Math.floor(hrs / 24)}D`;
+      })(),
+      rating: null,
+      description_it: p.description,
+      description_en: p.description,
+      fires: String(p.fires || 0),
+      img: `/images/pizzerias/pizza-${((p.id - 1) % 4) + 1}.png`,
+      _isUserPost: true,
+    }));
+    res.json(formatted);
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.post('/api/feed/posts', apiRateLimit, async (req, res) => {
+  try {
+    const parsed = FeedPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Campi mancanti o non validi' });
+    const { author, title, description, honeypot, mathAnswer, captchaToken } = parsed.data;
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+
+    if (honeypot && honeypot.trim() !== '') return res.status(400).json({ error: 'Richiesta non valida' });
+    if (!verifyCaptchaToken(captchaToken, mathAnswer)) return res.status(400).json({ error: 'Verifica captcha fallita' });
+
+    const sanitizedAuthor = sanitize(removeDangerousContent(author)).replace(/&amp;/g, '&');
+    const sanitizedTitle = sanitize(removeDangerousContent(title)).replace(/&amp;/g, '&');
+    const sanitizedDescription = description
+      ? sanitize(removeDangerousContent(description)).replace(/&amp;/g, '&')
+      : '';
+
+    if (sanitizedAuthor.length < 2 || sanitizedAuthor.length > 30) {
+      return res.status(400).json({ error: 'Nome deve essere tra 2 e 30 caratteri' });
+    }
+    if (!/^[a-zA-Z0-9àèéìòùÀÈÉÌÒÙ\s'-]+$/.test(sanitizedAuthor)) {
+      return res.status(400).json({ error: 'Nome contiene caratteri non validi' });
+    }
+    if (sanitizedTitle.length < 3 || sanitizedTitle.length > 100) {
+      return res.status(400).json({ error: 'Titolo deve essere tra 3 e 100 caratteri' });
+    }
+    if (sanitizedDescription.length > 500) {
+      return res.status(400).json({ error: 'Descrizione troppo lunga (max 500 caratteri)' });
+    }
+    if (containsBannedWords(sanitizedAuthor) || containsBannedWords(sanitizedTitle) || containsBannedWords(sanitizedDescription)) {
+      return res.status(400).json({ error: 'Contenuto non consentito' });
+    }
+
+    const existingPosts = await safeReadJSON(FEED_POSTS_PATH, []);
+    if (existingPosts.some(p =>
+      p.author.toLowerCase() === sanitizedAuthor.toLowerCase() &&
+      p.title.toLowerCase() === sanitizedTitle.toLowerCase()
+    )) {
+      return res.status(400).json({ error: 'Post duplicato' });
+    }
+
+    const rateLimit = checkRateLimit(clientIp);
+    if (!rateLimit.allowed) {
+      const waitMsg = rateLimit.reason === 'rate_5min'
+        ? `Troppo veloce. Riprova tra ${rateLimit.waitSeconds} secondi`
+        : `Limite orario raggiunto. Riprova tra ${rateLimit.waitSeconds} secondi`;
+      return res.status(429).json({ error: waitMsg, retryAfter: rateLimit.waitSeconds });
+    }
+
+    const newPost = {
+      id: existingPosts.length > 0 ? Math.max(...existingPosts.map(p => p.id)) + 1 : 1,
+      author: sanitizedAuthor,
+      title: sanitizedTitle,
+      description: sanitizedDescription,
+      createdAt: new Date().toISOString(),
+      approved: false,
+      fires: 0,
+    };
+
+    existingPosts.push(newPost);
+    await safeWriteJSON(FEED_POSTS_PATH, existingPosts);
+    recordComment(clientIp);
+
+    logger.info('Feed post creato', { postId: newPost.id, author: sanitizedAuthor, ip: clientIp });
+    res.status(201).json({ success: true, message: 'Scoperta condivisa! In attesa di approvazione.' });
+  } catch (err) {
+    logger.error('Errore creazione feed post', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+app.get('/api/admin/feed-posts', apiRateLimit, requireRole('admin'), async (_req, res) => {
+  try {
+    res.json(await safeReadJSON(FEED_POSTS_PATH, []));
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.post('/api/admin/approve-feed-post/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
+    const idx = posts.findIndex(p => String(p.id) === String(id));
+    if (idx === -1) return res.status(404).json({ error: 'Post non trovato' });
+
+    posts[idx].approved = true;
+    await safeWriteJSON(FEED_POSTS_PATH, posts);
+
+    auditLog(req.user.userId, 'approve_feed_post', 'feed', { postId: id, ip: req.ip });
+    res.json({ success: true, message: 'Post approvato' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.put('/api/admin/feed-posts/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description } = req.body;
+    if (!title) return res.status(400).json({ error: 'Titolo obbligatorio' });
+
+    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
+    const idx = posts.findIndex(p => String(p.id) === String(id));
+    if (idx === -1) return res.status(404).json({ error: 'Post non trovato' });
+
+    posts[idx].title = sanitize(removeDangerousContent(title));
+    posts[idx].description = description ? sanitize(removeDangerousContent(description)) : '';
+    await safeWriteJSON(FEED_POSTS_PATH, posts);
+
+    auditLog(req.user.userId, 'edit_feed_post', 'feed', { postId: id, ip: req.ip });
+    res.json({ success: true, message: 'Post aggiornato' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.delete('/api/admin/reject-feed-post/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
+    const filtered = posts.filter(p => String(p.id) !== String(id));
+    await safeWriteJSON(FEED_POSTS_PATH, filtered);
+
+    auditLog(req.user.userId, 'reject_feed_post', 'feed', { postId: id, ip: req.ip });
+    res.json({ success: true, message: 'Post rifiutato' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.get('/api/activity', apiRateLimit, async (req, res) => {
   try {
     const auditRaw = getAuditLog(30);
-    const venues = readJSON(VENUES_PATH, []);
-    const towns = readJSON(TOWNS_PATH, []);
+    const venues = await safeReadJSON(VENUES_PATH, []);
+    const towns = await safeReadJSON(TOWNS_PATH, []);
     const venueMap = {};
     venues.forEach(v => { venueMap[v.id] = v; });
     const townMap = {};
@@ -1036,14 +1380,20 @@ app.get('/api/activity', apiRateLimit, (req, res) => {
   }
 });
 
-app.put('/api/pizzerias/:id', apiRateLimit, requireRole('admin'), (req, res) => {
+app.put('/api/pizzerias/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, cityId, address, phone, category, rating, description, status, frazione } = req.body;
+    const { name, cityId, address, phone, category, rating, description, descriptionIt, status, frazione, imageUrl, tripadvisor, maps_url } = req.body;
     if (!name || !cityId) return res.status(400).json({ error: 'Campi mancanti' });
 
-    const sanitized = sanitizeObject({ name, cityId, address: address || '', phone: phone || '', category: category || 'traditional', description: description || '', status: status || 'open', frazione: frazione || null });
-    const venues = readJSON(VENUES_PATH, []);
+    const sanitized = sanitizeObject({
+      name, cityId, address: address || '', phone: phone || '',
+      category: category || 'traditional', description: description || '',
+      descriptionIt: descriptionIt || '', status: status || 'open',
+      frazione: frazione || null, imageUrl: imageUrl || null,
+      tripadvisor: tripadvisor || null, maps_url: maps_url || null,
+    });
+    const venues = await safeReadJSON(VENUES_PATH, []);
     const idx = venues.findIndex(v => v.id === id);
     if (idx === -1) return res.status(404).json({ error: 'Pizzeria non trovata' });
 
@@ -1056,42 +1406,54 @@ app.put('/api/pizzerias/:id', apiRateLimit, requireRole('admin'), (req, res) => 
       category: sanitized.category,
       rating: Number(rating) || 0,
       description: sanitized.description,
+      descriptionIt: sanitized.descriptionIt,
       status: sanitized.status,
       frazione: sanitized.frazione,
+      imageUrl: sanitized.imageUrl,
+      tripadvisor: sanitized.tripadvisor,
+      maps_url: sanitized.maps_url,
     };
 
-    safeWriteJSON(VENUES_PATH, venues);
+    await safeWriteJSON(VENUES_PATH, venues);
 
     auditLog(req.user.userId, 'update_pizzeria', 'venue', { venueId: id, name: sanitized.name, ip: req.ip });
     res.json({ success: true, message: 'Pizzeria aggiornata' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.post('/api/pizzerias/single', apiRateLimit, requireRole('admin'), (req, res) => {
+app.post('/api/pizzerias/single', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const { name, cityId, address, phone, category, rating, description } = req.body;
+    const { name, cityId, address, phone, category, rating, description, descriptionIt, status, frazione, imageUrl, tripadvisor, maps_url } = req.body;
     if (!name || !cityId) return res.status(400).json({ error: 'Campi mancanti' });
 
-    const sanitized = sanitizeObject({ name, cityId, address: address || '', phone: phone || '', category: category || 'traditional', description: description || '' });
-    const venues = readJSON(VENUES_PATH, []);
+    const sanitized = sanitizeObject({
+      name, cityId, address: address || '', phone: phone || '',
+      category: category || 'traditional', description: description || '',
+      descriptionIt: descriptionIt || '', status: status || 'open',
+      frazione: frazione || null, imageUrl: imageUrl || null,
+      tripadvisor: tripadvisor || null, maps_url: maps_url || null,
+    });
+    const venues = await safeReadJSON(VENUES_PATH, []);
     const newId = `pz-${String(venues.length + 1).padStart(3, '0')}`;
 
     const newVenue = {
       id: newId, name: sanitized.name, address: sanitized.address,
       cityId: sanitized.cityId, phone: sanitized.phone, category: sanitized.category,
-      rating: Number(rating) || 0, description: sanitized.description, status: 'open',
-      frazione: null, imageUrl: null, tripadvisor: null, maps_url: null,
+      rating: Number(rating) || 0, description: sanitized.description,
+      descriptionIt: sanitized.descriptionIt, status: sanitized.status,
+      frazione: sanitized.frazione, imageUrl: sanitized.imageUrl,
+      tripadvisor: sanitized.tripadvisor, maps_url: sanitized.maps_url,
     };
 
     venues.push(newVenue);
-    safeWriteJSON(VENUES_PATH, venues);
+    await safeWriteJSON(VENUES_PATH, venues);
 
     auditLog(req.user.userId, 'create_pizzeria', 'venue', { venueId: newId, name: sanitized.name, ip: req.ip });
     res.status(201).json(newVenue);
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.put('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), (req, res) => {
+app.put('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { pizzeriaId } = req.params;
     const { margheritaPrice, source } = req.body;
@@ -1100,7 +1462,7 @@ app.put('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), (req, res
     const price = Number(margheritaPrice);
     if (isNaN(price) || price < 0 || price > 100) return res.status(400).json({ error: 'Prezzo non valido' });
 
-    const prices = readJSON(PRICES_PATH, []);
+    const prices = await safeReadJSON(PRICES_PATH, []);
     const idx = prices.findIndex(p => p.pizzeriaId === pizzeriaId);
     
     if (idx !== -1) {
@@ -1118,7 +1480,7 @@ app.put('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), (req, res
       });
     }
 
-    safeWriteJSON(PRICES_PATH, prices);
+    await safeWriteJSON(PRICES_PATH, prices);
     auditLog(req.user.userId, 'update_price_direct', 'price', { pizzeriaId, price, ip: req.ip });
     res.json({ success: true, message: 'Prezzo salvato' });
   } catch (err) {
@@ -1127,28 +1489,28 @@ app.put('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), (req, res
   }
 });
 
-app.delete('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), (req, res) => {
+app.delete('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { pizzeriaId } = req.params;
-    const prices = readJSON(PRICES_PATH, []);
+    const prices = await safeReadJSON(PRICES_PATH, []);
     const filtered = prices.filter(p => p.pizzeriaId !== pizzeriaId);
-    safeWriteJSON(PRICES_PATH, filtered);
+    await safeWriteJSON(PRICES_PATH, filtered);
 
     auditLog(req.user.userId, 'delete_price_direct', 'price', { pizzeriaId, ip: req.ip });
     res.json({ success: true, message: 'Prezzo eliminato' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.delete('/api/pizzerias/:id', apiRateLimit, requireRole('admin'), (req, res) => {
+app.delete('/api/pizzerias/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const venues = readJSON(VENUES_PATH, []);
+    const venues = await safeReadJSON(VENUES_PATH, []);
     const filtered = venues.filter(v => v.id !== id);
-    safeWriteJSON(VENUES_PATH, filtered);
+    await safeWriteJSON(VENUES_PATH, filtered);
 
-    const prices = readJSON(PRICES_PATH, []);
+    const prices = await safeReadJSON(PRICES_PATH, []);
     const filteredPrices = prices.filter(p => p.pizzeriaId !== id);
-    safeWriteJSON(PRICES_PATH, filteredPrices);
+    await safeWriteJSON(PRICES_PATH, filteredPrices);
 
     auditLog(req.user.userId, 'delete_pizzeria', 'venue', { venueId: id, ip: req.ip });
     res.json({ success: true, message: 'Pizzeria eliminata' });
@@ -1162,25 +1524,25 @@ app.get('/api/admin/audit-log', apiRateLimit, requireRole('admin'), (req, res) =
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.get('/api/admin/me', apiRateLimit, (req, res) => {
-  if (!req.user) return res.status(401).json({ error: 'Non autorizzato' });
-  const admins = readJSON(ADMINS_PATH, []);
+app.get('/api/admin/me', apiRateLimit, async (req, res) => {
+  if (!req.user) return res.json({ user: null });
+  const admins = await safeReadJSON(ADMINS_PATH, []);
   const admin = admins.find(a => a.id === req.user.userId);
   res.json({ user: { id: req.user.userId, username: admin?.username || req.user.username, role: req.user.role, email: admin?.email || '', displayName: admin?.displayName || admin?.username || req.user.username } });
 });
 
-app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), (req, res) => {
+app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { displayName, email } = req.body;
     if (!displayName) return res.status(400).json({ error: 'Nome visualizzato obbligatorio' });
     const sanitized = sanitizeObject({ displayName: displayName, email: email || '' });
-    const admins = readJSON(ADMINS_PATH, []);
+    const admins = await safeReadJSON(ADMINS_PATH, []);
     const idx = admins.findIndex(a => a.id === req.user.userId);
     if (idx === -1) return res.status(404).json({ error: 'Utente non trovato' });
 
     admins[idx].displayName = sanitized.displayName;
     admins[idx].email = sanitized.email;
-    safeWriteJSON(ADMINS_PATH, admins);
+    await safeWriteJSON(ADMINS_PATH, admins);
 
     auditLog(req.user.userId, 'update_profile', 'admin', { displayName: sanitized.displayName, email: sanitized.email, ip: req.ip });
     res.json({ success: true, message: 'Profilo aggiornato' });
@@ -1188,34 +1550,45 @@ app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), (req, res) => 
 });
 
 if (NODE_ENV === 'production') {
+  // Discovery: Express 5 (path-to-regexp v8) requires named wildcards.
+  // Using '*path' as a secure catch-all for the frontend SPA.
   app.use(express.static(join(root, 'dist'), {
-    setHeaders: (res) => { res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); },
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
   }));
-  app.get('*', (_req, res) => { res.sendFile(join(root, 'dist', 'index.html')); });
+  app.get('*path', (_req, res) => { res.sendFile(join(root, 'dist', 'index.html')); });
+
 }
 
 let server;
 
-seedAdmin().then(() => {
-  server = app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`Server attivo su http://localhost:${PORT}`);
-    logger.info(`API: http://localhost:${PORT}/api/data/stitched`);
+if (process.env.NODE_ENV !== 'test') {
+  seedAdmin().then(() => {
+    server = app.listen(PORT, '0.0.0.0', () => {
+      logger.info(`Server attivo su http://localhost:${PORT}`);
+      logger.info(`API: http://localhost:${PORT}/api/data/stitched`);
+    });
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   });
+}
 
-  function gracefulShutdown(signal) {
-    logger.info(`${signal} ricevuto, shutdown in corso...`);
-    if (server) {
-      server.close(() => {
-        logger.info('Server chiuso');
-        process.exit(0);
-      });
-      setTimeout(() => {
-        logger.error('Forced shutdown');
-        process.exit(1);
-      }, 10000);
-    }
+function gracefulShutdown(signal) {
+  logger.info(`${signal} ricevuto, shutdown in corso...`);
+  if (server) {
+    server.close(() => {
+      logger.info('Server chiuso');
+      process.exit(0);
+    });
+    setTimeout(() => {
+      logger.error('Forced shutdown');
+      process.exit(1);
+    }, 10000);
   }
-
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-});
+}

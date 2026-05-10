@@ -43,7 +43,7 @@ function TwoFAModal({ onClose, onEnabled }) {
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Errore setup');
+      if (!res.ok) throw new Error(data.error || t('settings.saveError'));
 
       setQrCode(data.qrCode);
       setSecret(data.secret);
@@ -69,7 +69,14 @@ function TwoFAModal({ onClose, onEnabled }) {
         body: JSON.stringify({ code: verifyCode }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Codice non valido');
+      if (!res.ok) {
+        const serverErrors = {
+          'Codice non valido': t('login.invalidCode'),
+          'Nessun setup in corso': t('login.invalidCode'),
+          'Codice mancante': t('login.invalidCode'),
+        };
+        throw new Error(serverErrors[data.error] || data.error || t('login.invalidCode'));
+      }
 
       onEnabled();
       onClose();
@@ -85,7 +92,7 @@ function TwoFAModal({ onClose, onEnabled }) {
       <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md my-8">
         <div className="bg-primary text-on-primary p-4 border-b-4 border-primary flex justify-between items-center">
           <h3 className="font-headline font-black text-lg uppercase">
-            {step === 'setup' ? 'Attiva 2FA' : 'Verifica 2FA'}
+            {step === 'setup' ? t('settings.enable2FA') : t('settings.verify2FA')}
           </h3>
           <button onClick={onClose} className="text-on-primary hover:opacity-75">
             <span className="material-symbols-outlined">close</span>
@@ -102,14 +109,14 @@ function TwoFAModal({ onClose, onEnabled }) {
           {step === 'setup' && (
             <>
               <p className="font-body text-sm text-on-surface-variant">
-                Scansiona il QR code con la tua app autenticatore (Google Authenticator, Authy, ecc.)
+                {t('settings.qrDesc')}
               </p>
               <button
                 onClick={handleSetup}
                 disabled={loading}
                 className="w-full bg-primary text-on-primary font-headline font-bold uppercase py-3 border-2 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-colors disabled:opacity-50"
               >
-                {loading ? 'Generazione...' : 'Genera QR Code'}
+                {loading ? t('settings.generating') : t('settings.generateQR')}
               </button>
               {qrCode && (
                 <>
@@ -118,7 +125,7 @@ function TwoFAModal({ onClose, onEnabled }) {
                   </div>
                   <div className="bg-background border-2 border-primary p-3">
                     <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">
-                      Chiave manuale
+                      {t('settings.manualKey')}
                     </label>
                     <code className="font-mono text-sm break-all text-primary">{secret}</code>
                   </div>
@@ -126,7 +133,7 @@ function TwoFAModal({ onClose, onEnabled }) {
                     onClick={() => setStep('verify')}
                     className="w-full bg-secondary text-on-error font-headline font-bold uppercase py-3 border-2 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors"
                   >
-                    Avanti
+                    {t('settings.next')}
                   </button>
                 </>
               )}
@@ -136,7 +143,7 @@ function TwoFAModal({ onClose, onEnabled }) {
           {step === 'verify' && (
             <>
               <p className="font-body text-sm text-on-surface-variant">
-                Inserisci il codice a 6 cifre dalla tua app autenticatore
+                {t('settings.verifyCodeDesc')}
               </p>
               <input
                 type="text"
@@ -146,7 +153,7 @@ function TwoFAModal({ onClose, onEnabled }) {
                 value={verifyCode}
                 onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ''))}
                 className="w-full bg-background border-2 border-primary p-3 font-body font-bold text-primary text-center text-2xl tracking-widest focus:outline-none focus:border-secondary"
-                placeholder="000000"
+                placeholder={t('settings.verifyCodePlaceholder')}
                 autoFocus
               />
               <button
@@ -154,7 +161,7 @@ function TwoFAModal({ onClose, onEnabled }) {
                 disabled={loading || verifyCode.length !== 6}
                 className="w-full bg-primary text-on-primary font-headline font-bold uppercase py-3 border-2 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-colors disabled:opacity-50"
               >
-                {loading ? 'Verifica...' : 'Verifica e Attiva'}
+                {loading ? t('settings.verifying') : t('settings.verifyAndEnable')}
               </button>
             </>
           )}
@@ -183,7 +190,7 @@ function TwoFADisableModal({ onClose, onDisabled }) {
         body: JSON.stringify({ password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Errore disattivazione');
+      if (!res.ok) throw new Error(data.error || t('settings.saveError'));
 
       onDisabled();
       onClose();
@@ -198,7 +205,7 @@ function TwoFADisableModal({ onClose, onDisabled }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md my-8">
         <div className="bg-error-container text-error p-4 border-b-4 border-error flex justify-between items-center">
-          <h3 className="font-headline font-black text-lg uppercase">Disattiva 2FA</h3>
+          <h3 className="font-headline font-black text-lg uppercase">{t('settings.disable2FA')}</h3>
           <button onClick={onClose} className="text-error hover:opacity-75">
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -211,14 +218,14 @@ function TwoFADisableModal({ onClose, onDisabled }) {
             </div>
           )}
           <p className="font-body text-sm text-on-surface-variant">
-            Inserisci la password per disattivare l'autenticazione a due fattori
+            {t('settings.disable2FADesc')}
           </p>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-background border-2 border-primary p-3 font-body font-bold text-primary focus:outline-none focus:border-secondary"
-            placeholder="Password"
+            placeholder={t('settings.passwordPlaceholder')}
             autoFocus
           />
           <div className="flex gap-3">
@@ -226,14 +233,14 @@ function TwoFADisableModal({ onClose, onDisabled }) {
               onClick={onClose}
               className="flex-1 bg-surface text-primary font-headline font-bold uppercase py-3 border-2 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors"
             >
-              Annulla
+              {t('admin.cancel')}
             </button>
             <button
               onClick={handleDisable}
               disabled={loading || !password}
               className="flex-1 bg-error text-on-error font-headline font-bold uppercase py-3 border-2 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:opacity-75 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Disattivazione...' : 'Disattiva'}
+              {loading ? t('settings.disabling') : t('settings.disable')}
             </button>
           </div>
         </div>
@@ -268,6 +275,12 @@ export default function Settings({ user }) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [newApiKey, setNewApiKey] = useState(null);
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState(null);
+  const [purging, setPurging] = useState(false);
+  const [purgeResult, setPurgeResult] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -317,7 +330,7 @@ export default function Settings({ user }) {
 
   const handleSave = async () => {
     if (!settings.displayName.trim()) {
-      setSaveError('Nome visualizzato obbligatorio');
+      setSaveError(t('settings.displayNameRequired'));
       return;
     }
     setSaving(true);
@@ -336,7 +349,7 @@ export default function Settings({ user }) {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Errore salvataggio');
+      if (!res.ok) throw new Error(data.error || t('settings.saveError'));
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -372,6 +385,82 @@ export default function Settings({ user }) {
     }
     setSaved(false);
     setSaveError(null);
+  };
+
+  const handleRegenerateKey = async () => {
+    setRegenerating(true);
+    setNewApiKey(null);
+    try {
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+      const { csrfToken } = await csrfRes.json();
+      const res = await fetch('/api/admin/regenerate-key', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t('settings.regenerationError'));
+      setNewApiKey(data.apiKey);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const handleValidateJson = async () => {
+    setValidating(true);
+    setValidationResult(null);
+    try {
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+      const { csrfToken } = await csrfRes.json();
+      const res = await fetch('/api/admin/validate-json', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t('settings.validationError'));
+      setValidationResult(data);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      const res = await fetch('/api/admin/export-data', { credentials: 'include' });
+      if (!res.ok) throw new Error(t('settings.exportError'));
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'pizza-data-export.json'; a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setSaveError(err.message);
+    }
+  };
+
+  const handlePurgeCache = async () => {
+    setPurging(true);
+    setPurgeResult(null);
+    try {
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+      const { csrfToken } = await csrfRes.json();
+      const res = await fetch('/api/admin/purge-cache', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t('settings.purgeError'));
+      setPurgeResult({ success: true, message: data.message });
+      setTimeout(() => setPurgeResult(null), 3000);
+    } catch (err) {
+      setPurgeResult({ success: false, message: err.message });
+      setTimeout(() => setPurgeResult(null), 3000);
+    } finally {
+      setPurging(false);
+    }
   };
 
   return (
@@ -412,7 +501,7 @@ export default function Settings({ user }) {
                 className="w-full bg-background border-2 border-primary p-3 font-body font-bold text-primary focus:ring-0 focus:border-secondary"
                 value={settings.email}
                 onChange={(e) => handleChange('email', e.target.value)}
-                placeholder="email@esempio.it"
+                placeholder={t('settings.emailPlaceholder')}
               />
             </div>
             <div>
@@ -596,14 +685,14 @@ export default function Settings({ user }) {
                   onClick={() => setShowTwoFADisableModal(true)}
                   className="bg-error text-on-error font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:opacity-75 transition-colors"
                 >
-                  Disattiva
+                  {t('settings.disable')}
                 </button>
               ) : (
                 <button
                   onClick={() => setShowTwoFAModal(true)}
                   className="bg-primary text-on-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-colors"
                 >
-                  Attiva
+                  {t('settings.enable2FA')}
                 </button>
               )}
             </div>
@@ -613,9 +702,17 @@ export default function Settings({ user }) {
                 <h4 className="font-headline font-bold uppercase">{t('settings.apiAccessKey')}</h4>
                 <p className="font-body text-sm text-on-surface-variant">{t('settings.apiAccessKeyDesc')}</p>
               </div>
-              <button className="bg-surface text-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors">
-                {t('settings.regenerate')}
+              <button onClick={handleRegenerateKey} disabled={regenerating}
+                className="bg-surface text-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-50">
+                {regenerating ? '...' : t('settings.regenerate')}
               </button>
+              {newApiKey && (
+                <div className="mt-2 bg-background border-2 border-primary p-3 flex items-center gap-2">
+                  <code className="font-mono text-sm break-all text-primary flex-1">{newApiKey}</code>
+                  <button onClick={() => { navigator.clipboard.writeText(newApiKey); setNewApiKey(null); }}
+                    className="bg-primary text-on-primary font-label font-bold uppercase px-3 py-1 border-2 border-primary text-xs">{t('settings.copy')}</button>
+                </div>
+              )}
             </div>
             <div className="border-t-2 border-outline-variant" />
             <div className="flex justify-between items-center">
@@ -657,9 +754,21 @@ export default function Settings({ user }) {
                 <h4 className="font-headline font-bold uppercase">{t('settings.validateJson')}</h4>
                 <p className="font-body text-sm text-on-surface-variant">{t('settings.validateJsonDesc')}</p>
               </div>
-              <button className="bg-primary text-on-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-surface hover:text-primary transition-colors">
-                {t('settings.validate')}
+              <button onClick={handleValidateJson} disabled={validating}
+                className="bg-primary text-on-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-surface hover:text-primary transition-colors disabled:opacity-50">
+                {validating ? '...' : t('settings.validate')}
               </button>
+              {validationResult && (
+                <div className={`mt-2 p-3 border-2 font-label text-sm ${validationResult.valid ? 'bg-tertiary-container border-tertiary' : 'bg-error-container border-error'}`}>
+                  {validationResult.valid ? t('settings.jsonValid') : t('settings.jsonErrors', { count: validationResult.errors.length })}
+                  {!validationResult.valid && (
+                    <ul className="mt-1 list-disc list-inside">
+                      {validationResult.errors.slice(0, 10).map((e, i) => <li key={i}>{e}</li>)}
+                      {validationResult.errors.length > 10 && <li>{t('settings.moreErrors', { count: validationResult.errors.length - 10 })}</li>}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
             <div className="border-t-2 border-outline-variant" />
             <div className="flex justify-between items-center">
@@ -667,7 +776,8 @@ export default function Settings({ user }) {
                 <h4 className="font-headline font-bold uppercase">{t('settings.exportAllData')}</h4>
                 <p className="font-body text-sm text-on-surface-variant">{t('settings.exportAllDataDesc')}</p>
               </div>
-              <button className="bg-surface text-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors">
+              <button onClick={handleExportData}
+                className="bg-surface text-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors">
                 {t('settings.export')}
               </button>
             </div>
@@ -677,9 +787,15 @@ export default function Settings({ user }) {
                 <h4 className="font-headline font-bold uppercase text-secondary">{t('settings.purgeCache')}</h4>
                 <p className="font-body text-sm text-on-surface-variant">{t('settings.purgeCacheDesc')}</p>
               </div>
-              <button className="bg-secondary text-on-error font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors">
-                {t('settings.purge')}
+              <button onClick={handlePurgeCache} disabled={purging}
+                className="bg-secondary text-on-error font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-50">
+                {purging ? '...' : t('settings.purge')}
               </button>
+              {purgeResult && (
+                <div className={`mt-2 p-3 border-2 font-label text-sm ${purgeResult.success ? 'bg-tertiary-container border-tertiary' : 'bg-error-container border-error'}`}>
+                  {purgeResult.success ? t('settings.cachePurged') : `❌ ${purgeResult.message}`}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -712,7 +828,7 @@ export default function Settings({ user }) {
             disabled={saving}
             className="bg-primary text-on-primary font-headline font-bold uppercase px-8 py-3 border-2 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container hover:text-on-primary-container transition-colors active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
           >
-            {saving ? t('admin.saving') || 'Salvataggio...' : t('settings.saveSettings')}
+            {saving ? t('admin.saving') : t('settings.saveSettings')}
           </button>
         </div>
       </div>

@@ -5,8 +5,8 @@ export default function CommentList({ comments }) {
 
   if (!comments || comments.length === 0) {
     return (
-      <div className="border-2 border-dashed border-primary/30 px-4 py-6 text-center">
-        <p className="font-label font-bold text-primary/60 uppercase text-sm">
+      <div className="border border-outline-variant rounded-sm px-4 py-6 text-center bg-surface">
+        <p className="font-label font-medium text-on-surface-variant text-sm">
           {t('comments.noComments')}
         </p>
       </div>
@@ -28,33 +28,33 @@ export default function CommentList({ comments }) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3">
       {comments.map((c) => (
         <div
           key={c.id}
-          className="relative group bg-white/40 p-4 border border-primary/5 hover:border-primary/20 transition-all duration-300"
+          className="bg-surface border border-outline-variant rounded-sm p-4"
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline text-[10px] font-black">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary/10 text-primary rounded-sm flex items-center justify-center font-label font-bold text-xs">
                 {c.author.substring(0, 2).toUpperCase()}
               </div>
-              <span className="font-headline font-black uppercase text-xs tracking-tight">
+              <span className="font-label font-semibold text-xs text-primary">
                 {c.author}
               </span>
             </div>
-            <span className="font-label text-[10px] font-bold text-primary/30 uppercase tracking-tighter bg-primary/5 px-2 py-1">
+            <span className="font-label text-[10px] font-medium text-on-surface-variant bg-surface-variant px-2 py-0.5 rounded-sm">
               {formatDate(c.createdAt)}
             </span>
           </div>
-          <p className="font-body text-sm leading-relaxed text-primary/80 pl-11">
+          <p className="font-body text-sm leading-relaxed pl-10 text-on-surface">
             {c.content}
           </p>
           {c.proposedPrice && (
-            <div className="mt-3 pl-11">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary/10 text-secondary text-[10px] font-black uppercase rounded-full">
-                <span className="material-symbols-outlined text-[14px]">payments</span>
-                Proposta: €{c.proposedPrice.toFixed(2)}
+            <div className="mt-2 pl-10">
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-tertiary/10 text-tertiary text-[11px] font-semibold rounded-sm">
+                <span className="material-symbols-outlined text-sm">payments</span>
+                {t('comments.proposalLabel')} €{c.proposedPrice.toFixed(2)}
               </span>
             </div>
           )}

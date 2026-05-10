@@ -26,7 +26,9 @@ async function fetchWithAuth(url, options = {}) {
           headers: { 'Content-Type': 'application/json', ...options.headers },
         });
       }
-    } catch {}
+    } catch (err) {
+      console.debug('Token refresh failed', err);
+    }
     throw new Error('SESSION_EXPIRED');
   }
   return res;
@@ -51,24 +53,27 @@ export default function Admin() {
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({
-    name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional',
-    rating: 4.0, description: '', status: 'open', frazione: '',
-    imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: ''
-  });
   const [deleteId, setDeleteId] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional', rating: 4.0, description: '', descriptionIt: '', status: 'open', frazione: '', imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: '' });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  useEffect(() => { if (fetchError) setError(t('admin.connError') + fetchError); }, [fetchError, t]);
+  useEffect(() => { 
+    if (fetchError && !error) {
+      setError(t('admin.connError') + fetchError); 
+    }
+  }, [fetchError, t, error]);
 
   useEffect(() => {
-    if (!pizzerias.length || !locations.length) return;
+    if (!pizzerias.length || !locations.length || initialized) return;
+    
     setRows(pizzerias.map(p => ({
       ...p,
       cityName: locations.find(l => l.id === p.cityId)?.name || p.cityId,
     })));
     setInitialized(true);
-  }, [pizzerias, locations]);
+  }, [pizzerias, locations, initialized]);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
@@ -80,6 +85,11 @@ export default function Admin() {
     );
   }, [rows, search]);
 
+  const totalPages = useMemo(() => pageSize === Infinity ? 1 : Math.ceil(filteredRows.length / pageSize), [filteredRows, pageSize]);
+  const paginatedRows = useMemo(() => pageSize === Infinity ? filteredRows : filteredRows.slice((page - 1) * pageSize, page * pageSize), [filteredRows, pageSize, page]);
+
+  useEffect(() => { setPage(1); }, [search, pageSize]);
+
   const showToast = useCallback((msg, isError = false) => {
     setToast({ msg, isError });
     setTimeout(() => setToast(null), 3000);
@@ -90,7 +100,9 @@ export default function Admin() {
     setEditForm({
       name: row.name, address: row.address, cityId: row.cityId,
       phone: row.phone || '', category: row.category, rating: row.rating,
-      description: row.description || '', status: row.status,
+      description: row.description || '',
+      descriptionIt: row.descriptionIt || '',
+      status: row.status,
       frazione: row.frazione || '',
     });
   };
@@ -99,9 +111,9 @@ export default function Admin() {
   const cancelDelete = () => { setDeleteId(null); };
 
   const saveEdit = async () => {
-    if (!editForm.name || !editForm.cityId) { showToast('Nome e Città obbligatori', true); return; }
+    if (!editForm.name || !editForm.cityId) { showToast(t('admin.nameRequired'), true); return; }
     const rating = parseFloat(editForm.rating);
-    if (isNaN(rating) || rating < 0 || rating > 5) { showToast('Voto deve essere tra 0 e 5', true); return; }
+    if (isNaN(rating) || rating < 0 || rating > 5) { showToast(t('admin.ratingRequired'), true); return; }
     try {
       const csrfToken = await fetchCSRF();
       const res = await fetchWithAuth(`${API_BASE}/api/pizzerias/${editingId}`, {
@@ -111,7 +123,7 @@ export default function Admin() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Errore aggiornamento');
+        throw new Error(data.error || t('common.saveError'));
       }
       setRows(prev => prev.map(r => r.id === editingId ? { ...r, ...editForm, rating } : r));
       setDirty(false);
@@ -135,7 +147,7 @@ export default function Admin() {
         headers: { 'X-CSRF-Token': csrfToken },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Errore eliminazione');
+      if (!res.ok) throw new Error(data.error || t('common.error'));
       setRows(prev => prev.filter(r => r.id !== id));
       setDeleteId(null);
       if (editingId === id) cancelEdit();
@@ -151,9 +163,9 @@ export default function Admin() {
   };
 
   const addPizzeriaToServer = async () => {
-    if (!addForm.name || !addForm.cityId) { showToast('Nome e Città obbligatori', true); return; }
+    if (!addForm.name || !addForm.cityId) { showToast(t('admin.nameRequired'), true); return; }
     const rating = parseFloat(addForm.rating);
-    if (isNaN(rating) || rating < 0 || rating > 5) { showToast('Voto deve essere tra 0 e 5', true); return; }
+    if (isNaN(rating) || rating < 0 || rating > 5) { showToast(t('admin.ratingRequired'), true); return; }
 
     try {
       const csrfToken = await fetchCSRF();
@@ -168,16 +180,17 @@ export default function Admin() {
           category: addForm.category,
           rating,
           description: addForm.description,
+          descriptionIt: addForm.descriptionIt,
         }),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Errore creazione');
+        throw new Error(data.error || t('common.saveError'));
       }
       showToast(t('admin.toastPizzeriaAdded'));
       setShowAddModal(false);
       setAddForm({ name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional',
-        rating: 4.0, description: '', status: 'open', frazione: '',
+        rating: 4.0, description: '', descriptionIt: '', status: 'open', frazione: '',
         imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: '' });
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
@@ -190,9 +203,9 @@ export default function Admin() {
   };
 
   const addPizzeria = () => {
-    if (!addForm.name || !addForm.cityId) { showToast('Nome e Città obbligatori', true); return; }
+    if (!addForm.name || !addForm.cityId) { showToast(t('admin.nameRequired'), true); return; }
     const rating = parseFloat(addForm.rating);
-    if (isNaN(rating) || rating < 0 || rating > 5) { showToast('Voto deve essere tra 0 e 5', true); return; }
+    if (isNaN(rating) || rating < 0 || rating > 5) { showToast(t('admin.ratingRequired'), true); return; }
     const newP = {
       id: generateId(), ...addForm, rating,
       frazione: addForm.frazione || null,
@@ -202,7 +215,7 @@ export default function Admin() {
     setDirty(true);
     setShowAddModal(false);
     setAddForm({ name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional',
-      rating: 4.0, description: '', status: 'open', frazione: '',
+      rating: 4.0, description: '', descriptionIt: '', status: 'open', frazione: '',
       imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: '' });
     showToast(t('admin.toastPizzeriaAdded'));
   };
@@ -211,7 +224,9 @@ export default function Admin() {
     const json = rows.map(r => ({
       id: r.id, name: r.name, address: r.address, cityId: r.cityId,
       phone: r.phone || '', category: r.category, rating: r.rating,
-      description: r.description || '', status: r.status,
+      description: r.description || '',
+      descriptionIt: r.descriptionIt || '',
+      status: r.status,
       frazione: r.frazione || null, imageUrl: r.imageUrl || '',
       ...(r.isNew && { isNew: true }), ...(r.openedAt && { openedAt: r.openedAt }),
     }));
@@ -263,18 +278,25 @@ export default function Admin() {
         </div>
       )}
 
-      <div className="mb-6 flex gap-4">
+      <div className="mb-6 flex gap-4 flex-wrap items-center">
         <div className="relative flex-1 md:max-w-md">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary">search</span>
           <input className="w-full bg-surface border-2 border-primary py-3 pl-12 pr-4 font-label uppercase focus:outline-none focus:border-secondary"
             placeholder={t('admin.searchPlaceholder')} type="text" value={search}
             onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <select value={pageSize === Infinity ? 'all' : pageSize} onChange={(e) => { setPageSize(e.target.value === 'all' ? Infinity : Number(e.target.value)); }}
+          className="bg-surface border-2 border-primary py-3 px-4 font-label uppercase focus:outline-none focus:border-secondary cursor-pointer">
+          <option value="10">{t('admin.pageSize', { n: 10 })}</option>
+          <option value="25">{t('admin.pageSize', { n: 25 })}</option>
+          <option value="50">{t('admin.pageSize', { n: 50 })}</option>
+          <option value="all">{t('admin.allPages')}</option>
+        </select>
         <span className="font-headline font-bold text-lg text-primary self-center">{filteredRows.length}/{rows.length}</span>
       </div>
 
       <div className="space-y-4">
-        {filteredRows.map((row) => (
+        {paginatedRows.map((row) => (
           <PizzeriaRow
             key={row.id}
             row={row}
@@ -289,8 +311,26 @@ export default function Admin() {
         ))}
       </div>
 
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 pt-4 border-t-2 border-outline-variant">
+          <span className="font-label text-sm text-on-surface-variant">
+            {t('admin.paginationOf', { from: (page - 1) * pageSize + 1, to: Math.min(page * pageSize, filteredRows.length), total: filteredRows.length })}
+          </span>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-colors">
+              {t('admin.previous')}
+            </button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-colors">
+              {t('admin.next')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {filteredRows.length === 0 && (
-        <div className="text-center py-12 text-on-surface-variant font-headline font-bold uppercase">Nessun risultato</div>
+        <div className="text-center py-12 text-on-surface-variant font-headline font-bold uppercase">{t('admin.noResult')}</div>
       )}
 
       <AddModal
@@ -307,11 +347,11 @@ export default function Admin() {
           <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
             <div className="p-6">
               <h2 className="text-xl font-headline font-black uppercase text-primary mb-4">
-                Eliminare definitivamente {rows.find(r => r.id === deleteId)?.name}?
+                {t('admin.deleteConfirmTitle', { name: rows.find(r => r.id === deleteId)?.name })}
               </h2>
               <div className="flex gap-3 justify-end">
-                <button onClick={cancelDelete} className="bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors">Annulla</button>
-                <button onClick={() => confirmDelete(deleteId)} className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors">Elimina</button>
+                <button onClick={cancelDelete} className="bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors">{t('admin.cancel')}</button>
+                <button onClick={() => confirmDelete(deleteId)} className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors">{t('common.delete')}</button>
               </div>
             </div>
           </div>
@@ -319,12 +359,12 @@ export default function Admin() {
       )}
 
       <div className="mt-12 bg-surface-variant border-4 border-primary p-6 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-        <h3 className="text-xl font-black font-headline uppercase text-primary mb-3">Guida Rapida</h3>
+        <h3 className="text-xl font-black font-headline uppercase text-primary mb-3">{t('admin.guideTitle')}</h3>
         <ul className="font-body font-bold text-on-surface-variant space-y-2 text-sm">
-          <li>• Clicca <strong>Modifica</strong> su una pizzeria per cambiare i dati</li>
-          <li>• <strong>Esporta JSON</strong> scarica il file venues.json in locale</li>
-          <li>• <strong>Ricarica</strong> rilegge i dati dal server</li>
-          <li>• Le operazioni di scrittura richiedono autenticazione admin</li>
+          <li>{t('admin.guideStep1')}</li>
+          <li>{t('admin.guideStep3')}</li>
+          <li>{t('admin.guideStep4')}</li>
+          <li>{t('admin.guideStep2')}</li>
         </ul>
       </div>
     </div>

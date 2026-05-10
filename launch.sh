@@ -6,7 +6,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== Pizza Penisola Launcher ===${NC}"
+echo -e "${BLUE}=== PizzaRadar Sorrentum Launcher ===${NC}"
 
 if [ ! -f ".env" ]; then
     echo -e "${YELLOW}[WARN] .env file not found. Copying from .env.example...${NC}"

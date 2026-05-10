@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../../i18n/I18nContext';
 
 export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPrice, onSubmitted }) {
@@ -12,7 +12,6 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const initRef = useRef(false);
 
   const fetchCaptcha = useCallback(async () => {
     try {
@@ -21,17 +20,13 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
       setCaptcha(data);
       setCaptchaAnswer('');
     } catch {
-      setError('Impossibile caricare la verifica. Riprova.');
+      setError(t('priceProposal.errorFetchCaptcha'));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
     fetchCaptcha();
   }, [fetchCaptcha]);
-
-  useEffect(() => { fetchCaptcha(); }, [fetchCaptcha]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,20 +34,20 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
     setError('');
 
     if (!author.trim()) {
-      setError('Inserisci il tuo nome o nickname.');
+      setError(t('priceProposal.errorAuthorRequired'));
       return;
     }
     if (!proposedPrice || isNaN(parseFloat(proposedPrice))) {
-      setError('Inserisci il prezzo proposto per la Margherita.');
+      setError(t('priceProposal.errorPriceRequired'));
       return;
     }
     const price = parseFloat(proposedPrice);
     if (price <= 0 || price > 100) {
-      setError('Il prezzo deve essere compreso tra €0.10 e €100.');
+      setError(t('priceProposal.errorPriceRange'));
       return;
     }
-    if (!captcha || captchaAnswer === '' || parseInt(captchaAnswer) !== captcha.answer) {
-      setError('Risposta alla verifica errata. Riprova.');
+    if (!captcha || captchaAnswer === '') {
+      setError(t('priceProposal.errorCaptchaWrong'));
       fetchCaptcha();
       return;
     }
@@ -64,7 +59,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
 
       const noteText = content.trim().length >= 5
         ? content.trim()
-        : `Prezzo Margherita proposto a €${price.toFixed(2)}`;
+        : `${t('priceProposal.priceLabel')} €${price.toFixed(2)}`;
 
       const res = await fetch('/api/comments', {
         method: 'POST',
@@ -77,19 +72,20 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
           proposedPrice: price,
           honeypot,
           mathAnswer: parseInt(captchaAnswer),
+          captchaToken: captcha?.captchaToken,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Errore durante l\'invio. Riprova.');
+        setError(data.error || t('priceProposal.errorSubmit'));
         fetchCaptcha();
         return;
       }
       setSuccess(true);
       onSubmitted?.();
     } catch {
-      setError('Errore di rete. Verifica la connessione e riprova.');
+      setError(t('priceProposal.errorNetwork'));
     } finally {
       setSubmitting(false);
     }
@@ -103,17 +99,17 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
             task_alt
           </span>
           <h4 className="font-headline font-black uppercase text-lg text-tertiary">
-            Segnalazione inviata!
+            {t('priceProposal.successTitle')}
           </h4>
         </div>
         <p className="font-body text-sm text-on-surface-variant">
-          Grazie per il contributo. Il prezzo proposto verrà verificato e aggiornato a breve.
+          {t('priceProposal.successDesc')}
         </p>
         <button
           onClick={() => { setSuccess(false); setProposedPrice(''); setContent(''); setAuthor(''); fetchCaptcha(); }}
           className="mt-4 font-label font-bold uppercase text-xs py-1 px-4 border-2 border-tertiary text-tertiary hover:bg-tertiary hover:text-on-tertiary transition-colors"
         >
-          Invia un'altra segnalazione
+          {t('priceProposal.submitAnother')}
         </button>
       </div>
     );
@@ -137,7 +133,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
           </p>
           {currentPrice > 0 && (
             <p className="font-label text-xs text-on-surface-variant mt-0.5">
-              Prezzo attuale registrato: <span className="font-headline font-black text-secondary">€{currentPrice.toFixed(2)}</span>
+              {t('priceProposal.currentPrice')} <span className="font-headline font-black text-secondary">€{currentPrice.toFixed(2)}</span>
             </p>
           )}
         </div>
@@ -146,7 +142,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
       {/* Price */}
       <div>
         <label className="block text-xs font-black font-headline uppercase tracking-widest text-primary mb-1.5">
-          🍕 Prezzo Margherita *
+          {t('priceProposal.priceLabel')}
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 font-headline font-black text-primary text-sm">€</span>
@@ -167,7 +163,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
       {/* Author */}
       <div>
         <label className="block text-xs font-black font-headline uppercase tracking-widest text-primary mb-1.5">
-          Il tuo nome / nickname *
+          {t('priceProposal.authorLabel')}
         </label>
         <input
           type="text"
@@ -175,7 +171,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
           onChange={(e) => setAuthor(e.target.value)}
           maxLength={30}
           className="w-full bg-surface border-2 border-primary px-3 py-2.5 font-body font-bold text-sm text-primary focus:outline-none focus:border-secondary"
-          placeholder="Es. Marco R."
+          placeholder={t('priceProposal.authorPlaceholder')}
           required
         />
         <p className="text-right text-[10px] text-on-surface-variant mt-0.5">{author.length}/30</p>
@@ -184,7 +180,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
       {/* Notes */}
       <div>
         <label className="block text-xs font-black font-headline uppercase tracking-widest text-primary mb-1.5">
-          Note aggiuntive
+          {t('priceProposal.notesLabel')}
         </label>
         <textarea
           value={content}
@@ -192,7 +188,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
           maxLength={200}
           rows={2}
           className="w-full bg-surface border-2 border-primary px-3 py-2.5 font-body font-bold text-sm text-primary focus:outline-none focus:border-secondary resize-none"
-          placeholder="Es. Prezzo da menù in sala, aggiornato ad aprile 2026..."
+          placeholder={t('priceProposal.notesPlaceholder')}
         />
         <p className="text-right text-[10px] text-on-surface-variant -mt-1">{content.length}/200</p>
       </div>
@@ -200,7 +196,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
       {/* Captcha */}
       <div className="bg-surface-variant border-2 border-primary p-3">
         <p className="text-xs font-black font-headline uppercase tracking-widest text-on-surface-variant mb-2">
-          Verifica anti-spam
+          {t('priceProposal.captchaLabel')}
         </p>
         <div className="flex items-center gap-3">
           {captcha ? (
@@ -208,7 +204,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
               {captcha.question}
             </span>
           ) : (
-            <span className="font-label text-sm text-on-surface-variant">Caricamento...</span>
+            <span className="font-label text-sm text-on-surface-variant">{t('priceProposal.captchaLoading')}</span>
           )}
           <input
             type="number"
@@ -222,7 +218,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
             type="button"
             onClick={fetchCaptcha}
             className="text-on-surface-variant hover:text-primary transition-colors"
-            title="Nuovo calcolo"
+            title={t('priceProposal.newCalculation')}
             tabIndex={-1}
           >
             <span className="material-symbols-outlined text-sm">refresh</span>
@@ -258,18 +254,18 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
         {submitting ? (
           <>
             <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
-            Invio in corso...
+            {t('priceProposal.submitting')}
           </>
         ) : (
           <>
             <span className="material-symbols-outlined text-sm">send</span>
-            Invia segnalazione
+            {t('priceProposal.submitBtn')}
           </>
         )}
       </button>
 
       <p className="text-[10px] font-label text-on-surface-variant text-center">
-        Le segnalazioni vengono verificate prima di essere pubblicate. Grazie per il contributo!
+        {t('priceProposal.infoText')}
       </p>
     </form>
   );

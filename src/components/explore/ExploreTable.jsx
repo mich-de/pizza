@@ -1,6 +1,6 @@
 import { PAGE_SIZE } from '../../config/exploreConfig';
 
-export default function ExploreTable({ sorted, stats, page, setPage, t }) {
+export default function ExploreTable({ sorted, stats, page, setPage, t, onSelect }) {
   const priceTier = (price) => {
     if (stats.range === 0) return 'mid';
     const ratio = (price - stats.min) / stats.range;
@@ -9,13 +9,9 @@ export default function ExploreTable({ sorted, stats, page, setPage, t }) {
     return 'expensive';
   };
 
-  const tierLabel = (tier) => {
-    switch (tier) {
-      case 'cheap': return '€';
-      case 'mid': return '€€';
-      case 'expensive': return '€€€';
-    }
-  };
+  const tierColors = { cheap: 'text-tertiary', mid: 'text-primary', expensive: 'text-secondary' };
+  const tierBarColors = { cheap: 'bg-tertiary', mid: 'bg-primary-fixed-dim', expensive: 'bg-secondary' };
+  const tierBgColors = { cheap: 'bg-tertiary/5', mid: '', expensive: 'bg-secondary/5' };
 
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -24,52 +20,57 @@ export default function ExploreTable({ sorted, stats, page, setPage, t }) {
 
   return (
     <div>
-      <section className="bg-background border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] overflow-hidden mb-6">
+      <div className="bg-surface border border-outline-variant rounded-sm overflow-hidden mb-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-primary text-on-primary font-headline uppercase tracking-widest text-sm border-b-4 border-primary">
-                <th className="p-4 border-r-2 border-outline-variant font-bold w-8">#</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold">{t('prices.pizzeria')}</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold">{t('prices.city')}</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-32">{t('prices.category')}</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-32">{t('prices.margherita')}</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-40">{t('prices.priceDistribution')}</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-16">{t('prices.rating')}</th>
+              <tr className="bg-surface-variant/70 text-on-surface-variant/80 font-label text-xs uppercase tracking-wider border-b border-outline-variant">
+                <th className="p-4 border-r border-outline-variant font-semibold w-10">#</th>
+                <th className="p-4 border-r border-outline-variant font-semibold">{t('prices.pizzeria')}</th>
+                <th className="p-4 border-r border-outline-variant font-semibold">{t('prices.city')}</th>
+                <th className="p-4 border-r border-outline-variant font-semibold text-center w-28">{t('prices.category')}</th>
+                <th className="p-4 border-r border-outline-variant font-semibold text-center w-28">{t('prices.margherita')}</th>
+                <th className="p-4 border-r border-outline-variant font-semibold text-center w-40">{t('prices.priceDistribution')}</th>
+                <th className="p-4 font-semibold text-center w-16">{t('prices.rating')}</th>
               </tr>
             </thead>
-            <tbody className="font-body font-semibold">
+            <tbody className="font-body text-sm">
               {paginated.map((pz, idx) => {
                 const tier = priceTier(pz.margheritaPrice);
                 return (
                   <tr
                     key={`${pz.id}-${idx}`}
-                    className={`border-b-2 border-primary hover:bg-surface-variant transition-colors ${tier === 'cheap' ? 'bg-tertiary-container/20' : tier === 'expensive' ? 'bg-secondary-container/20' : ''}`}
+                    onClick={() => onSelect?.(pz)}
+                    className={`group border-b border-outline-variant cursor-pointer transition-all duration-200 ${tierBgColors[tier]} hover:bg-primary/[0.04]`}
                   >
-                    <td className="p-4 border-r-2 border-primary font-mono text-xs text-on-surface-variant">{page * PAGE_SIZE + idx + 1}</td>
-                    <td className="p-4 border-r-2 border-primary">
-                      <div className="font-bold">{pz.name}</div>
-                      <div className="text-xs text-on-surface-variant">{pz.address}</div>
+                    <td className="p-4 border-r border-outline-variant font-mono text-xs text-on-surface-variant/50 align-top relative">
+                      <span className="absolute left-0 top-4 bottom-4 w-0.5 bg-primary rounded-full scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top" />
+                      {page * PAGE_SIZE + idx + 1}
                     </td>
-                    <td className="p-4 border-r-2 border-primary text-sm">{pz.cityName}</td>
-                    <td className="p-4 border-r-2 border-primary text-sm text-center">{t(`common.${pz.category === 'wood-fired' ? 'woodFired' : pz.category}`)}</td>
-                    <td className="p-4 border-r-2 border-primary text-center">
-                      <span className={`font-headline font-black text-lg ${tier === 'cheap' ? 'text-tertiary' : tier === 'expensive' ? 'text-secondary' : 'text-primary'}`}>
+                    <td className="p-4 border-r border-outline-variant align-top">
+                      <div className="font-medium text-on-surface group-hover:text-primary transition-colors duration-200">{pz.name}</div>
+                      <div className="text-xs text-on-surface-variant/60 mt-0.5">{pz.address}</div>
+                    </td>
+                    <td className="p-4 border-r border-outline-variant text-on-surface-variant/80 align-top group-hover:text-primary/80 transition-colors duration-200">{pz.cityName}</td>
+                    <td className="p-4 border-r border-outline-variant text-center align-top">
+                      <span className="font-label text-xs text-on-surface-variant/60 group-hover:text-primary/60 transition-colors duration-200">{t(`common.${pz.category === 'wood-fired' ? 'woodFired' : pz.category}`)}</span>
+                    </td>
+                    <td className="p-4 border-r border-outline-variant text-center align-top">
+                      <span className={`font-display font-bold text-lg transition-all duration-200 ${tierColors[tier]} group-hover:scale-110 inline-block`}>
                         €{pz.margheritaPrice?.toFixed(2)}
                       </span>
                     </td>
-                    <td className="p-4 border-r-2 border-primary">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-3 bg-surface-dim border border-outline-variant overflow-hidden">
-                          <div className={`h-full transition-all ${tier === 'cheap' ? 'bg-tertiary' : tier === 'expensive' ? 'bg-secondary' : 'bg-primary-fixed-dim'}`} style={{ width: `${barWidth(pz.margheritaPrice)}%` }} />
+                    <td className="p-4 border-r border-outline-variant align-top">
+                      <div className="flex items-center gap-2 h-9">
+                        <div className="flex-1 h-2 bg-surface-dim rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-300 ${tierBarColors[tier]} group-hover:opacity-80`} style={{ width: `${barWidth(pz.margheritaPrice)}%` }} />
                         </div>
-                        <span className="font-label text-xs font-bold text-on-surface-variant w-10 text-right">{tierLabel(tier)}</span>
                       </div>
                     </td>
-                    <td className="p-4 border-r-2 border-primary text-center">
+                    <td className="p-4 text-center align-top">
                       <div className="inline-flex items-center gap-1">
-                        <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="text-sm font-bold">{pz.rating}</span>
+                        <span className="material-symbols-outlined text-secondary text-sm transition-transform duration-200 group-hover:scale-110" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                        <span className="font-medium text-on-surface group-hover:text-primary transition-colors duration-200">{pz.rating}</span>
                       </div>
                     </td>
                   </tr>
@@ -78,18 +79,18 @@ export default function ExploreTable({ sorted, stats, page, setPage, t }) {
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
       {totalPages > 1 && (
-        <section className="flex items-center justify-between mb-8">
-          <span className="font-label text-sm font-bold text-on-surface-variant">
+        <div className="flex items-center justify-between mb-8">
+          <span className="font-label text-sm text-on-surface-variant/60">
             {t('prices.page')} {page + 1} {t('prices.of')} {totalPages}
           </span>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-sm bg-background text-primary hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"
+              className="w-9 h-9 flex items-center justify-center rounded-sm border border-outline-variant bg-surface text-on-surface-variant/70 hover:bg-surface-variant hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed font-label text-sm"
             >
               ←
             </button>
@@ -106,23 +107,27 @@ export default function ExploreTable({ sorted, stats, page, setPage, t }) {
                 <button
                   key={`page-${pageNum}`}
                   onClick={() => setPage(pageNum)}
-                  className={`w-10 h-10 border-2 border-primary font-headline font-bold text-sm transition-colors ${pageNum === page ? 'bg-primary text-on-primary' : 'bg-background text-primary hover:bg-surface-variant'}`}
+                  className={`w-9 h-9 rounded-sm font-label text-sm font-medium transition-colors ${
+                    pageNum === page
+                      ? 'bg-primary text-on-primary'
+                      : 'border border-outline-variant bg-surface text-on-surface-variant/70 hover:bg-surface-variant'
+                  }`}
                 >
                   {pageNum + 1}
                 </button>
               ));
             })()}
-            {totalPages > 5 && page < totalPages - 3 && <span className="px-2 font-headline font-bold text-primary">…</span>}
+            {totalPages > 5 && page < totalPages - 3 && <span className="px-1 text-on-surface-variant/40 font-label">…</span>}
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-sm bg-background text-primary hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"
+              className="w-9 h-9 flex items-center justify-center rounded-sm border border-outline-variant bg-surface text-on-surface-variant/70 hover:bg-surface-variant hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed font-label text-sm"
             >
               →
             </button>
           </div>
-          <span className="font-label text-sm text-on-surface-variant">{sorted.length} {sorted.length === 1 ? 'pizzeria' : 'pizzerie'}</span>
-        </section>
+          <span className="font-label text-sm text-on-surface-variant/60">{t('sidebar.pizzeriasCount', { count: sorted.length })}</span>
+        </div>
       )}
     </div>
   );

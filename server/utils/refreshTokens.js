@@ -62,3 +62,23 @@ export function revokeAllUserTokens(userId) {
   }
   if (changed) saveTokens(tokens);
 }
+
+const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function pruneExpiredTokens() {
+  const tokens = readTokens();
+  const now = Date.now();
+  let changed = false;
+  for (const [id, entry] of Object.entries(tokens)) {
+    const createdAt = new Date(entry.createdAt).getTime();
+    if (entry.revoked || (now - createdAt > REFRESH_TOKEN_MAX_AGE_MS)) {
+      delete tokens[id];
+      changed = true;
+    }
+  }
+  if (changed) saveTokens(tokens);
+}
+
+// Auto-prune every 6 hours
+setInterval(pruneExpiredTokens, 6 * 60 * 60 * 1000);
+

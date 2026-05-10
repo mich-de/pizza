@@ -1,13 +1,11 @@
-import { PAGE_SIZE } from '../../config/pricesConfig';
-
-export default function PricesFilters({ zoneFilter, setZoneFilter, catFilter, setCatFilter, search, setSearch, priceMin, setPriceMin, priceMax, setPriceMax, sortBy, setSortBy, categories, cities, t, setPage }) {
+export default function PricesFilters({ filteredCount, cities, t }) {
   return (
     <div className="flex items-center gap-4 mb-6">
       <span className="font-headline font-bold uppercase text-sm bg-secondary text-on-secondary px-3 py-1 border-2 border-primary">
         {cities.length - 1} {t('nav.network')}
       </span>
       <span className="font-headline font-bold uppercase text-sm bg-tertiary text-on-tertiary px-3 py-1 border-2 border-primary">
-        {filtered.length} {t('common.filter').toLowerCase()}
+        {filteredCount} {t('common.filter').toLowerCase()}
       </span>
     </div>
   );

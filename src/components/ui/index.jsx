@@ -1,24 +1,29 @@
-export function StatCard({ title, value, icon, color = 'primary', className = '' }) {
+export function StatCard({ title, value, icon, color = 'primary', className = '', subtitle }) {
   const colorMap = {
-    primary: { bg: 'bg-surface-variant', border: 'border-primary', text: 'text-primary', iconText: 'text-primary' },
-    secondary: { bg: 'bg-secondary-container', border: 'border-secondary', text: 'text-secondary', iconText: 'text-secondary' },
-    tertiary: { bg: 'bg-tertiary-container', border: 'border-tertiary', text: 'text-tertiary', iconText: 'text-tertiary' },
-    primaryContainer: { bg: 'bg-primary-container', border: 'border-primary', text: 'text-primary', iconText: 'text-primary' },
+    primary: { bg: 'bg-surface', border: 'border-primary', text: 'text-primary', iconText: 'text-primary', badge: 'bg-primary/10' },
+    secondary: { bg: 'bg-secondary', border: 'border-secondary', text: 'text-on-secondary', iconText: 'text-on-secondary/80', badge: 'bg-on-secondary/10' },
+    tertiary: { bg: 'bg-tertiary', border: 'border-tertiary', text: 'text-on-tertiary', iconText: 'text-on-tertiary/80', badge: 'bg-on-tertiary/10' },
+    primaryContainer: { bg: 'bg-primary-container', border: 'border-primary/30', text: 'text-on-primary-container', iconText: 'text-primary', badge: 'bg-primary/10' },
   };
   const c = colorMap[color] || colorMap.primary;
 
   return (
-    <div className={`${c.bg} border-4 ${c.border} p-6 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] ${className}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <div className={`text-sm font-black font-headline uppercase tracking-widest mb-1 ${c.text}`}>
-            {title}
+    <div className={`${c.bg} border ${c.border} rounded-sm ${className}`}>
+      <div className="p-5">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0">
+            <div className={`font-label text-[11px] font-semibold uppercase tracking-wider ${c.text} opacity-70 mb-1`}>
+              {title}
+            </div>
+            <div className={`text-3xl font-display font-bold tracking-tight ${c.text}`}>{value}</div>
+            {subtitle && (
+              <div className={`font-label text-xs mt-1 ${c.text} opacity-60`}>{subtitle}</div>
+            )}
           </div>
-          <div className={`text-4xl font-black font-headline ${c.text}`}>{value}</div>
+          {icon && (
+            <span className={`material-symbols-outlined text-4xl ${c.iconText} opacity-60`}>{icon}</span>
+          )}
         </div>
-        {icon && (
-          <span className={`material-symbols-outlined text-5xl ${c.iconText}`}>{icon}</span>
-        )}
       </div>
     </div>
   );
@@ -26,12 +31,12 @@ export function StatCard({ title, value, icon, color = 'primary', className = ''
 
 export function Card({ children, className = '', variant = 'default' }) {
   const variants = {
-    default: 'bg-surface-bright border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]',
-    primary: 'bg-primary text-on-primary border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]',
-    container: 'bg-primary-container border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]',
-    secondary: 'bg-secondary text-on-tertiary border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]',
-    tertiary: 'bg-tertiary-container border-4 border-tertiary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]',
-    surface: 'bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]',
+    default: 'bg-surface border border-outline-variant rounded-sm',
+    primary: 'bg-primary text-on-primary border border-primary rounded-sm',
+    container: 'bg-primary-container border border-primary/30 rounded-sm',
+    secondary: 'bg-secondary text-on-secondary border border-secondary rounded-sm',
+    tertiary: 'bg-tertiary text-on-tertiary border border-tertiary rounded-sm',
+    surface: 'bg-surface border border-outline-variant rounded-sm',
   };
 
   return (
@@ -43,16 +48,14 @@ export function Card({ children, className = '', variant = 'default' }) {
 
 export function Badge({ children, color = 'primary' }) {
   const colors = {
-    primary: 'bg-primary text-on-primary border-primary',
-    secondary: 'bg-secondary text-on-secondary border-secondary',
-    tertiary: 'bg-tertiary text-on-tertiary border-tertiary',
-    container: 'bg-primary-container text-primary border-primary',
-    surface: 'bg-surface text-primary border-primary',
-    error: 'bg-error text-on-error border-error',
+    primary: 'bg-primary/10 text-primary',
+    secondary: 'bg-secondary/10 text-secondary',
+    tertiary: 'bg-tertiary/10 text-tertiary',
+    error: 'bg-error/10 text-error',
   };
 
   return (
-    <span className={`inline-block px-3 py-1 font-label font-bold uppercase text-xs border-2 ${colors[color]}`}>
+    <span className={`inline-block px-2.5 py-0.5 font-label font-semibold text-[11px] uppercase tracking-wider rounded-sm ${colors[color] || colors.primary}`}>
       {children}
     </span>
   );
@@ -60,19 +63,16 @@ export function Badge({ children, color = 'primary' }) {
 
 export function BrutalistButton({ children, onClick, variant = 'primary', className = '', disabled = false, type = 'button' }) {
   const variants = {
-    primary: 'bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container',
-    secondary: 'bg-secondary text-on-secondary hover:bg-primary hover:text-on-primary',
-    surface: 'bg-surface text-primary hover:bg-primary hover:text-on-primary',
-    error: 'bg-error text-on-error hover:bg-primary hover:text-on-primary',
+    primary: 'bg-primary text-on-primary hover:bg-primary-fixed-dim active:bg-primary-fixed-dim',
+    secondary: 'bg-secondary text-on-secondary hover:opacity-90 active:opacity-80',
+    surface: 'bg-surface text-primary border border-outline-variant hover:bg-surface-variant active:bg-surface-dim',
+    error: 'bg-error text-on-error hover:opacity-90 active:opacity-80',
   };
+  const base = 'font-label font-semibold text-sm tracking-wider uppercase px-5 py-2.5 transition-all duration-150 rounded-sm disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className={`font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-colors ${variants[variant]} ${disabled ? 'opacity-40 cursor-not-allowed' : 'active:translate-x-1 active:translate-y-1 active:shadow-none'} ${className}`}
-    >
+    <button type={type} onClick={onClick} disabled={disabled}
+      className={`${base} ${variants[variant]} ${className}`}>
       {children}
     </button>
   );
@@ -80,19 +80,19 @@ export function BrutalistButton({ children, onClick, variant = 'primary', classN
 
 export function PageHeader({ title, subtitle, children }) {
   return (
-    <header className="mb-8 border-b-4 border-primary pb-6">
+    <header className="mb-8 border-b border-outline-variant pb-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-5xl md:text-7xl font-display font-black tracking-tighter uppercase leading-none text-primary">
+          <h1 className="text-5xl md:text-6xl font-display font-bold tracking-tight leading-[1.1] text-primary">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-lg font-bold text-on-surface-variant mt-3 max-w-xl">
+            <p className="text-base font-body text-on-surface-variant mt-2 max-w-xl leading-relaxed">
               {subtitle}
             </p>
           )}
         </div>
-        {children && <div className="flex gap-4 items-center">{children}</div>}
+        {children && <div className="flex gap-3 items-center flex-shrink-0">{children}</div>}
       </div>
     </header>
   );

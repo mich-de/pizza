@@ -12,10 +12,10 @@ export const adminTabs = [
   { key: 'settings', icon: 'settings', labelKey: 'nav.settings' },
 ];
 
-export const activeLinkClass = 'bg-primary-container text-primary border-2 border-primary my-1 mx-2 p-3 flex items-center gap-3 font-headline font-bold uppercase shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]';
+export const activeLinkClass = 'bg-primary/10 text-primary rounded-sm px-3 py-2.5 my-0.5 flex items-center gap-3 font-label font-medium text-sm transition-all';
 
-export const inactiveLinkClass = 'text-primary p-3 my-1 mx-2 flex items-center gap-3 font-headline font-bold uppercase hover:bg-secondary hover:text-on-secondary transition-all hover:translate-x-1 duration-100';
+export const inactiveLinkClass = 'text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded-sm px-3 py-2.5 my-0.5 flex items-center gap-3 font-label font-medium text-sm transition-all';
 
-export const activeLinkClassMobile = 'bg-primary-container text-primary border-2 border-primary my-1 mx-3 p-3 flex items-center gap-3 font-headline font-bold uppercase shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]';
+export const activeLinkClassMobile = 'bg-primary/10 text-primary border-l-2 border-primary px-4 py-3 mx-2 my-0.5 flex items-center gap-3 font-label font-medium text-sm';
 
-export const inactiveLinkClassMobile = 'text-primary p-3 my-1 mx-3 flex items-center gap-3 font-headline font-bold uppercase hover:bg-secondary hover:text-on-secondary transition-all hover:translate-x-1 duration-100';
+export const inactiveLinkClassMobile = 'text-on-surface-variant px-4 py-3 mx-2 my-0.5 flex items-center gap-3 font-label font-medium text-sm hover:text-primary hover:bg-surface-variant transition-colors';

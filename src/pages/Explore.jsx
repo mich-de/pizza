@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { useStitchedData } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PageHeader } from '../components/ui';
+import { PageHeader, StatCard } from '../components/ui';
 import { groupByCity } from '../utils/groupByCity';
 import PriceProposalForm from '../components/explore/PriceProposalForm';
 import ExploreCards from '../components/explore/ExploreCards';
@@ -14,27 +14,27 @@ import { PAGE_SIZE } from '../config/exploreConfig';
 function ExplorePriceReport({ selected, t }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-t-4 border-primary pt-4 px-6 pb-2">
+    <div className="border-t border-outline-variant pt-4">
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="w-full flex items-center justify-center gap-2 bg-surface-variant text-primary font-headline font-bold uppercase py-3 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:text-on-secondary hover:border-secondary transition-colors"
+          className="w-full flex items-center justify-center gap-2 bg-primary/5 text-primary font-label font-medium text-sm py-2.5 px-4 border border-primary/20 rounded-sm hover:bg-primary hover:text-on-primary transition-colors"
         >
-          <span className="material-symbols-outlined">edit_note</span>
-          Segnala prezzo errato
+          <span className="material-symbols-outlined text-lg">edit_note</span>
+          {t('explore.reportPrice')}
         </button>
       ) : (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-headline font-black uppercase text-base text-primary flex items-center gap-2">
-              <span className="material-symbols-outlined text-secondary">edit_note</span>
-              Segnala prezzo errato
+            <h4 className="font-display font-bold text-base text-primary flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary/60">edit_note</span>
+              {t('explore.reportPrice')}
             </h4>
             <button
               onClick={() => setOpen(false)}
-              className="font-label text-xs font-bold uppercase text-on-surface-variant hover:text-primary transition-colors"
+              className="font-label text-xs font-medium uppercase text-on-surface-variant/60 hover:text-primary transition-colors"
             >
-              Annulla
+              {t('common.cancel')}
             </button>
           </div>
           <PriceProposalForm
@@ -46,6 +46,24 @@ function ExplorePriceReport({ selected, t }) {
         </div>
       )}
     </div>
+  );
+}
+
+function FilterPill({ label, count, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm font-label text-xs font-medium tracking-wider transition-colors ${
+        active
+          ? 'bg-primary/10 text-primary border border-primary/30'
+          : 'bg-surface text-on-surface-variant/70 border border-outline-variant hover:bg-surface-variant hover:text-on-surface'
+      }`}
+    >
+      {label}
+      <span className={`font-display text-sm font-bold ${active ? 'text-primary' : 'text-on-surface-variant/50'}`}>
+        {count}
+      </span>
+    </button>
   );
 }
 
@@ -75,7 +93,6 @@ export default function Explore() {
   }, [reportPz, selected]);
 
   const cities = useMemo(() => ['all', ...new Set(data.map((d) => d.cityName))].sort(), [data]);
-  const categories = useMemo(() => ['all', ...new Set(data.map((d) => d.category))], [data]);
 
   const filtered = useMemo(() => {
     return data.filter((p) => {
@@ -114,9 +131,6 @@ export default function Explore() {
   const cheapest = sorted.length > 0 ? sorted.find((p) => p.margheritaPrice === stats.min) : null;
   const priciest = sorted.length > 0 ? sorted.find((p) => p.margheritaPrice === stats.max) : null;
 
-  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
-  const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-
   const grouped = useMemo(() => groupByCity(data), [data]);
   const cityNames = useMemo(() => Object.keys(grouped), [grouped]);
   const networkStats = useMemo(() => ({
@@ -125,10 +139,6 @@ export default function Explore() {
     avgPrice: data.length > 0 ? data.reduce((s, p) => s + (p.margheritaPrice || 0), 0) / data.length : 0,
     clusters: cityNames.length,
   }), [data, cityNames]);
-
-  const selectedData = selectedCity ? grouped[selectedCity] || [] : [];
-
-  const delta = (pz) => pz.margheritaPrice - stats.avg;
 
   const exportCSV = () => {
     const header = 'Name,City,Category,Price,Rating\n';
@@ -160,9 +170,9 @@ export default function Explore() {
       <PageHeader title={t('explore.title')} subtitle={t('explore.subtitle')}>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-lg">search</span>
             <input
-              className="bg-surface border-2 border-primary py-2 pl-10 pr-4 font-label uppercase focus:outline-none focus:border-secondary w-56"
+              className="bg-surface border border-outline-variant rounded-sm py-2 pl-10 pr-4 font-body text-sm focus:outline-none focus:border-primary w-56"
               placeholder={t('explore.search')}
               type="text"
               value={search}
@@ -171,7 +181,7 @@ export default function Explore() {
           </div>
           <button
             onClick={exportCSV}
-            className="flex items-center gap-2 bg-background text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors text-sm"
+            className="flex items-center gap-2 bg-surface text-on-surface-variant/70 font-label font-medium text-sm py-2 px-4 border border-outline-variant rounded-sm hover:bg-surface-variant hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-sm">download</span>
             {t('prices.exportCSV')}
@@ -179,32 +189,33 @@ export default function Explore() {
         </div>
       </PageHeader>
 
+      {/* City filters */}
       <div className="flex flex-wrap gap-2 mb-6">
         {cities.map((city) => {
           const isActive = cityFilter === city;
           const count = city === 'all' ? data.length : data.filter(p => p.cityName === city).length;
           return (
-            <button
+            <FilterPill
               key={city}
+              label={city === 'all' ? t('explore.all') : city}
+              count={count}
+              active={isActive}
               onClick={() => { setCityFilter(isActive ? 'all' : city); setPage(0); }}
-              className={`px-3 py-1 border-2 border-primary font-label font-bold uppercase text-sm cursor-pointer transition-colors ${
-                isActive
-                  ? 'bg-primary text-on-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]'
-                  : 'bg-surface text-on-surface-variant hover:bg-secondary-container'
-              }`}
-            >
-              {city === 'all' ? t('explore.all') : city} <span className="font-headline font-black">{count}</span>
-            </button>
+            />
           );
         })}
         {activeFiltersCount > 0 && (
-          <button onClick={resetFilters} className="px-3 py-1 border-2 border-error text-error font-label font-bold uppercase text-sm hover:bg-error hover:text-on-error transition-colors">
-            Reset ({activeFiltersCount})
+          <button
+            onClick={resetFilters}
+            className="px-3 py-1.5 rounded-sm font-label text-xs font-medium tracking-wider border border-error/30 text-error/70 hover:bg-error/10 hover:text-error transition-colors"
+          >
+            {t('explore.reset')} ({activeFiltersCount})
           </button>
         )}
       </div>
 
-      <div className="flex gap-2 mb-8 border-b-4 border-primary pb-0">
+      {/* View tabs */}
+      <div className="flex gap-1 mb-8 border-b border-outline-variant">
         {[
           { key: 'cards', icon: 'grid_view', label: t('explore.tabCards') },
           { key: 'table', icon: 'table_chart', label: t('explore.tabTable') },
@@ -213,37 +224,61 @@ export default function Explore() {
           <button
             key={tab.key}
             onClick={() => setView(tab.key)}
-            className={`flex items-center gap-2 px-6 py-3 font-headline font-bold uppercase transition-all border-2 border-primary ${
+            className={`flex items-center gap-2 px-5 py-3 font-label text-xs font-semibold uppercase tracking-wider transition-all relative ${
               view === tab.key
-                ? 'bg-primary text-on-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] -mb-[4px]'
-                : 'bg-surface text-on-surface-variant hover:bg-secondary-container -mb-[4px]'
+                ? 'text-primary'
+                : 'text-on-surface-variant/60 hover:text-on-surface-variant'
             }`}
           >
-            <span className="material-symbols-outlined">{tab.icon}</span>
+            <span className="material-symbols-outlined text-lg">{tab.icon}</span>
             {tab.label}
+            {view === tab.key && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+            )}
           </button>
         ))}
       </div>
 
       {view === 'cards' && (
         <div>
-          <div className="mb-8 bg-primary text-on-primary p-6 border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <span className="material-symbols-outlined text-4xl text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
-                <div>
-                  <p className="font-label text-xs uppercase tracking-widest mb-2 text-primary-container">{t('explore.total')}</p>
-                  <p className="font-headline text-4xl font-black">{data.length}</p>
-                  {activeFiltersCount > 0 && (
-                    <p className="font-label text-xs uppercase text-primary-container/70">
-                      {filtered.length} {filtered.length === 1 ? 'pizzeria' : 'pizzerie'} con filtri attivi
-                    </p>
-                  )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StatCard
+              title={t('explore.total')}
+              value={data.length}
+              icon="storefront"
+              subtitle={activeFiltersCount > 0 ? t('explore.withFilters', { count: filtered.length }) : undefined}
+            />
+            <StatCard
+              title={t('prices.avgPrice')}
+              value={`€${stats.avg.toFixed(2)}`}
+              icon="trending_up"
+              color="primaryContainer"
+            />
+            <StatCard
+              title={t('prices.medianTitle')}
+              value={`€${stats.median.toFixed(2)}`}
+              icon="balance"
+              color="secondary"
+            />
+            <div className="bg-surface border border-outline-variant rounded-sm">
+              <div className="p-5">
+                <div className="font-label text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70 mb-1">
+                  {t('prices.sortBy')}
                 </div>
+                <select
+                  className="w-full bg-surface text-on-surface font-body font-medium text-sm border border-outline-variant rounded-sm px-3 py-2 focus:outline-none focus:border-primary cursor-pointer"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="price-asc">{t('prices.sortPriceAsc')}</option>
+                  <option value="price-desc">{t('prices.sortPriceDesc')}</option>
+                  <option value="name-asc">{t('prices.sortNameAsc')}</option>
+                  <option value="rating-desc">{t('prices.sortRatingDesc')}</option>
+                </select>
               </div>
             </div>
           </div>
-          <ExploreCards filtered={filtered} stats={stats} t={t} lang={lang}
+          <ExploreCards filtered={sorted} stats={stats} t={t} lang={lang}
             onSelect={(pz) => setSelected(pz)}
             onReportPrice={(pz) => setReportPz(pz)}
           />
@@ -252,90 +287,82 @@ export default function Explore() {
 
       {view === 'table' && (
         <div>
-          <div className="flex items-center gap-4 mb-6">
-            <span className="font-headline font-bold uppercase text-sm bg-secondary text-on-secondary px-3 py-1 border-2 border-primary">
-              {data.length} {data.length === 1 ? 'pizzeria' : 'pizzerie'}
-            </span>
-            <span className="font-headline font-bold uppercase text-sm bg-tertiary text-on-tertiary px-3 py-1 border-2 border-primary">
-              {filtered.length} {t('common.filter').toLowerCase()}
-            </span>
-          </div>
           <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-surface-variant border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-              <label className="block text-xs font-black font-headline uppercase tracking-widest mb-2 text-primary">
-                {t('prices.zoneFilter')}
-              </label>
-              <select
-                className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
-                value={cityFilter}
-                onChange={(e) => { setCityFilter(e.target.value); setPage(0); }}
-              >
-                {cities.map((c) => (
-                  <option key={c} value={c}>{c === 'all' ? t('prices.allZones') : c}</option>
-                ))}
-              </select>
-            </div>
-            <div className="bg-primary-container border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center justify-between">
-              <div>
-                <div className="text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">{t('prices.avgPrice')}</div>
-                <div className="text-3xl font-black font-headline text-primary">€{stats.avg.toFixed(2)}</div>
+            <div className="bg-surface border border-outline-variant rounded-sm">
+              <div className="p-5">
+                <label className="font-label text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70 mb-2 block">
+                  {t('prices.zoneFilter')}
+                </label>
+                <select
+                  className="w-full bg-surface text-on-surface font-body font-medium text-sm border border-outline-variant rounded-sm px-3 py-2 focus:outline-none focus:border-primary cursor-pointer"
+                  value={cityFilter}
+                  onChange={(e) => { setCityFilter(e.target.value); setPage(0); }}
+                >
+                  {cities.map((c) => (
+                    <option key={c} value={c}>{c === 'all' ? t('prices.allZones') : c}</option>
+                  ))}
+                </select>
               </div>
-              <span className="material-symbols-outlined text-4xl text-primary">trending_up</span>
             </div>
-            <div className="bg-surface-variant border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center justify-between">
-              <div>
-                <div className="text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">{t('prices.medianTitle')}</div>
-                <div className="text-3xl font-black font-headline text-primary">€{stats.median.toFixed(2)}</div>
+            <StatCard title={t('prices.avgPrice')} value={`€${stats.avg.toFixed(2)}`} icon="trending_up" color="primaryContainer" />
+            <StatCard title={t('prices.medianTitle')} value={`€${stats.median.toFixed(2)}`} icon="balance" color="secondary" />
+            <div className="bg-surface border border-outline-variant rounded-sm">
+              <div className="p-5">
+                <label className="font-label text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70 mb-2 block">
+                  {t('prices.sortBy')}
+                </label>
+                <select
+                  className="w-full bg-surface text-on-surface font-body font-medium text-sm border border-outline-variant rounded-sm px-3 py-2 focus:outline-none focus:border-primary cursor-pointer"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="price-asc">{t('prices.sortPriceAsc')}</option>
+                  <option value="price-desc">{t('prices.sortPriceDesc')}</option>
+                  <option value="name-asc">{t('prices.sortNameAsc')}</option>
+                  <option value="rating-desc">{t('prices.sortRatingDesc')}</option>
+                </select>
               </div>
-              <span className="material-symbols-outlined text-4xl text-primary">balance</span>
-            </div>
-            <div>
-              <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">{t('prices.sortBy')}</label>
-              <select
-                className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="price-asc">{t('prices.sortPriceAsc')}</option>
-                <option value="price-desc">{t('prices.sortPriceDesc')}</option>
-                <option value="name-asc">{t('prices.sortNameAsc')}</option>
-                <option value="rating-desc">{t('prices.sortRatingDesc')}</option>
-              </select>
             </div>
           </section>
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {cheapest && (
-              <div className="bg-tertiary-container border-4 border-tertiary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
-                  <span className="text-xs font-black font-headline uppercase tracking-widest text-tertiary">{t('prices.cheapestTitle')}</span>
+              <div className="bg-tertiary/5 border border-tertiary/30 rounded-sm">
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="material-symbols-outlined text-tertiary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
+                    <span className="font-label text-[11px] font-semibold uppercase tracking-wider text-tertiary">{t('prices.cheapestTitle')}</span>
+                  </div>
+                  <p className="font-display font-bold text-lg text-tertiary">{cheapest.name}</p>
+                  <p className="font-display font-bold text-2xl text-tertiary mt-1">€{cheapest.margheritaPrice?.toFixed(2)}</p>
+                  <p className="font-label text-xs text-tertiary/60 mt-0.5">{cheapest.cityName}</p>
                 </div>
-                <p className="font-headline font-black text-lg text-tertiary">{cheapest.name}</p>
-                <p className="font-headline font-bold text-2xl text-tertiary">€{cheapest.margheritaPrice?.toFixed(2)}</p>
-                <p className="text-xs font-label text-tertiary/70 uppercase">{cheapest.cityName}</p>
               </div>
             )}
-            <div className="bg-primary-container border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>balance</span>
-                <span className="text-xs font-black font-headline uppercase tracking-widest text-primary">{t('prices.rangeTitle')}</span>
+            <div className="bg-primary/5 border border-primary/30 rounded-sm">
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>balance</span>
+                  <span className="font-label text-[11px] font-semibold uppercase tracking-wider text-primary">{t('prices.rangeTitle')}</span>
+                </div>
+                <p className="font-display font-bold text-2xl text-primary">€{stats.min.toFixed(2)} – €{stats.max.toFixed(2)}</p>
+                <p className="font-label text-xs text-primary/60 mt-0.5">{t('prices.minPrice')}: €{stats.min.toFixed(2)} · {t('prices.maxPrice')}: €{stats.max.toFixed(2)}</p>
               </div>
-              <p className="font-headline font-bold text-2xl text-primary">€{stats.min.toFixed(2)} - €{stats.max.toFixed(2)}</p>
-              <p className="text-xs font-label text-primary/70 uppercase">{t('prices.minPrice')}: €{stats.min.toFixed(2)} · {t('prices.maxPrice')}: €{stats.max.toFixed(2)}</p>
             </div>
             {priciest && (
-              <div className="bg-secondary-container border-4 border-secondary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
-                  <span className="text-xs font-black font-headline uppercase tracking-widest text-secondary">{t('prices.priciestTitle')}</span>
+              <div className="bg-secondary/5 border border-secondary/30 rounded-sm">
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="material-symbols-outlined text-secondary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
+                    <span className="font-label text-[11px] font-semibold uppercase tracking-wider text-secondary">{t('prices.priciestTitle')}</span>
+                  </div>
+                  <p className="font-display font-bold text-lg text-secondary">{priciest.name}</p>
+                  <p className="font-display font-bold text-2xl text-secondary mt-1">€{priciest.margheritaPrice?.toFixed(2)}</p>
+                  <p className="font-label text-xs text-secondary/60 mt-0.5">{priciest.cityName}</p>
                 </div>
-                <p className="font-headline font-black text-lg text-secondary">{priciest.name}</p>
-                <p className="font-headline font-bold text-2xl text-secondary">€{priciest.margheritaPrice?.toFixed(2)}</p>
-                <p className="text-xs font-label text-secondary/70 uppercase">{priciest.cityName}</p>
               </div>
             )}
           </section>
-          <ExploreTable sorted={sorted} stats={stats} page={page} setPage={setPage} t={t} />
+          <ExploreTable sorted={sorted} stats={stats} page={page} setPage={setPage} t={t} onSelect={(pz) => setSelected(pz)} />
         </div>
       )}
 
@@ -348,71 +375,71 @@ export default function Explore() {
           selectedCity={selectedCity}
           setSelectedCity={setSelectedCity}
           t={t}
+          onSelect={(pz) => setSelected(pz)}
         />
       )}
 
-      {/* Modale Dettagli */}
       {selected && createPortal(
         <div
-          className="fixed inset-0 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999 }}
+          className="fixed inset-0 flex items-center justify-center p-4 z-[9999]"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}
         >
-          <div className="bg-background border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-lg max-h-[80vh] overflow-y-auto">
-            <div className="bg-primary text-on-primary p-4 flex items-center justify-between">
-              <h2 className="font-headline font-black text-xl uppercase">{t('prices.detailTitle')}</h2>
-              <button onClick={() => setSelected(null)} className="w-8 h-8 flex items-center justify-center border-2 border-on-primary hover:bg-secondary transition-colors">
-                <span className="material-symbols-outlined">close</span>
+          <div className="bg-surface border border-outline-variant rounded-sm w-full max-w-lg max-h-[80vh] overflow-y-auto animate-scale-in shadow-xl">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-outline-variant">
+              <h2 className="text-xl font-display font-bold text-primary">{t('prices.detailTitle')}</h2>
+              <button onClick={() => setSelected(null)} className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-surface-variant transition-colors text-on-surface-variant/60">
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="border-b-2 border-primary pb-3">
-                <h3 className="text-2xl font-headline font-black text-primary">{selected.name}</h3>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="bg-primary text-on-primary font-label font-bold uppercase text-xs py-1 px-2">
+            <div className="p-6 space-y-5">
+              <div className="border-b border-outline-variant pb-4">
+                <h3 className="text-2xl font-display font-bold text-primary">{selected.name}</h3>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="bg-primary/10 text-primary font-label font-semibold text-xs px-2.5 py-1 rounded-sm">
                     {t(`common.${selected.category === 'wood-fired' ? 'woodFired' : selected.category}`)}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="font-bold">{selected.rating}</span>
+                  <span className="flex items-center gap-1 text-sm">
+                    <span className="material-symbols-outlined text-secondary text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                    <span className="font-semibold text-on-surface">{selected.rating}</span>
                   </span>
                 </div>
               </div>
               {selected.description && (
                 <div>
-                  <div className="text-xs font-black font-headline uppercase text-on-surface-variant mb-1">{t('prices.description')}</div>
-                  <p className="font-body text-sm text-primary">{lang === 'it' ? (selected.descriptionIt || selected.description) : selected.description}</p>
+                  <div className="font-label text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60 mb-1">{t('prices.description')}</div>
+                  <p className="font-body text-sm text-on-surface leading-relaxed">{lang === 'it' ? (selected.descriptionIt || selected.description) : selected.description}</p>
                 </div>
               )}
-              <div className="bg-surface-variant border-2 border-primary p-3">
-                <div className="text-xs font-black font-headline uppercase text-on-surface-variant mb-1">{t('prices.address')}</div>
-                <div className="font-body font-bold text-primary">{selected.address || '—'}</div>
+              <div className="bg-surface-variant/50 border border-outline-variant rounded-sm p-4">
+                <div className="font-label text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60 mb-1">{t('prices.address')}</div>
+                <div className="font-body font-medium text-on-surface">{selected.address || '—'}</div>
               </div>
-              <div className="bg-primary-container border-4 border-primary p-4">
-                <div className="text-xs font-black font-headline uppercase text-primary mb-1">🍕 {t('prices.margherita')}</div>
-                <div className="text-3xl font-black font-headline text-primary">€{selected.margheritaPrice?.toFixed(2)}</div>
+              <div className="bg-primary/5 border border-primary/30 rounded-sm p-5">
+                <div className="font-label text-[11px] font-semibold uppercase tracking-wider text-primary/70 mb-1">{t('prices.margherita')}</div>
+                <div className="text-3xl font-display font-bold text-primary">€{selected.margheritaPrice?.toFixed(2)}</div>
               </div>
 
               <ExplorePriceReport selected={selected} t={t} />
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 {selected.address && (
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.name + ' ' + selected.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-primary text-on-primary font-label font-bold uppercase text-sm py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2 bg-primary text-on-primary font-label font-medium text-sm py-2.5 px-5 rounded-sm hover:opacity-90 transition-opacity"
                   >
-                    <span className="material-symbols-outlined">map</span>
-                    Maps
+                    <span className="material-symbols-outlined text-lg">map</span>
+                    {t('explore.maps')}
                   </a>
                 )}
                 <button
                   onClick={() => setSelected(null)}
-                  className="flex items-center gap-2 bg-background text-primary font-label font-bold uppercase text-sm py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors"
+                  className="flex items-center gap-2 bg-surface text-on-surface-variant/70 font-label font-medium text-sm py-2.5 px-5 border border-outline-variant rounded-sm hover:bg-surface-variant transition-colors"
                 >
-                  <span className="material-symbols-outlined">close</span>
-                  Chiudi
+                  <span className="material-symbols-outlined text-lg">close</span>
+                  {t('common.close')}
                 </button>
               </div>
             </div>
@@ -421,30 +448,29 @@ export default function Explore() {
         document.body
       )}
 
-      {/* Modale Segnala Prezzo */}
       {reportPz && createPortal(
         <div
-          className="fixed inset-0 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999 }}
+          className="fixed inset-0 flex items-center justify-center p-4 z-[9999]"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setReportPz(null); }}
         >
-          <div className="bg-background border-4 border-secondary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="bg-secondary text-on-secondary p-3 flex items-center justify-between">
-              <h2 className="font-headline font-black text-base uppercase flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">edit_note</span>
-                Segnala Prezzo
+          <div className="bg-surface border border-outline-variant rounded-sm w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in shadow-xl">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-outline-variant">
+              <h2 className="text-lg font-display font-bold text-primary flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary/60">edit_note</span>
+                {t('explore.reportPrice')}
               </h2>
-              <button onClick={() => setReportPz(null)} className="w-7 h-7 flex items-center justify-center border-2 border-on-secondary hover:bg-secondary-container transition-colors">
-                <span className="material-symbols-outlined text-sm">close</span>
+              <button onClick={() => setReportPz(null)} className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-surface-variant transition-colors text-on-surface-variant/60">
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
-            <div className="p-4">
-              <div className="mb-3 bg-surface-variant border-2 border-primary p-3">
-                <h3 className="font-headline font-bold text-lg text-primary">{reportPz.name}</h3>
-                <p className="font-body text-xs text-on-surface-variant">{reportPz.address}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="font-label font-bold text-lg text-primary">€{reportPz.margheritaPrice?.toFixed(2)}</span>
-                  <span className="text-xs text-on-surface-variant">(attuale)</span>
+            <div className="p-6">
+              <div className="mb-4 bg-surface-variant/50 border border-outline-variant rounded-sm p-4">
+                <h3 className="font-display font-bold text-lg text-primary">{reportPz.name}</h3>
+                <p className="font-body text-xs text-on-surface-variant/70 mt-0.5">{reportPz.address}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="font-display font-bold text-xl text-primary">€{reportPz.margheritaPrice?.toFixed(2)}</span>
+                  <span className="font-label text-xs text-on-surface-variant/50">{t('explore.currentLabel')}</span>
                 </div>
               </div>
               <PriceProposalForm

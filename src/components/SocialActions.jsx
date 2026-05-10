@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function SocialActions({ fires, onCommentClick }) {
+export default function SocialActions({ fires, onCommentClick, t }) {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likes, setLikes] = useState(parseInt(fires?.replace('K', '000')) || 0);
@@ -28,40 +28,40 @@ export default function SocialActions({ fires, onCommentClick }) {
   };
 
   return (
-    <div className="flex items-center gap-1 sm:gap-4 border-t-2 border-primary/10 pt-4 mt-6">
-      <div className="flex items-center bg-primary/5 p-1 rounded-full border border-primary/5 backdrop-blur-sm">
+    <div className="flex items-center gap-2 border-t border-outline-variant pt-4 mt-5">
+      <div className="flex items-center bg-surface-variant border border-outline-variant rounded-sm overflow-hidden">
         <button 
           onClick={handleLike}
-          className={`group flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 transform active:scale-90 ${isLiked ? 'bg-secondary text-on-secondary shadow-lg shadow-secondary/20' : 'hover:bg-primary/5 text-primary/60 hover:text-primary'}`}
+          className={`group flex items-center gap-1.5 px-3 py-1.5 transition-colors duration-150 border-r border-outline-variant ${isLiked ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-surface hover:text-primary'}`}
         >
-          <span className={`material-symbols-outlined text-[20px] transition-transform duration-300 group-hover:scale-125 ${isLiked ? 'fill-1' : ''}`} style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>
+          <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>
             local_fire_department
           </span>
-          <span className="font-label font-bold text-sm tracking-tighter">{formatLikes(likes)}</span>
+          <span className="font-label font-semibold text-xs">{formatLikes(likes)}</span>
         </button>
 
         <button 
           onClick={onCommentClick}
-          className="group flex items-center gap-2 px-4 py-2 rounded-full text-primary/60 hover:text-tertiary hover:bg-tertiary/5 transition-all duration-300 transform active:scale-90"
+          className="group flex items-center gap-1.5 px-3 py-1.5 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150 border-r border-outline-variant"
         >
-          <span className="material-symbols-outlined text-[20px] transition-transform duration-300 group-hover:rotate-12">chat_bubble</span>
-          <span className="font-label font-bold text-sm tracking-tighter uppercase hidden sm:inline">Comments</span>
+          <span className="material-symbols-outlined text-lg">chat_bubble</span>
+          <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.comments') || 'Comments'}</span>
         </button>
 
         <button 
           onClick={handleShare}
-          className="group flex items-center gap-2 px-4 py-2 rounded-full text-primary/60 hover:text-primary hover:bg-primary/5 transition-all duration-300 transform active:scale-90"
+          className="group flex items-center gap-1.5 px-3 py-1.5 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150"
         >
-          <span className="material-symbols-outlined text-[20px] transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1">share</span>
-          <span className="font-label font-bold text-sm tracking-tighter uppercase hidden sm:inline">Share</span>
+          <span className="material-symbols-outlined text-lg">share</span>
+          <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.share') || 'Share'}</span>
         </button>
       </div>
 
       <button 
         onClick={() => setIsSaved(!isSaved)}
-        className={`ml-auto flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 transform active:scale-90 border border-primary/10 ${isSaved ? 'bg-tertiary text-on-tertiary shadow-lg shadow-tertiary/20' : 'bg-surface hover:bg-tertiary/5 text-primary/40 hover:text-tertiary hover:border-tertiary/30'}`}
+        className={`ml-auto flex items-center justify-center w-9 h-9 border border-outline-variant rounded-sm transition-colors duration-150 ${isSaved ? 'bg-tertiary/10 text-tertiary border-tertiary/30' : 'bg-surface text-on-surface-variant hover:bg-surface-variant'}`}
       >
-        <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}>
+        <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}>
           bookmark
         </span>
       </button>

@@ -1,63 +1,36 @@
 import { useI18n } from '../i18n/I18nContext';
 
-function PizzaSpinner() {
-  return (
-    <svg
-      width="64"
-      height="64"
-      viewBox="0 0 64 64"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ animation: 'pizza-spin 1.2s linear infinite', display: 'block' }}
-    >
-      {/* Crust / outer ring */}
-      <circle cx="32" cy="32" r="30" fill="#C2410C" />
-      {/* Sauce */}
-      <circle cx="32" cy="32" r="24" fill="#EA580C" />
-      {/* Cheese */}
-      <circle cx="32" cy="32" r="18" fill="#FCD34D" />
-      {/* Slice dividers */}
-      <line x1="32" y1="2" x2="32" y2="62" stroke="#C2410C" strokeWidth="2" />
-      <line x1="2" y1="32" x2="62" y2="32" stroke="#C2410C" strokeWidth="2" />
-      <line x1="9" y1="9" x2="55" y2="55" stroke="#C2410C" strokeWidth="2" />
-      <line x1="55" y1="9" x2="9" y2="55" stroke="#C2410C" strokeWidth="2" />
-      {/* Toppings — small circles */}
-      <circle cx="32" cy="20" r="3" fill="#991B1B" />
-      <circle cx="20" cy="38" r="2.5" fill="#991B1B" />
-      <circle cx="44" cy="38" r="2.5" fill="#991B1B" />
-      <circle cx="32" cy="44" r="2" fill="#16A34A" />
-      <circle cx="24" cy="26" r="2" fill="#16A34A" />
-    </svg>
-  );
-}
-
 export default function LoadingSpinner({ fullScreen = false }) {
   const { t } = useI18n();
+  const container = fullScreen
+    ? 'min-h-screen flex items-center justify-center bg-background'
+    : 'flex items-center justify-center py-12';
 
-  const inner = (
-    <div className="bg-primary-container border-4 border-primary p-8 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] flex flex-col items-center">
-      <style>{`
-        @keyframes pizza-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-      <PizzaSpinner />
-      <p className="font-headline font-black uppercase mt-4 text-xl tracking-tight">
-        {t('common.loading')}
-      </p>
-      <p className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">
-        🍕 Caricamento Margherita...
-      </p>
+  return (
+    <div className={container}>
+      <div className="flex flex-col items-center gap-5">
+        <div className="relative w-16 h-16">
+          <svg className="animate-pizza-spin w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="45" fill="#C84C09" stroke="#C84C09" strokeWidth="2" />
+            <circle cx="50" cy="50" r="35" fill="#DC2626" stroke="#C84C09" strokeWidth="1.5" />
+            <circle cx="50" cy="50" r="30" fill="#FBBF24" stroke="#C84C09" strokeWidth="1.5" />
+            <line x1="50" y1="20" x2="50" y2="80" stroke="#C84C09" strokeWidth="1.5" />
+            <line x1="20" y1="50" x2="80" y2="50" stroke="#C84C09" strokeWidth="1.5" />
+            <line x1="28.8" y1="28.8" x2="71.2" y2="71.2" stroke="#C84C09" strokeWidth="1.5" />
+            <line x1="71.2" y1="28.8" x2="28.8" y2="71.2" stroke="#C84C09" strokeWidth="1.5" />
+            <circle cx="40" cy="40" r="5" fill="#A03030" stroke="#C84C09" strokeWidth="1" />
+            <circle cx="60" cy="40" r="5" fill="#A03030" stroke="#C84C09" strokeWidth="1" />
+            <circle cx="50" cy="60" r="5" fill="#A03030" stroke="#C84C09" strokeWidth="1" />
+            <circle cx="35" cy="55" r="4" fill="#5C7A3E" stroke="#C84C09" strokeWidth="1" />
+            <circle cx="65" cy="55" r="4" fill="#5C7A3E" stroke="#C84C09" strokeWidth="1" />
+          </svg>
+        </div>
+        <div className="text-center">
+          <p className="font-label font-medium text-sm text-primary/60 animate-pulse-soft">
+            {t('loading.margherita')}
+          </p>
+        </div>
+      </div>
     </div>
   );
-
-  if (fullScreen) {
-    return (
-      <div className="p-6 md:p-12 flex items-center justify-center min-h-[60vh]">
-        {inner}
-      </div>
-    );
-  }
-
-  return inner;
 }

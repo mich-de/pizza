@@ -7,6 +7,7 @@ const PUBLIC_ROUTES = [
   '/api/data/prices',
   '/api/comments',
   '/api/comments/captcha',
+  '/api/feed/posts',
   '/api/auth/login',
   '/api/auth/refresh',
   '/api/auth/2fa/verify-login',
@@ -18,7 +19,7 @@ function isPublicRoute(path) {
 }
 
 export function authMiddleware(req, res, next) {
-  if (isPublicRoute(req.path)) return next();
+  if (!req.path.startsWith('/api') || isPublicRoute(req.path)) return next();
 
   const token = req.signedCookies?.accessToken || req.cookies?.accessToken;
   if (!token) return res.status(401).json({ error: 'Non autorizzato' });

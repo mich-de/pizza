@@ -170,7 +170,7 @@ export default function Prices() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Errore salvataggio');
+        throw new Error(data.error || t('common.saveError'));
       }
 
       setRows((prev) =>
@@ -200,12 +200,12 @@ export default function Prices() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Errore eliminazione');
+        throw new Error(data.error || t('common.error'));
       }
 
       setRows((prev) => prev.filter((r) => r.pizzeriaId !== pizzeriaId));
       setDeleteId(null);
-      showToast(t('admin.toastRowDeleted') || 'Prezzo eliminato');
+      showToast(t('admin.toastRowDeleted'));
     } catch (err) {
       if (err.message === 'SESSION_EXPIRED') {
         navigate('/login');
@@ -275,7 +275,7 @@ export default function Prices() {
 
       <div className="flex items-center gap-4 mb-6">
         <span className="font-headline font-bold uppercase text-sm bg-secondary text-on-secondary px-3 py-1 border-2 border-primary">
-          {allData.length} {allData.length === 1 ? 'pizzeria' : 'pizzerie'}
+          {allData.length} {allData.length === 1 ? t('prices.pizzeriaSingular') : t('prices.pizzeriaPlural')}
         </span>
         <span className="font-headline font-bold uppercase text-sm text-on-surface-variant">
           {cities.length - 1} {t('nav.network')}
@@ -285,7 +285,7 @@ export default function Prices() {
         </span>
         {editMode && (
           <span className="font-headline font-bold uppercase text-sm bg-primary-container text-primary px-3 py-1 border-2 border-primary">
-            MODIFICA
+            {t('prices.editModeBadge')}
           </span>
         )}
       </div>
@@ -424,11 +424,11 @@ export default function Prices() {
           <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
             <div className="p-6">
               <h2 className="text-xl font-headline font-black uppercase text-primary mb-4">
-                Eliminare il prezzo per {rows.find(r => r.pizzeriaId === deleteId)?.name}?
+                {t('prices.deleteConfirmPrice', { name: rows.find(r => r.pizzeriaId === deleteId)?.name })}
               </h2>
               <div className="flex gap-3 justify-end">
-                <button onClick={() => setDeleteId(null)} className="bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-sm">Annulla</button>
-                <button onClick={() => deletePrice(deleteId)} className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-sm">Elimina</button>
+                <button onClick={() => setDeleteId(null)} className="bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-sm">{t('admin.cancel')}</button>
+                <button onClick={() => deletePrice(deleteId)} className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-sm">{t('common.delete')}</button>
               </div>
             </div>
           </div>
