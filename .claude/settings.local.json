@@ -1,0 +1,12 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8080",
+    "ANTHROPIC_API_KEY": "sk-l75y2DE0GfEHONaJbOvzyDcz0RTmxx5oUb4IQ297ujvoEuI2uXzk7UjpEv8twkTr",
+    "ANTHROPIC_MODEL": "claude-3-5-sonnet-20241022"
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch"
+    ]
+  }
+}

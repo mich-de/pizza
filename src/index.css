@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1A1612;
+  --color-on-primary: #F7F3ED;
+  --color-primary-container: #EAE3D8;
+  --color-on-primary-container: #1A1612;
+  --color-primary-fixed: #DED8CC;
+  --color-primary-fixed-dim: #8E8676;
+  --color-on-primary-fixed: #1A1612;
+  --color-on-primary-fixed-variant: #F7F3ED;
+
+  --color-secondary: #C2410C;
+  --color-on-secondary: #FFFFFF;
+  --color-secondary-container: #FFE8DC;
+  --color-on-secondary-container: #1A1612;
+  --color-secondary-fixed: #FDBA74;
+  --color-secondary-fixed-dim: #9A3412;
+  --color-on-secondary-fixed: #FFFFFF;
+  --color-on-secondary-fixed-variant: #F7F3ED;
+
+  --color-tertiary: #047857;
+  --color-on-tertiary: #FFFFFF;
+  --color-tertiary-container: #CCFBEF;
+  --color-on-tertiary-container: #1A1612;
+  --color-tertiary-fixed: #6EE7B7;
+  --color-tertiary-fixed-dim: #065F46;
+  --color-on-tertiary-fixed: #FFFFFF;
+  --color-on-tertiary-fixed-variant: #F7F3ED;
+
+  --color-background: #FAF7F2;
+  --color-on-background: #1A1612;
+  --color-surface: #FFFFFF;
+  --color-on-surface: #1A1612;
+  --color-surface-variant: #F0EDE6;
+  --color-on-surface-variant: #78716C;
+  --color-surface-bright: #FFFFFF;
+  --color-surface-dim: #E8E2D8;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F8F5F0;
+  --color-surface-container: #F3F0EA;
+  --color-surface-container-high: #EDE9E2;
+  --color-surface-container-highest: #E8E2D8;
+  --color-surface-tint: #C2410C;
+  --color-outline: #1A1612;
+  --color-outline-variant: #D6D3CC;
+  --color-inverse-surface: #1A1612;
+  --color-inverse-on-surface: #FAF7F2;
+  --color-inverse-primary: #EAE3D8;
+
+  --color-error: #991B1B;
+  --color-on-error: #FFFFFF;
+  --color-error-container: #FEE2E2;
+  --color-on-error-container: #7F1D1D;
+
+  --font-headline: 'Space Grotesk', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-label: 'Space Grotesk', sans-serif;
+  --radius-default: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-full: 0px;
+}
+
+* {
+  border-radius: 0 !important;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] {
+  --color-background: #0E0C0A;
+  --color-on-background: #E8E2D8;
+  --color-primary: #EDE8E0;
+  --color-on-primary: #0E0C0A;
+  --color-primary-container: #2A2520;
+  --color-on-primary-container: #E8E2D8;
+  --color-primary-fixed: #DED8CC;
+  --color-primary-fixed-dim: #9A907E;
+  --color-on-primary-fixed: #0E0C0A;
+  --color-on-primary-fixed-variant: #E8E2D8;
+  --color-secondary: #EA580C;
+  --color-on-secondary: #0E0C0A;
+  --color-secondary-container: #431808;
+  --color-on-secondary-container: #FDBA74;
+  --color-secondary-fixed: #FDBA74;
+  --color-secondary-fixed-dim: #C2410C;
+  --color-on-secondary-fixed: #0E0C0A;
+  --color-on-secondary-fixed-variant: #E8E2D8;
+  --color-tertiary: #34D399;
+  --color-on-tertiary: #0E0C0A;
+  --color-tertiary-container: #064E3B;
+  --color-on-tertiary-container: #6EE7B7;
+  --color-tertiary-fixed: #6EE7B7;
+  --color-tertiary-fixed-dim: #059669;
+  --color-on-tertiary-fixed: #0E0C0A;
+  --color-on-tertiary-fixed-variant: #E8E2D8;
+  --color-surface: #181512;
+  --color-on-surface: #E8E2D8;
+  --color-surface-variant: #2A2520;
+  --color-on-surface-variant: #9A907E;
+  --color-surface-bright: #2A2520;
+  --color-surface-container: #110F0D;
+  --color-surface-container-low: #1E1B18;
+  --color-surface-container-high: #252018;
+  --color-surface-container-highest: #2A2520;
+  --color-surface-dim: #0E0C0A;
+  --color-surface-tint: #EA580C;
+  --color-error: #F87171;
+  --color-on-error: #0E0C0A;
+  --color-error-container: #3D0F0F;
+  --color-on-error-container: #FCA5A5;
+  --color-outline: #E8E2D8;
+  --color-outline-variant: #3A3530;
+  --color-inverse-surface: #E8E2D8;
+  --color-inverse-on-surface: #0E0C0A;
+  --color-inverse-primary: #2A2520;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+@keyframes subtle-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pizza-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: var(--color-primary); }
+  50% { border-color: var(--color-secondary); }
+}
+
+/* Page-level fade-in applied to main route content */
+main > * {
+  animation: subtle-fade 0.25s ease both;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-secondary) 30%, transparent);
+}

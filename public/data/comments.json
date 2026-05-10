@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "postId": "#001",
+    "author": "LucaR",
+    "content": "La migliore pizza di Sorrento! Crosta perfetta e mozzarella filante.",
+    "createdAt": "2026-04-28T14:30:00.000Z",
+    "approved": true
+  },
+  {
+    "id": 2,
+    "postId": "#001",
+    "author": "AnnaM",
+    "content": "Concordo, il rapporto qualità-prezzo è imbattibile.",
+    "createdAt": "2026-04-28T16:45:00.000Z",
+    "approved": true
+  },
+  {
+    "id": 3,
+    "postId": "#002",
+    "author": "PepperoniFan",
+    "content": "Quella carbonizzazione sui cupolini di pepperoni è arte pura.",
+    "createdAt": "2026-04-29T10:00:00.000Z",
+    "approved": true
+  },
+  {
+    "id": 4,
+    "postId": "pz-001",
+    "author": "gigi",
+    "content": "corretto",
+    "createdAt": "2026-05-03T17:38:08.809Z",
+    "approved": true
+  },
+  {
+    "id": 5,
+    "postId": "test",
+    "author": "test",
+    "content": "This is a test content for price proposal",
+    "createdAt": "2026-05-03T18:24:57.351Z",
+    "approved": true
+  },
+  {
+    "id": 6,
+    "postId": "pz-001",
+    "author": "madds",
+    "content": "Prezzo Margherita proposto a €10.00",
+    "createdAt": "2026-05-03T18:30:17.022Z",
+    "approved": true
+  },
+  {
+    "id": 7,
+    "postId": "pz-001",
+    "author": "sdfdf",
+    "content": "dsfsfd",
+    "createdAt": "2026-05-03T18:32:00.588Z",
+    "approved": true
+  },
+  {
+    "id": 8,
+    "postId": "pz-003",
+    "author": "michde",
+    "content": "Prezzo Margherita proposto a €10.00",
+    "createdAt": "2026-05-03T21:16:03.201Z",
+    "approved": true
+  },
+  {
+    "id": 9,
+    "postId": "pz-003",
+    "author": "michde",
+    "content": "maggio 2026",
+    "createdAt": "2026-05-03T21:25:40.355Z",
+    "approved": true
+  },
+  {
+    "id": 10,
+    "postId": "pz-162",
+    "author": "michde",
+    "content": "Prezzo Margherita proposto a €12.00",
+    "createdAt": "2026-05-03T21:33:34.727Z",
+    "approved": true
+  }
+]

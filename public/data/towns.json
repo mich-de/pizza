@@ -1,0 +1,38 @@
+[
+  {
+    "id": "massa-lubrense",
+    "name": "Massa Lubrense",
+    "region": "Penisola Sorrentina",
+    "description": "Panoramic coastal town with a rich agricultural and culinary tradition, famous for its views of Capri."
+  },
+  {
+    "id": "sorrento",
+    "name": "Sorrento",
+    "region": "Penisola Sorrentina",
+    "description": "The main hub of the peninsula, famous for its historic center, lemons, and high-end tourism."
+  },
+  {
+    "id": "sant-agnello",
+    "name": "Sant'Agnello",
+    "region": "Penisola Sorrentina",
+    "description": "A charming residential town offering some of the best sunset views and high-quality local pizzerias."
+  },
+  {
+    "id": "piano",
+    "name": "Piano di Sorrento",
+    "region": "Penisola Sorrentina",
+    "description": "A vibrant local town with a strong commercial soul and authentic, less-touristic dining options."
+  },
+  {
+    "id": "meta",
+    "name": "Meta",
+    "region": "Penisola Sorrentina",
+    "description": "Known for its long beaches and family-run restaurants that preserve the traditional flavors of the area."
+  },
+  {
+    "id": "vico-equense",
+    "name": "Vico Equense",
+    "region": "Penisola Sorrentina",
+    "description": "The northern gateway to the peninsula, birthplace of the 'Pizza a Metro' and home to dramatic cliffside vistas."
+  }
+]

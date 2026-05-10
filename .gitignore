@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Environment (NEVER commit)
+.env
+.env.*
+!.env.example
+
+# Server private data (secrets, tokens, admin accounts, audit logs)
+server/private/
+server/logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

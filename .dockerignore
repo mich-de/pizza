@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-ssr
+npm-debug.log*
+.git
+.vscode
+.idea
+.env
+!.env.example
+server/private/
+server/logs/
+*.md
+AGENTS.md
