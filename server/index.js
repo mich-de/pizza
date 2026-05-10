@@ -1582,7 +1582,6 @@ if (process.env.NODE_ENV !== 'test') {
 
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  });
 }
 
 function gracefulShutdown(signal) {
