@@ -20,7 +20,8 @@
 6. [State Management & Frontend Routes](#6-state-management--frontend-routes)
 7. [Security Protocols](#7-security-protocols)
 8. [Developer Operations & Commands](#8-developer-operations--commands)
-9. [AI Reference Guide](#9-ai-reference-guide)
+9. [Deployment & GitHub Actions](#9-deployment--github-actions)
+10. [AI Reference Guide](#10-ai-reference-guide)
 
 ---
 
@@ -489,7 +490,24 @@ The project currently has **no automated tests**. Manual testing flow:
 
 ---
 
-## 9. AI Reference Guide
+## 9. Deployment & GitHub Actions
+
+### GitHub Pages (Frontend Only)
+Il progetto è configurato per il deployment automatico su GitHub Pages.
+
+1. **Build Automatico**: Ad ogni push sul branch `main`, l'Action `.github/workflows/deploy.yml` compila il progetto.
+2. **Supporto SPA**: Un file `404.html` personalizzato e uno script di redirect in `index.html` gestiscono le rotte di React Router.
+3. **Modalità Statica**: Poiché GitHub Pages non supporta backend Node.js, l'app opera in **modalità statica**, leggendo i dati delle pizzerie e dei prezzi direttamente dai file JSON pubblici.
+
+### Server Deployment (Full Stack)
+Per far girare il backend Express (necessario per CRUD Admin, moderazione Feed e 2FA):
+1. **Docker**: Utilizza il file `docker-compose.yml` fornito.
+2. **Manuale**: Esegui `npm run build` e poi `npm start` su una VPS (Render, Fly.io, ecc.).
+3. **CI/CD**: Il workflow `.github/workflows/server-check.yml` verifica che il backend si avvii correttamente ad ogni push.
+
+---
+
+## 10. AI Reference Guide
 
 ### Coding Style Preferences
 
