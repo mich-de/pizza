@@ -11,12 +11,6 @@ services:
     volumes:
       - pizza-data:/app/public/data
       - server-private:/app/server/private
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     read_only: false
     tmpfs:
       - /tmp:noexec,nosuid,size=64m
