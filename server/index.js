@@ -1568,10 +1568,16 @@ if (NODE_ENV === 'production') {
 let server;
 
 if (process.env.NODE_ENV !== 'test') {
-  seedAdmin().then(() => {
-    server = app.listen(PORT, '0.0.0.0', () => {
-      logger.info(`Server attivo su http://localhost:${PORT}`);
-      logger.info(`API: http://localhost:${PORT}/api/data/stitched`);
+  seedAdmin()
+    .then(() => {
+      server = app.listen(PORT, '0.0.0.0', () => {
+        logger.info(`Server attivo su http://0.0.0.0:${PORT}`);
+        logger.info(`API: http://0.0.0.0:${PORT}/api/data/stitched`);
+      });
+    })
+    .catch(err => {
+      console.error('ERRORE FATALE ALL\'AVVIO:', err);
+      process.exit(1);
     });
 
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
