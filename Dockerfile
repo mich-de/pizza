@@ -12,7 +12,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN apk add --no-cache su-exec && addgroup -S appgroup && adduser -S appuser -G appgroup
 
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
@@ -26,11 +26,13 @@ RUN mkdir -p server/private server/logs \
   && echo '[]' > server/private/admins.json \
   && chown -R appuser:appgroup /app
 
-USER appuser
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENV NODE_ENV=production
 ENV PORT=3001
 
 EXPOSE 3001
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server/index.js"]
