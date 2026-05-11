@@ -1556,8 +1556,9 @@ app.get('/health', (req, res) => {
 });
 
 if (NODE_ENV === 'production') {
-  // Discovery: Express 5 (path-to-regexp v8) requires named wildcards.
-  // Using '*path' as a secure catch-all for the frontend SPA.
+  if (!existsSync(join(root, 'dist', 'index.html'))) {
+    logger.error('dist/index.html not found. Run npm run build before starting.');
+  }
   app.use(express.static(join(root, 'dist'), {
     setHeaders: (res, path) => {
       if (path.endsWith('.html')) {
@@ -1567,7 +1568,15 @@ if (NODE_ENV === 'production') {
       }
     },
   }));
-  app.get('*path', (_req, res) => { res.sendFile(join(root, 'dist', 'index.html')); });
+  app.get('*path', (_req, res) => {
+    const indexPath = join(root, 'dist', 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        logger.error('SPA fallback failed: ' + indexPath);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+  });
 
 }
 
