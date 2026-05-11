@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul 2>&1
 title PizzaRadar Sorrentum
 setlocal enabledelayedexpansion
 
@@ -13,7 +12,7 @@ if not exist ".env" (
     echo.
 )
 
-echo Pulizia porte in uso (5173, 5174, 5175, 3000, 3001)...
+echo Pulizia porte in uso (5173-5175, 3000-3001)...
 for %%p in (5173 5174 5175 3000 3001) do (
     for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%%p "') do (
         taskkill /PID %%a /F >nul 2>&1 && echo   Porta %%p liberata
@@ -42,14 +41,14 @@ start "PizzaRadar-Frontend" cmd /c "title PizzaRadar Frontend && npm run dev"
 timeout /t 2 /nobreak >nul
 
 echo.
-echo ┌─────────────────────────────────────────────┐
-echo │ Frontend:  http://localhost:5173            │
-echo │ API:       http://localhost:3001/api/...    │
-echo │ Health:    http://localhost:3001/health     │
-echo │ Admin:     http://localhost:3001/login      │
-echo │ Username:  peninsula-ovserver               │
-echo │ Password:  PizzaAdmin2024!                  │
-echo └─────────────────────────────────────────────┘
+echo =============================================
+echo   Frontend:  http://localhost:5173
+echo   API:       http://localhost:3001/api/...
+echo   Health:    http://localhost:3001/health
+echo   Admin:     http://localhost:3001/login
+echo   Username:  peninsula-ovserver
+echo   Password:  PizzaAdmin2024!
+echo =============================================
 echo.
 echo Premi un tasto per fermare i server...
 pause >nul
