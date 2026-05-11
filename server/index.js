@@ -1551,6 +1551,10 @@ app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), async (req, re
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 if (NODE_ENV === 'production') {
   // Discovery: Express 5 (path-to-regexp v8) requires named wildcards.
   // Using '*path' as a secure catch-all for the frontend SPA.
