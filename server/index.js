@@ -494,11 +494,27 @@ app.get('/health', (_req, res) => {
 
 app.get('/api/csrf-token', csrfToken);
 
-// SPA Fallback - Keep it AFTER static files but BEFORE auth/csrf for non-API routes
+// 1. ASSET PROTECTION: Prevent fall-through to auth/csrf for missing assets
+app.use((req, res, next) => {
+  if (req.path.startsWith('/assets/') || req.path.includes('.')) {
+    // If we are here, express.static didn't find the file.
+    // Log it and return 404 immediately to avoid 500 from auth/csrf
+    if (NODE_ENV === 'production' && !req.path.startsWith('/api/')) {
+       logger.warn(`Asset not found on disk: ${req.path}`, { 
+         requestedPath: req.path,
+         resolvedPath: join(root, 'dist', req.path) 
+       });
+       return res.status(404).send('Asset not found');
+    }
+  }
+  next();
+});
+
+// SPA Fallback - Keep it AFTER static files and asset protection but BEFORE auth/csrf
 if (NODE_ENV === 'production') {
   const distIndex = join(root, 'dist', 'index.html');
   app.get(/^(?!\/api).*$/, (req, res, next) => {
-    // DO NOT serve index.html for missing assets or files with extensions
+    // If it's a path that should be a file, don't serve index.html
     if (req.path.includes('.') || req.path.startsWith('/assets/')) {
       return next();
     }
