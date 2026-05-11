@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -18,6 +18,8 @@ function readTokens() {
 }
 
 function saveTokens(tokens) {
+  const dir = dirname(TOKENS_PATH);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(TOKENS_PATH, JSON.stringify(tokens, null, 2), 'utf-8');
 }
 

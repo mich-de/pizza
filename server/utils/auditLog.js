@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -17,6 +17,8 @@ function readLog() {
 }
 
 function saveLog(log) {
+  const dir = dirname(AUDIT_LOG_PATH);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(AUDIT_LOG_PATH, JSON.stringify(log, null, 2), 'utf-8');
 }
 
