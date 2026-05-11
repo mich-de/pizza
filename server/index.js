@@ -4,7 +4,7 @@ import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger, format, transports } from 'winston';
@@ -273,6 +273,8 @@ function readJSON(filePath, fallback = []) {
 }
 
 function atomicWriteJSON(filePath, data) {
+  const dir = dirname(filePath);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const tmpPath = `${filePath}.tmp.${Date.now()}.${process.pid}`;
   writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
   renameSync(tmpPath, filePath);
