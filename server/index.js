@@ -458,19 +458,31 @@ if (NODE_ENV === 'production') {
   const distDir = join(root, 'dist');
   const distIndex = join(distDir, 'index.html');
   
+  // Startup Diagnostics
   if (existsSync(distDir)) {
-    app.use(express.static(distDir, {
-      setHeaders: (res, path) => {
-        if (path.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-cache');
-        } else {
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        }
-      },
-    }));
+    try {
+      const files = readdirSync(distDir);
+      logger.info('Production: dist/ directory found', { files });
+      if (existsSync(join(distDir, 'assets'))) {
+        const assets = readdirSync(join(distDir, 'assets')).slice(0, 5);
+        logger.info('Production: dist/assets/ sample', { assets });
+      }
+    } catch (err) {
+      logger.error('Production: Error reading dist/ directory', { error: err.message });
+    }
   } else {
-    logger.warn('Production: dist/ directory not found');
+    logger.warn('Production: dist/ directory NOT found at ' + distDir);
   }
+
+  app.use(express.static(distDir, {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  }));
 }
 
 app.use(express.json({ limit: '1mb' }));
@@ -485,12 +497,19 @@ app.get('/api/csrf-token', csrfToken);
 // SPA Fallback - Keep it AFTER static files but BEFORE auth/csrf for non-API routes
 if (NODE_ENV === 'production') {
   const distIndex = join(root, 'dist', 'index.html');
-  app.get(/^(?!\/api).*$/, (_req, res, next) => {
+  app.get(/^(?!\/api).*$/, (req, res, next) => {
+    // DO NOT serve index.html for missing assets or files with extensions
+    if (req.path.includes('.') || req.path.startsWith('/assets/')) {
+      return next();
+    }
+
     if (existsSync(distIndex)) {
       res.sendFile(distIndex, (err) => {
         if (err) {
           logger.error('SPA fallback failed', { path: distIndex, error: err.message });
-          res.status(500).json({ error: 'Internal server error' });
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Internal server error' });
+          }
         }
       });
     } else {
