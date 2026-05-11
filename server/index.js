@@ -4,7 +4,7 @@ import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger, format, transports } from 'winston';
@@ -1556,10 +1556,15 @@ app.get('/health', (req, res) => {
 });
 
 if (NODE_ENV === 'production') {
-  if (!existsSync(join(root, 'dist', 'index.html'))) {
+  const distDir = join(root, 'dist');
+  const distIndex = join(distDir, 'index.html');
+  if (!existsSync(distIndex)) {
     logger.error('dist/index.html not found. Run npm run build before starting.');
+  } else {
+    const assetFiles = readdirSync(distDir).filter(f => f.endsWith('.js') || f.endsWith('.css'));
+    logger.info(`dist/ ready: ${assetFiles.length} asset files`);
   }
-  app.use(express.static(join(root, 'dist'), {
+  app.use(express.static(distDir, {
     setHeaders: (res, path) => {
       if (path.endsWith('.html')) {
         res.setHeader('Cache-Control', 'no-cache');
@@ -1568,11 +1573,16 @@ if (NODE_ENV === 'production') {
       }
     },
   }));
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/assets/') && !existsSync(join(distDir, req.path.slice(1)))) {
+      logger.warn(`Asset not found: ${req.path} — rebuild dist/ needed`);
+    }
+    next();
+  });
   app.get('*path', (_req, res) => {
-    const indexPath = join(root, 'dist', 'index.html');
-    res.sendFile(indexPath, (err) => {
+    res.sendFile(distIndex, (err) => {
       if (err) {
-        logger.error('SPA fallback failed: ' + indexPath);
+        logger.error('SPA fallback failed: ' + distIndex);
         res.status(500).json({ error: 'Internal server error' });
       }
     });
