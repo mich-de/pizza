@@ -22,7 +22,7 @@ import { z } from 'zod';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const root = join(__dirname, '..');
+const root = process.cwd();
 const PRIVATE_DIR = join(__dirname, 'private');
 
 const app = express();
@@ -453,25 +453,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files EARLY, before auth/csrf middleware
-if (NODE_ENV === 'production') {
+// Serve static files EARLY, before auth/csrf middleware (unconditional for container reliability)
+{
   const distDir = join(root, 'dist');
-  const distIndex = join(distDir, 'index.html');
-  
+
   // Startup Diagnostics
   if (existsSync(distDir)) {
     try {
       const files = readdirSync(distDir);
-      logger.info('Production: dist/ directory found', { files });
+      logger.info('dist/ directory found', { files, root, cwd: process.cwd() });
       if (existsSync(join(distDir, 'assets'))) {
         const assets = readdirSync(join(distDir, 'assets')).slice(0, 5);
-        logger.info('Production: dist/assets/ sample', { assets });
+        logger.info('dist/assets/ sample', { assets });
       }
     } catch (err) {
-      logger.error('Production: Error reading dist/ directory', { error: err.message });
+      logger.error('Error reading dist/ directory', { error: err.message });
     }
   } else {
-    logger.warn('Production: dist/ directory NOT found at ' + distDir);
+    logger.warn('dist/ directory NOT found at ' + distDir + ' (root=' + root + ', cwd=' + process.cwd() + ')');
   }
 
   app.use(express.static(distDir, {
@@ -494,27 +493,24 @@ app.get('/health', (_req, res) => {
 
 app.get('/api/csrf-token', csrfToken);
 
-// 1. ASSET PROTECTION: Prevent fall-through to auth/csrf for missing assets
+// ASSET PROTECTION: Prevent fall-through to auth/csrf for missing assets
 app.use((req, res, next) => {
   if (req.path.startsWith('/assets/') || req.path.includes('.')) {
-    // If we are here, express.static didn't find the file.
-    // Log it and return 404 immediately to avoid 500 from auth/csrf
-    if (NODE_ENV === 'production' && !req.path.startsWith('/api/')) {
-       logger.warn(`Asset not found on disk: ${req.path}`, { 
-         requestedPath: req.path,
-         resolvedPath: join(root, 'dist', req.path) 
-       });
-       return res.status(404).send('Asset not found');
+    if (!req.path.startsWith('/api/')) {
+      logger.warn('Asset not found on disk', {
+        requestedPath: req.path,
+        resolvedPath: join(root, 'dist', req.path),
+      });
+      return res.status(404).type('text/plain').send('Asset not found');
     }
   }
   next();
 });
 
-// SPA Fallback - Keep it AFTER static files and asset protection but BEFORE auth/csrf
-if (NODE_ENV === 'production') {
+// SPA Fallback — AFTER static files + asset protection, BEFORE auth/csrf
+{
   const distIndex = join(root, 'dist', 'index.html');
   app.get(/^(?!\/api).*$/, (req, res, next) => {
-    // If it's a path that should be a file, don't serve index.html
     if (req.path.includes('.') || req.path.startsWith('/assets/')) {
       return next();
     }
