@@ -12,10 +12,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache su-exec && addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 COPY package*.json ./
-RUN npm install --production && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
@@ -26,13 +26,14 @@ RUN mkdir -p server/private server/logs \
   && echo '[]' > server/private/admins.json \
   && chown -R appuser:appgroup /app
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER appuser
 
 ENV NODE_ENV=production
 ENV PORT=3001
 
 EXPOSE 3001
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3001/health || exit 1
+
 CMD ["node", "server/index.js"]

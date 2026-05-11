@@ -8,21 +8,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-    volumes:
-      - pizza-data:/app/public/data
-      - server-private:/app/server/private
-    read_only: false
     tmpfs:
       - /tmp:noexec,nosuid,size=64m
-      - /app/server/logs:noexec,nosuid,size=32m
-    security_opt:
-      - no-new-privileges:true
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '1.0'
-
-volumes:
-  pizza-data:
-  server-private:
