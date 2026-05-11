@@ -438,19 +438,23 @@ npm run dev
 ./launch.sh
 ```
 
-### Production
+### Coolify / Docker (Root Domain)
+
+Per far girare il sito su Coolify o in qualsiasi ambiente dove l'app è servita alla radice del dominio (es. `https://pizza.tuodominio.it`):
+
+1. **Vite Base Path**: Il progetto è ora configurato con `base: '/'` di default in `vite.config.js`.
+2. **Variabili d'Ambiente**: Su Coolify, configura le seguenti variabili:
+   - `NODE_ENV=production`
+   - `PORT=3001`
+   - `JWT_SECRET=tuo-segreto-molto-forte`
+   - `JWT_REFRESH_SECRET=altro-segreto-molto-forte`
+   - `ALLOWED_ORIGINS=https://tuo-dominio.it` (IMPORTANTE per il CORS)
+3. **Volume**: Se usi Docker Compose, assicurati che i volumi per `public/data` e `server/private` siano persistenti.
 
 ```bash
-# Build frontend
+# Build & Start manuale
 npm run build
-
-# Start production server (serves dist/ + API on :3001)
 npm start
-
-# Or with Docker:
-cp .env.example .env
-# Edit JWT_SECRET, JWT_REFRESH_SECRET, ADMIN_PASSWORD
-docker compose up -d
 ```
 
 ### Environment Variables
