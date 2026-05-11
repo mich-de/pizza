@@ -1340,6 +1340,19 @@ app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), async (req, re
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
+// Global error handler — log full stack for any uncaught error
+app.use((err, req, res, next) => {
+  logger.error('Unhandled error', {
+    method: req.method,
+    path: req.path,
+    error: err.message,
+    stack: err.stack,
+  });
+  if (!res.headersSent) {
+    res.status(500).type('text/plain').send('Internal Server Error');
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
