@@ -4,7 +4,7 @@ import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger, format, transports } from 'winston';
@@ -453,7 +453,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files EARLY, before auth/csrf middleware (unconditional for container reliability)
+// Serve static files EARLY, before auth/csrf middleware (using sendFile directly to avoid serve-static bugs)
 {
   const distDir = join(root, 'dist');
 
@@ -473,15 +473,40 @@ app.use((req, res, next) => {
     logger.warn('dist/ directory NOT found at ' + distDir + ' (root=' + root + ', cwd=' + process.cwd() + ')');
   }
 
-  app.use(express.static(distDir, {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache');
-      } else {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  // Serve static files via sendFile directly (bypass serve-static@2.x which crashes on .js)
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+
+    const fileName = req.path === '/' ? 'index.html' : req.path;
+    const filePath = join(distDir, fileName);
+
+    // Skip directories and missing files
+    if (!existsSync(filePath)) return next();
+    const stat = statSync(filePath);
+    if (!stat.isFile()) return next();
+
+    const ext = fileName.split('.').pop().toLowerCase();
+    const mime = {
+      html: 'text/html', css: 'text/css', js: 'application/javascript',
+      json: 'application/json', svg: 'image/svg+xml', png: 'image/png',
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+      webp: 'image/webp', ico: 'image/x-icon', txt: 'text/plain',
+      xml: 'application/xml', map: 'application/json',
+    };
+    const contentType = mime[ext] || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', ext === 'html' ? 'no-cache' : 'public, max-age=31536000, immutable');
+
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        logger.error('sendFile failed', { path: filePath, error: err.message, code: err.code });
+        if (!res.headersSent) {
+          res.status(500).type('text/plain').send('Internal Server Error');
+        }
       }
-    },
-  }));
+    });
+  });
 }
 
 app.use(express.json({ limit: '1mb' }));
