@@ -421,7 +421,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://frontend-cdn.perplexity.ai', 'data:'],
       connectSrc: ["'self'"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
@@ -453,6 +453,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve static files EARLY, before auth/csrf middleware
+if (NODE_ENV === 'production') {
+  const distDir = join(root, 'dist');
+  const distIndex = join(distDir, 'index.html');
+  
+  if (existsSync(distDir)) {
+    app.use(express.static(distDir, {
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache');
+        } else {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      },
+    }));
+  } else {
+    logger.warn('Production: dist/ directory not found');
+  }
+}
+
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser(JWT_SECRET));
 
@@ -462,284 +482,22 @@ app.get('/health', (_req, res) => {
 
 app.get('/api/csrf-token', csrfToken);
 
-app.post('/api/auth/login', apiRateLimit, async (req, res) => {
-  try {
-    const parsed = LoginSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: 'Campi mancanti o non validi' });
-    const { username, password } = parsed.data;
-
-    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
-
-    // Login-specific rate limiting (production only — dev can retry freely)
-app.post('/api/admin/regenerate-key', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const apiKey = randomBytes(32).toString('hex');
-    const admins = await safeReadJSON(ADMINS_PATH, []);
-    const idx = admins.findIndex(a => a.id === req.user.userId);
-    if (idx === -1) return res.status(404).json({ error: 'Utente non trovato' });
-    admins[idx].apiKey = createHmac('sha256', JWT_SECRET).update(apiKey).digest('hex');
-    await safeWriteJSON(ADMINS_PATH, admins);
-    auditLog(req.user.userId, 'regenerate_api_key', 'admin', { ip: req.ip });
-    res.json({ success: true, apiKey });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.post('/api/admin/validate-json', apiRateLimit, requireRole('admin'), async (_req, res) => {
-  try {
-    const towns = await safeReadJSON(TOWNS_PATH, []);
-    const venues = await safeReadJSON(VENUES_PATH, []);
-    const prices = await safeReadJSON(PRICES_PATH, []);
-    const errors = [];
-
-    const townIds = new Set(towns.map(t => t.id));
-    const venueIds = new Set(venues.map(v => v.id));
-
-    venues.forEach((v, i) => {
-      if (!v.id) errors.push(`Venue[${i}]: id mancante`);
-      if (!v.name) errors.push(`Venue[${i}]: name mancante`);
-      if (!v.cityId || !townIds.has(v.cityId)) errors.push(`Venue[${i}] (${v.name || '?'}): cityId "${v.cityId}" non trovato in towns`);
-    });
-
-    prices.forEach((p, i) => {
-      if (!p.pizzeriaId || !venueIds.has(p.pizzeriaId)) errors.push(`Price[${i}]: pizzeriaId "${p.pizzeriaId}" non trovato in venues`);
-      if (typeof p.margheritaPrice !== 'number' || p.margheritaPrice < 0) errors.push(`Price[${i}]: margheritaPrice non valido`);
-    });
-
-    auditLog(_req.user.userId, 'validate_json', 'admin', { ip: _req.ip });
-    res.json({ success: true, valid: errors.length === 0, errors });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.get('/api/admin/export-data', apiRateLimit, requireRole('admin'), async (_req, res) => {
-  try {
-    const towns = await safeReadJSON(TOWNS_PATH, []);
-    const venues = await safeReadJSON(VENUES_PATH, []);
-    const prices = await safeReadJSON(PRICES_PATH, []);
-    const data = { towns, venues, prices, exportedAt: new Date().toISOString() };
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', 'attachment; filename="pizza-data-export.json"');
-    res.json(data);
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.post('/api/admin/purge-cache', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    auditLog(req.user.userId, 'purge_cache', 'admin', { ip: req.ip });
-    res.json({ success: true, message: 'Cache invalidata' });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
+// SPA Fallback - Keep it AFTER static files but BEFORE auth/csrf for non-API routes
 if (NODE_ENV === 'production') {
-      const loginRL = checkLoginRateLimit(clientIp);
-      if (!loginRL.allowed) {
-        logger.warn('Login rate limit exceeded', { ip: clientIp, username });
-        return res.status(429).json({ error: `Troppi tentativi. Riprova tra ${loginRL.waitSeconds} secondi.`, retryAfter: loginRL.waitSeconds });
-      }
-    }
-
-    const admins = await safeReadJSON(ADMINS_PATH, []);
-    const admin = admins.find(a => a.username === username);
-    if (!admin) {
-      recordLoginAttempt(clientIp);
-      logger.warn('Login fallito - utente non trovato', { username, ip: clientIp });
-      return res.status(401).json({ error: 'Credenziali non valide' });
-    }
-
-    // Account lockout check
-    const lockout = checkAccountLockout(admin);
-    if (lockout.locked) {
-      logger.warn('Login bloccato - account locked', { username, ip: clientIp });
-      return res.status(423).json({ error: `Account temporaneamente bloccato. Riprova tra ${lockout.waitSeconds} secondi.`, retryAfter: lockout.waitSeconds });
-    }
-
-    const valid = await verifyPassword(password, admin.passwordHash);
-    if (!valid) {
-      recordLoginAttempt(clientIp);
-      recordFailedLogin(admin, admins);
-      logger.warn('Login fallito - password errata', { username, ip: clientIp, failedAttempts: admin.failedAttempts });
-      return res.status(401).json({ error: 'Credenziali non valide' });
-    }
-
-    // Successful auth — clear lockout counters
-    clearLoginAttempts(clientIp);
-    clearFailedLogins(admin, admins);
-
-    if (admin.twoFASecret) {
-      const tempToken = randomBytes(32).toString('hex');
-      pending2FALogins.set(tempToken, {
-        userId: admin.id,
-        username: admin.username,
-        role: admin.role,
-        createdAt: Date.now(),
+  const distIndex = join(root, 'dist', 'index.html');
+  app.get(/^(?!\/api).*$/, (_req, res, next) => {
+    if (existsSync(distIndex)) {
+      res.sendFile(distIndex, (err) => {
+        if (err) {
+          logger.error('SPA fallback failed', { path: distIndex, error: err.message });
+          res.status(500).json({ error: 'Internal server error' });
+        }
       });
-      logger.info('2FA richiesta', { userId: admin.id, username: admin.username, ip: clientIp });
-      return res.json({
-        success: true,
-        requires2FA: true,
-        tempToken,
-      });
+    } else {
+      next();
     }
-
-    const accessToken = generateAccessToken({ userId: admin.id, username: admin.username, role: admin.role });
-    const refreshTokenId = createRefreshToken(admin.id, admin.role);
-    const refreshToken = generateRefreshToken({ tokenId: refreshTokenId, userId: admin.id, role: admin.role });
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: ACCESS_EXPIRES_MS,
-      path: '/',
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: REFRESH_EXPIRES_MS,
-      path: '/',
-    });
-
-    auditLog(admin.id, 'login', 'auth', { ip: clientIp });
-    logger.info('Login riuscito', { userId: admin.id, username: admin.username, ip: clientIp });
-
-    res.json({
-      success: true,
-      user: { id: admin.id, username: admin.username, role: admin.role },
-    });
-  } catch (err) {
-    logger.error('Errore login', { error: err.message });
-    res.status(500).json({ error: prodError('Errore interno del server') });
-  }
-});
-
-app.post('/api/auth/refresh', apiRateLimit, async (req, res) => {
-  try {
-    const oldRefreshToken = req.cookies?.refreshToken;
-    if (!oldRefreshToken) return res.status(401).json({ error: 'Token mancante' });
-
-    let decoded;
-    try {
-      decoded = verifyRefreshToken(oldRefreshToken);
-    } catch {
-      res.clearCookie('accessToken', { path: '/' });
-      res.clearCookie('refreshToken', { path: '/' });
-      return res.status(401).json({ error: 'Token scaduto' });
-    }
-
-    const tokenEntry = validateRefreshToken(decoded.tokenId);
-    if (!tokenEntry) {
-      res.clearCookie('accessToken', { path: '/' });
-      res.clearCookie('refreshToken', { path: '/' });
-      return res.status(401).json({ error: 'Sessione revocata' });
-    }
-
-    revokeRefreshToken(decoded.tokenId);
-
-    const newAccessToken = generateAccessToken({ userId: tokenEntry.userId, username: tokenEntry.username || ADMIN_USERNAME, role: tokenEntry.role });
-    const newRefreshTokenId = createRefreshToken(tokenEntry.userId, tokenEntry.role);
-    const newRefreshToken = generateRefreshToken({ tokenId: newRefreshTokenId, userId: tokenEntry.userId, role: tokenEntry.role });
-
-    res.cookie('accessToken', newAccessToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: ACCESS_EXPIRES_MS,
-      path: '/',
-    });
-
-    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: REFRESH_EXPIRES_MS,
-      path: '/',
-    });
-
-    res.json({ success: true });
-  } catch (err) {
-    logger.error('Errore refresh token', { error: err.message });
-    res.clearCookie('accessToken', { path: '/' });
-    res.clearCookie('refreshToken', { path: '/' });
-    res.status(500).json({ error: prodError('Errore interno del server') });
-  }
-});
-
-app.post('/api/auth/logout', apiRateLimit, (req, res) => {
-  try {
-    const refreshToken = req.cookies?.refreshToken;
-    if (refreshToken) {
-      try {
-        const decoded = verifyRefreshToken(refreshToken);
-        revokeRefreshToken(decoded.tokenId);
-      } catch (err) {
-        logger.debug('Logout token revocation failed', { error: err.message });
-      }
-    }
-    res.clearCookie('accessToken', { path: '/' });
-    res.clearCookie('refreshToken', { path: '/' });
-    if (req.user) auditLog(req.user.userId, 'logout', 'auth', { ip: req.ip });
-    res.json({ success: true });
-  } catch {
-    res.status(500).json({ error: prodError('Errore interno del server') });
-  }
-});
-
-app.post('/api/auth/2fa/verify-login', apiRateLimit, async (req, res) => {
-  try {
-    const { tempToken, code } = req.body;
-    if (!tempToken || !code) return res.status(400).json({ error: 'Dati mancanti' });
-
-    const pending = pending2FALogins.get(tempToken);
-    if (!pending) return res.status(401).json({ error: 'Sessione scaduta' });
-
-    const admins = await safeReadJSON(ADMINS_PATH, []);
-    const admin = admins.find(a => a.id === pending.userId);
-    if (!admin || !admin.twoFASecret) {
-      pending2FALogins.delete(tempToken);
-      return res.status(401).json({ error: '2FA non configurata' });
-    }
-
-    const valid = verifyTOTP(code, admin.twoFASecret);
-    if (!valid) {
-      logger.warn('2FA fallita', { userId: admin.id, ip: req.ip });
-      return res.status(401).json({ error: 'Codice non valido' });
-    }
-
-    pending2FALogins.delete(tempToken);
-
-    const accessToken = generateAccessToken({ userId: admin.id, username: admin.username, role: admin.role });
-    const refreshTokenId = createRefreshToken(admin.id, admin.role);
-    const refreshToken = generateRefreshToken({ tokenId: refreshTokenId, userId: admin.id, role: admin.role });
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: ACCESS_EXPIRES_MS,
-      path: '/',
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: REFRESH_EXPIRES_MS,
-      path: '/',
-    });
-
-    auditLog(admin.id, 'login', 'auth', { ip: req.ip, method: '2fa' });
-    logger.info('2FA verificata - login riuscito', { userId: admin.id, username: admin.username, ip: req.ip });
-
-    res.json({
-      success: true,
-      user: { id: admin.id, username: admin.username, role: admin.role },
-    });
-  } catch (err) {
-    logger.error('Errore verifica 2FA', { error: err.message });
-    res.status(500).json({ error: prodError('Errore interno del server') });
-  }
-});
+  });
+}
 
 app.use(authMiddleware);
 app.use(csrfMiddleware);
@@ -1555,40 +1313,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-if (NODE_ENV === 'production') {
-  const distDir = join(root, 'dist');
-  const distIndex = join(distDir, 'index.html');
-  if (!existsSync(distIndex)) {
-    logger.error('dist/index.html not found. Run npm run build before starting.');
-  } else {
-    const assetFiles = readdirSync(distDir).filter(f => f.endsWith('.js') || f.endsWith('.css'));
-    logger.info(`dist/ ready: ${assetFiles.length} asset files`);
-  }
-  app.use(express.static(distDir, {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache');
-      } else {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
-    },
-  }));
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/assets/') && !existsSync(join(distDir, req.path.slice(1)))) {
-      logger.warn(`Asset not found: ${req.path} — rebuild dist/ needed`);
-    }
-    next();
-  });
-  app.get('*path', (_req, res) => {
-    res.sendFile(distIndex, (err) => {
-      if (err) {
-        logger.error('SPA fallback failed: ' + distIndex);
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-  });
-
-}
 
 let server;
 
