@@ -1,9 +1,6 @@
 services:
   pizza-radar:
-    build:
-      context: .
-      args:
-        - CACHE_BUST=${GIT_COMMIT:-unknown}
+    build: .
     container_name: pizza-radar
     restart: unless-stopped
     ports:
