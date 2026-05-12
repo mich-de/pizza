@@ -59,10 +59,11 @@ if ! kill -0 $VITE_PID 2>/dev/null; then
     exit 1
 fi
 
+PORT=$(grep -oP '^PORT=\K.*' .env 2>/dev/null || echo 3000)
 echo -e "${GREEN}Frontend:  http://localhost:5173${NC}"
-echo -e "${GREEN}API:       http://localhost:3000/api/data/stitched${NC}"
-echo -e "${GREEN}Health:    http://localhost:3000/health${NC}"
-echo -e "${GREEN}Admin:     http://localhost:3000/login${NC}"
+echo -e "${GREEN}API:       http://localhost:${PORT}/api/data/stitched${NC}"
+echo -e "${GREEN}Health:    http://localhost:${PORT}/health${NC}"
+echo -e "${GREEN}Admin:     http://localhost:${PORT}/login${NC}"
 echo -e "${YELLOW}Username:  peninsula-ovserver${NC}"
 echo -e "${YELLOW}Password:  PizzaAdmin2024!${NC}"
 echo ""

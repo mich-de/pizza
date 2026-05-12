@@ -41,6 +41,15 @@ export default [
     },
   },
   {
+    files: ['vite.config.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+      },
+    },
+  },
+  {
     files: ['**/*.test.js', '**/*.spec.js'],
     languageOptions: {
       globals: {

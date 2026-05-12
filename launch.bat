@@ -22,6 +22,9 @@ for %%p in (5173 5174 5175 3000 3001) do (
 taskkill /IM node.exe /F >nul 2>&1
 timeout /t 2 /nobreak >nul
 
+for /f "tokens=2 delims==" %%a in ('findstr /b "PORT=" .env') do set PORT=%%a
+if not defined PORT set PORT=3000
+
 if not exist "node_modules" (
     echo Installazione dipendenze...
     call npm install
@@ -43,9 +46,9 @@ timeout /t 2 /nobreak >nul
 echo.
 echo =============================================
 echo   Frontend:  http://localhost:5173
-echo   API:       http://localhost:3000/api/...
-echo   Health:    http://localhost:3000/health
-echo   Admin:     http://localhost:3000/login
+echo   API:       http://localhost:%PORT%/api/...
+echo   Health:    http://localhost:%PORT%/health
+echo   Admin:     http://localhost:%PORT%/login
 echo   Username:  peninsula-ovserver
 echo   Password:  PizzaAdmin2024!
 echo =============================================
