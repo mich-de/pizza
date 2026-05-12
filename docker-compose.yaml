@@ -2,8 +2,8 @@ services:
   pizza-radar:
     build:
       context: .
-      # Ensure fresh build — no cache for the build stage
-      additional_contexts: {}
+      args:
+        - CACHE_BUST=${GIT_COMMIT:-unknown}
     container_name: pizza-radar
     restart: unless-stopped
     ports:

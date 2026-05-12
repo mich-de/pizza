@@ -5,6 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# Cache bust: always rebuild when source changes
+ARG CACHE_BUST=1
 COPY . .
 RUN npm run build
 
