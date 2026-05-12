@@ -22,6 +22,9 @@ WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 COPY package*.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
@@ -42,6 +45,6 @@ ENV PORT=3001
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD node server/healthcheck.cjs
+  CMD curl -f http://127.0.0.1:${PORT}/health || exit 1
 
 CMD ["node", "server/index.js"]
