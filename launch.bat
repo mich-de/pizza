@@ -43,9 +43,9 @@ timeout /t 2 /nobreak >nul
 echo.
 echo =============================================
 echo   Frontend:  http://localhost:5173
-echo   API:       http://localhost:3001/api/...
-echo   Health:    http://localhost:3001/health
-echo   Admin:     http://localhost:3001/login
+echo   API:       http://localhost:3000/api/...
+echo   Health:    http://localhost:3000/health
+echo   Admin:     http://localhost:3000/login
 echo   Username:  peninsula-ovserver
 echo   Password:  PizzaAdmin2024!
 echo =============================================
