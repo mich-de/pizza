@@ -473,7 +473,7 @@ app.use((req, res, next) => {
     logger.warn('dist/ directory NOT found at ' + distDir + ' (root=' + root + ', cwd=' + process.cwd() + ')');
   }
 
-  // Serve static files via sendFile directly (bypass serve-static@2.x which crashes on .js)
+  // Serve static files via sendFile with root option (bypass serve-static@2.x which crashes on .js)
   app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
 
@@ -492,13 +492,15 @@ app.use((req, res, next) => {
       jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
       webp: 'image/webp', ico: 'image/x-icon', txt: 'text/plain',
       xml: 'application/xml', map: 'application/json',
+      woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', eot: 'application/vnd.ms-fontobject',
     };
     const contentType = mime[ext] || 'application/octet-stream';
 
     res.setHeader('Content-Type', contentType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', ext === 'html' ? 'no-cache' : 'public, max-age=31536000, immutable');
 
-    res.sendFile(filePath, (err) => {
+    res.sendFile(fileName, { root: distDir }, (err) => {
       if (err) {
         logger.error('sendFile failed', { path: filePath, error: err.message, code: err.code });
         if (!res.headersSent) {
@@ -945,7 +947,7 @@ app.get('/api/feed', apiRateLimit, async (req, res) => {
     });
 
     auditRaw.forEach(entry => {
-        if (['approve_price', 'approve_comment', 'approve_feed_post', 'edit_feed_post', 'login', '2fa_enabled', 'update_pizzeria', 'create_pizzeria'].includes(entry.action)) {
+      if (['approve_price', 'approve_comment', 'approve_feed_post', 'edit_feed_post', 'login', '2fa_enabled', 'update_pizzeria', 'create_pizzeria'].includes(entry.action)) {
         feedItems.push({
           id: `audit-${entry.id}`,
           type: 'activity',
@@ -1280,7 +1282,7 @@ app.put('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), async (re
 
     const prices = await safeReadJSON(PRICES_PATH, []);
     const idx = prices.findIndex(p => p.pizzeriaId === pizzeriaId);
-    
+
     if (idx !== -1) {
       prices[idx].margheritaPrice = price;
       if (source) prices[idx].source = source;
@@ -1398,8 +1400,8 @@ if (process.env.NODE_ENV !== 'test') {
       process.exit(1);
     });
 
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
 function gracefulShutdown(signal) {
