@@ -5,7 +5,15 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-COPY . .
+# Copy source files individually to ensure cache invalidation
+COPY src/ ./src/
+COPY public/ ./public/
+COPY server/ ./server/
+COPY index.html vite.config.js ./
+
+# Install dev deps needed for build (vite, tailwind, etc.)
+RUN npm install
+
 RUN npm run build
 
 FROM node:20-alpine
