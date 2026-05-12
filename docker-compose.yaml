@@ -1,10 +1,13 @@
 services:
   pizza-radar:
-    build: .
+    build:
+      context: .
+      # Ensure fresh build — no cache for the build stage
+      additional_contexts: {}
     container_name: pizza-radar
     restart: unless-stopped
     ports:
-      - '80:80'
+      - '3001:3001'
     environment:
       - NODE_ENV=production
       - PORT=3001
