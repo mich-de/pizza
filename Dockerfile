@@ -40,9 +40,9 @@ RUN mkdir -p server/private server/logs \
 USER appuser
 
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=3000
 
-EXPOSE 3001
+EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://127.0.0.1:${PORT}/health || exit 1
