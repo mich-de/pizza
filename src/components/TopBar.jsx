@@ -1,7 +1,9 @@
 import { useI18n } from '../i18n/I18nContext';
 import { navItems } from '../config/navigation';
 import { NavLink } from 'react-router-dom';
-import { useStitchedData } from '../hooks/useDataFetch';
+import { useStitchedData, usePendingCounts } from '../hooks/useDataFetch';
+import { useState, useEffect } from 'react';
+import { checkAuth } from '../services/authService';
 
 const activeLinkClassMobile = 'text-primary bg-primary/10 rounded-sm px-4 py-3 mx-2 my-0.5 flex items-center gap-3 font-label font-medium text-sm border-l-2 border-primary';
 const inactiveLinkClassMobile = 'text-on-surface-variant/70 px-4 py-3 mx-2 my-0.5 flex items-center gap-3 font-label font-medium text-sm hover:text-primary hover:bg-primary/5 transition-colors duration-200';
@@ -48,7 +50,12 @@ function LangToggle({ dense }) {
 }
 
 export default function TopBar({ onMenuToggle }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAuth().then(user => setIsAdmin(user?.role === 'admin')).catch(() => {});
+  }, []);
 
   return (
     <header className="md:hidden relative flex justify-between items-center w-full px-4 py-2.5 sticky top-0 z-50 bg-surface/95 backdrop-blur-sm border-b border-outline-variant">
@@ -59,7 +66,7 @@ export default function TopBar({ onMenuToggle }) {
         </button>
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-gradient-to-br from-primary/15 to-primary/5 rounded-sm flex items-center justify-center overflow-hidden ring-1 ring-primary/20 flex-shrink-0">
-            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-cover" />
+            <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="text-base font-display font-bold text-primary tracking-tight leading-none">
@@ -76,9 +83,16 @@ export default function TopBar({ onMenuToggle }) {
         <button className="w-8 h-8 flex items-center justify-center hover:bg-surface-variant rounded-sm transition-colors text-on-surface-variant/40">
           <span className="material-symbols-outlined text-lg">notifications</span>
         </button>
-        <button className="w-8 h-8 flex items-center justify-center hover:bg-surface-variant rounded-sm transition-colors text-on-surface-variant/40">
-          <span className="material-symbols-outlined text-lg">account_circle</span>
-        </button>
+        {isAdmin ? (
+          <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+            <span className="font-label text-[9px] font-semibold uppercase tracking-wider text-primary">Admin</span>
+          </div>
+        ) : (
+          <button className="w-8 h-8 flex items-center justify-center hover:bg-surface-variant rounded-sm transition-colors text-on-surface-variant/40">
+            <span className="material-symbols-outlined text-lg">account_circle</span>
+          </button>
+        )}
       </div>
     </header>
   );
@@ -87,6 +101,7 @@ export default function TopBar({ onMenuToggle }) {
 export function MobileDrawer({ open, onClose }) {
   const { t, lang, setLang } = useI18n();
   const { data } = useStitchedData();
+  const { total: pendingTotal, isAdmin } = usePendingCounts();
   const year = new Date().getFullYear();
 
   const globalAvg = data.length > 0
@@ -117,7 +132,7 @@ export function MobileDrawer({ open, onClose }) {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-primary/15 to-primary/5 rounded-sm flex items-center justify-center flex-shrink-0 overflow-hidden ring-2 ring-primary/20 shadow-md">
-                  <img src="/images/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                  <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h2 className="font-display font-bold text-lg tracking-tight text-primary leading-none">
@@ -184,6 +199,11 @@ export function MobileDrawer({ open, onClose }) {
                 <>
                   <span className="material-symbols-outlined !text-lg" style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}>{item.icon}</span>
                   <span className="flex-1">{t(item.labelKey)}</span>
+                  {item.to === '/admin' && isAdmin && pendingTotal > 0 && (
+                    <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-error text-on-error text-[10px] font-bold rounded-full border border-surface shadow-sm mr-2">
+                      {pendingTotal}
+                    </span>
+                  )}
                   {isActive && (
                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-soft" />
                   )}
@@ -223,6 +243,14 @@ export function MobileDrawer({ open, onClose }) {
                 </button>
               </div>
             </div>
+            {isAdmin && (
+              <div className="flex items-center gap-1.5 mt-1 pt-1.5 border-t border-primary/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping flex-shrink-0" />
+                <span className="font-label text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  Admin
+                </span>
+              </div>
+            )}
             {data.length > 0 && (
               <div className="flex items-center gap-2 text-on-surface-variant/40">
                 <span className="w-1 h-1 rounded-full bg-tertiary animate-pulse-soft" />

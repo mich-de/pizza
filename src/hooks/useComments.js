@@ -1,27 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
+import { silentFetch } from '../utils/silentFetch';
 
-export function useComments(postId) {
+export function useComments(postId, enabled = true) {
   const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchComments = useCallback(() => {
+    if (!enabled) return;
     setLoading(true);
     setError(null);
-    fetch(`/api/comments?postId=${encodeURIComponent(postId)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch comments');
-        return res.json();
-      })
-      .then((data) => {
-        setComments(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
+    silentFetch(`/api/comments?postId=${encodeURIComponent(postId)}`)
+      .then(async (res) => {
+        const data = res.ok ? await res.json() : [];
+        setComments(data || []);
         setLoading(false);
       });
-  }, [postId]);
+  }, [postId, enabled]);
 
   useEffect(() => {
     fetchComments();

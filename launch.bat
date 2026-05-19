@@ -2,7 +2,7 @@
 title PizzaRadar Sorrentum
 setlocal enabledelayedexpansion
 
-echo === PizzaRadar Sorrentum Launcher ===
+echo === PizzaRadar Sorrentum Unified Launcher ===
 echo.
 
 if not exist ".env" (
@@ -12,54 +12,26 @@ if not exist ".env" (
     echo.
 )
 
-echo Pulizia porte in uso (5173-5175, 3000-3001)...
-for %%p in (5173 5174 5175 3000 3001) do (
+echo Pulizia porte in uso...
+for %%p in (5173 5174 5175 3000) do (
     for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%%p "') do (
         taskkill /PID %%a /F >nul 2>&1 && echo   Porta %%p liberata
     )
 )
 
-taskkill /IM node.exe /F >nul 2>&1
-timeout /t 2 /nobreak >nul
-
-for /f "tokens=2 delims==" %%a in ('findstr /b "PORT=" .env') do set PORT=%%a
-if not defined PORT set PORT=3000
-
 if not exist "node_modules" (
     echo Installazione dipendenze...
     call npm install
-    if errorlevel 1 (
-        echo [ERRORE] npm install fallito
-        pause
-        exit /b 1
-    )
 )
 
-echo Avvio backend (Express :3001)...
-start "PizzaRadar-Backend" cmd /c "title PizzaRadar Backend && npm run server:dev"
-timeout /t 3 /nobreak >nul
-
-echo Avvio frontend (Vite :5173)...
-start "PizzaRadar-Frontend" cmd /c "title PizzaRadar Frontend && npm run dev"
-timeout /t 2 /nobreak >nul
-
 echo.
 echo =============================================
+echo   Avvio in corso (una sola finestra)...
+echo   CTRL+C per fermare tutto.
+echo.
 echo   Frontend:  http://localhost:5173
-echo   API:       http://localhost:%PORT%/api/...
-echo   Health:    http://localhost:%PORT%/health
-echo   Admin:     http://localhost:%PORT%/login
-echo   Username:  peninsula-ovserver
-echo   Password:  PizzaAdmin2024!
+echo   Admin:     http://localhost:5173/login
 echo =============================================
 echo.
-echo Premi un tasto per fermare i server...
-pause >nul
 
-echo.
-echo Fermo i server...
-taskkill /FI "WINDOWTITLE eq PizzaRadar-Backend*" /F >nul 2>&1
-taskkill /FI "WINDOWTITLE eq PizzaRadar-Frontend*" /F >nul 2>&1
-taskkill /IM node.exe /F >nul 2>&1
-echo Server fermati.
-timeout /t 1 /nobreak >nul
+npm run dev:all

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { useAllData } from '../hooks/useDataFetch';
@@ -47,7 +47,6 @@ export default function Admin() {
 
   const [rows, setRows] = useState([]);
   const [initialized, setInitialized] = useState(false);
-  const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState(null);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
@@ -58,22 +57,29 @@ export default function Admin() {
   const [addForm, setAddForm] = useState({ name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional', rating: 4.0, description: '', descriptionIt: '', status: 'open', frazione: '', imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: '' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [dirty, setDirty] = useState(false);
 
-  useEffect(() => { 
-    if (fetchError && !error) {
-      setError(t('admin.connError') + fetchError); 
+  // Initialize rows from fetched data
+  useEffect(() => {
+    if (!loading && pizzerias.length > 0 && locations.length > 0) {
+      setRows(pizzerias.map(p => ({
+        ...p,
+        cityName: locations.find(l => l.id === p.cityId)?.name || p.cityId,
+      })));
+      setInitialized(true);
     }
-  }, [fetchError, t, error]);
+  }, [pizzerias, locations, loading]);
 
   useEffect(() => {
-    if (!pizzerias.length || !locations.length || initialized) return;
-    
-    setRows(pizzerias.map(p => ({
-      ...p,
-      cityName: locations.find(l => l.id === p.cityId)?.name || p.cityId,
-    })));
-    setInitialized(true);
-  }, [pizzerias, locations, initialized]);
+    if (fetchError) {
+      setError(t('admin.connError') + fetchError);
+    }
+  }, [fetchError, t]);
+
+  // Reset page when search or pageSize changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, pageSize]);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
@@ -87,8 +93,6 @@ export default function Admin() {
 
   const totalPages = useMemo(() => pageSize === Infinity ? 1 : Math.ceil(filteredRows.length / pageSize), [filteredRows, pageSize]);
   const paginatedRows = useMemo(() => pageSize === Infinity ? filteredRows : filteredRows.slice((page - 1) * pageSize, page * pageSize), [filteredRows, pageSize, page]);
-
-  useEffect(() => { setPage(1); }, [search, pageSize]);
 
   const showToast = useCallback((msg, isError = false) => {
     setToast({ msg, isError });

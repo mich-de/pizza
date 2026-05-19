@@ -186,7 +186,7 @@ pizza/
 ```
 ┌──────────────┐        1. GET /explore         ┌──────────────────┐
 │   Browser    │ ──────────────────────────────► │   Express 5     │
-│  (React SPA) │                                 │   (:3001)       │
+│  (React SPA) │                                 │   (:3000)       │
 │              │                                 │                 │
 │  API calls   │    ┌─── Request Flow ───┐       │ Middleware Stack │
 │  via fetch() │    │                    │       │                 │
@@ -418,7 +418,7 @@ No global state library (Redux, Zustand) — all component state is local via `u
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Vite dev server (port 5173) with HMR |
-| `npm run server:dev` | Express backend with `--watch` auto-reload (port 3001) |
+| `npm run server:dev` | Express backend with `--watch` auto-reload (port 3000) |
 | `npm run server` | Express without file watching |
 | `npm run build` | Production build: Vite → `dist/` |
 | `npm start` | Express production mode (serves `dist/` + API) |
@@ -445,7 +445,7 @@ Per far girare il sito su Coolify o in qualsiasi ambiente dove l'app è servita 
 1. **Vite Base Path**: Il progetto è ora configurato con `base: '/'` di default in `vite.config.js`.
 2. **Variabili d'Ambiente**: Su Coolify, configura le seguenti variabili:
    - `NODE_ENV=production`
-   - `PORT=3001`
+   - `PORT=3000`
    - `JWT_SECRET=tuo-segreto-molto-forte`
    - `JWT_REFRESH_SECRET=altro-segreto-molto-forte`
    - `ALLOWED_ORIGINS=https://tuo-dominio.it` (IMPORTANTE per il CORS)
@@ -461,7 +461,7 @@ npm start
 
 ```env
 NODE_ENV=production
-PORT=3001
+PORT=3000
 
 # Generate with: openssl rand -base64 32
 JWT_SECRET=change-me-to-a-strong-jwt-secret
@@ -470,7 +470,7 @@ JWT_REFRESH_SECRET=change-me-to-a-strong-refresh-secret
 ADMIN_USERNAME=peninsula-ovserver
 ADMIN_PASSWORD=PizzaAdmin2024!
 
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3001
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
 ### Testing

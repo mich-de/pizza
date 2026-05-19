@@ -17,7 +17,7 @@ export default function Footer() {
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary/10 rounded-sm flex items-center justify-center overflow-hidden ring-1 ring-primary/20 flex-shrink-0">
-                <img src="/images/logo.png" alt="" className="w-full h-full object-cover" />
+                <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="font-display font-bold text-sm tracking-tight text-primary leading-tight">

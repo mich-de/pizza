@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:all": "concurrently -n \"VITE,EXPR\" -c \"cyan,magenta\" \"npm run dev\" \"npm run server:dev\"",
     "server": "node server/index.js",
     "server:dev": "node --watch server/index.js",
     "start": "NODE_ENV=production node server/index.js",
@@ -41,6 +42,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
     "esbuild": "^0.28.0",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",

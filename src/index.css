@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -52,6 +52,7 @@
 
   --font-headline: 'Playfair Display', Georgia, serif;
   --font-display: 'Playfair Display', Georgia, serif;
+  --font-script: 'Dancing Script', cursive;
   --font-body: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
   --font-label: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
 }

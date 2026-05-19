@@ -602,9 +602,9 @@
   {
     "id": "pr-new-pz-178",
     "pizzeriaId": "pz-178",
-    "margheritaPrice": 5,
+    "margheritaPrice": 5.59,
     "currency": "EUR",
-    "lastUpdated": "2026-05-10T13:46:00.000Z",
+    "lastUpdated": "2026-05-19T22:55:47.897Z",
     "source": "estimated"
   },
   {

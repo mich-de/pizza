@@ -5,7 +5,7 @@ import { useI18n } from '../i18n/I18nContext';
 const API_BASE = globalThis.process?.env?.VITE_API_BASE || '';
 
 export default function Login() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
@@ -44,6 +44,7 @@ export default function Login() {
         return;
       }
 
+      localStorage.setItem('pizza_session_hint', 'true');
       navigate('/admin');
       window.location.reload();
     } catch {
@@ -147,7 +148,7 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8 animate-slide-down">
           <div className="w-14 h-14 bg-primary/10 rounded-sm flex items-center justify-center mx-auto mb-4 overflow-hidden shadow-lg">
-            <img src="/images/logo.png" alt="Logo" className="w-full h-full object-cover" />
+            <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-display font-bold text-primary tracking-tight">{t('login.pizzaRadar')}</h1>
           <p className="text-sm font-body text-on-surface-variant mt-1">{t('login.penisola')}</p>

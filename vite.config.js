@@ -8,8 +8,13 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: `http://localhost:${process.env.PORT || 3000}`,
+        target: `http://127.0.0.1:${process.env.PORT || 3000}`,
         changeOrigin: true,
+        timeout: 30000,
+        proxyTimeout: 30000,
+        onError: (err) => {
+          console.error('[VITE PROXY ERROR]', err.code, err.message);
+        },
       },
     },
   },

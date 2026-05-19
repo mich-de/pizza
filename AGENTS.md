@@ -3,12 +3,12 @@
 ## Dev commands
 
 - **Start dev**: `./launch.sh` (kills stale ports, installs deps, starts Vite + Express --watch). Windows: `launch.bat`.
-- **Frontend only**: `npm run dev` (Vite :5173, proxies `/api` to :3001)
-- **Backend only**: `npm run server:dev` (Express --watch :3001)
+- **Frontend only**: `npm run dev` (Vite :5173, proxies `/api` to :3000)
+- **Backend only**: `npm run server:dev` (Express --watch :3000)
 - **Test**: `npm test` (vitest run — config inherited from `vite.config.js`, no separate vitest config)
 - **Lint**: `npm run lint` (ESLint 10 flat config — `src/` + `server/` + `*.test.js` scopes)
 - **Build**: `npm run build` (Vite → `dist/`)
-- **Production**: `npm start` (Express serves `dist/` + API :3001)
+- **Production**: `npm start` (Express serves `dist/` + API :3000)
 - **No typecheck**, no formatter, no CI
 
 ## Tests
@@ -31,7 +31,7 @@ Tests use **vitest** + **supertest** (`server/**/*.test.js`):
 ## Data flow
 
 ```
-Browser → Vite proxy (:5173) → Express API (:3001) → JSON files (server/private/)
+Browser → Vite proxy (:5173) → Express API (:3000) → JSON files (server/private/)
                                 ↓
                           Static JSON (public/data/) fetched directly by frontend
 ```

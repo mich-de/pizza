@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 import { createLogger, format, transports } from 'winston';
 import { randomBytes, createHmac } from 'crypto';
 import { hashPassword, verifyPassword } from './utils/password.js';
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken, ACCESS_EXPIRES_MS, REFRESH_EXPIRES_MS } from './utils/jwt.js';
+import { generateAccessToken, ACCESS_EXPIRES_MS, REFRESH_EXPIRES_MS } from './utils/jwt.js';
 import { createRefreshToken, validateRefreshToken, revokeRefreshToken } from './utils/refreshTokens.js';
 import { createSecret, createKeyUri, createQRCodeDataURI, verifyTOTP } from './utils/totp.js';
 import { authMiddleware, requireRole } from './middleware/auth.js';
@@ -33,7 +33,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-me';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'peninsula-ovserver';
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || null;
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000')
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000')
   .split(',')
   .map(s => s.trim());
 
@@ -112,9 +112,7 @@ function recordLoginAttempt(ip) {
   loginAttemptMap.get(ip).push(now);
 }
 
-function clearLoginAttempts(ip) {
-  loginAttemptMap.delete(ip);
-}
+
 
 function checkAccountLockout(admin) {
   if (!admin.lockedUntil) return { locked: false };
@@ -435,8 +433,26 @@ app.use(helmet({
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) callback(null, true);
-    else callback(new Error('Not allowed by CORS'));
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is explicitly allowed
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Robust check for localhost and 127.0.0.1 in non-production environments
+    if (NODE_ENV !== 'production') {
+      const isLocal = origin.startsWith('http://localhost:') || 
+                      origin.startsWith('http://127.0.0.1:');
+      if (isLocal) return callback(null, true);
+    }
+
+    // Special case: allow any origin if it's the same as the host (for production behind proxy)
+    // This is often needed when the frontend is served by the same server but the origin header is present
+    
+    console.warn(`[CORS] Rejected origin: "${origin}" (Allowed: ${ALLOWED_ORIGINS.join(', ')})`);
+    callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'DELETE', 'PUT'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
@@ -560,6 +576,177 @@ app.use((req, res, next) => {
 app.use(authMiddleware);
 app.use(csrfMiddleware);
 
+app.post('/api/auth/login', apiRateLimit, async (req, res) => {
+  try {
+    const parsed = LoginSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Dati non validi' });
+
+    const { username, password } = parsed.data;
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+
+    const ipCheck = checkLoginRateLimit(clientIp);
+    if (!ipCheck.allowed) {
+      return res.status(429).json({ error: `Troppi tentativi. Riprova tra ${ipCheck.waitSeconds} secondi` });
+    }
+
+    const admins = await safeReadJSON(ADMINS_PATH, []);
+    const admin = admins.find(a => a.username === username);
+    if (!admin) {
+      recordLoginAttempt(clientIp);
+      return res.status(401).json({ error: 'Credenziali non valide' });
+    }
+
+    const lockCheck = checkAccountLockout(admin);
+    if (lockCheck.locked) {
+      return res.status(429).json({ error: `Account bloccato. Riprova tra ${lockCheck.waitSeconds} secondi` });
+    }
+
+    const validPassword = await verifyPassword(password, admin.passwordHash);
+    if (!validPassword) {
+      recordLoginAttempt(clientIp);
+      recordFailedLogin(admin, admins);
+      return res.status(401).json({ error: 'Credenziali non valide' });
+    }
+
+    clearFailedLogins(admin, admins);
+
+    if (admin.twoFASecret) {
+      const tempToken = randomBytes(32).toString('hex');
+      pending2FALogins.set(tempToken, {
+        userId: admin.id,
+        username: admin.username,
+        role: admin.role,
+        createdAt: Date.now(),
+      });
+      return res.json({ requires2FA: true, tempToken });
+    }
+
+    const accessToken = generateAccessToken({ userId: admin.id, username: admin.username, role: admin.role });
+    const refreshTokenId = createRefreshToken(admin.id, admin.role);
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: NODE_ENV === 'production',
+      sameSite: 'strict',
+      signed: true,
+      maxAge: ACCESS_EXPIRES_MS,
+    });
+    res.cookie('refreshToken', refreshTokenId, {
+      httpOnly: true,
+      secure: NODE_ENV === 'production',
+      sameSite: 'strict',
+      signed: true,
+      maxAge: REFRESH_EXPIRES_MS,
+    });
+
+    auditLog(admin.id, 'login', 'auth', { ip: clientIp });
+    logger.info('Login riuscito', { userId: admin.id, username: admin.username });
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Errore login', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const tokenId = req.signedCookies?.refreshToken || req.cookies?.refreshToken;
+    if (tokenId) revokeRefreshToken(tokenId);
+
+    res.clearCookie('accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', signed: true });
+    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', signed: true });
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Errore logout', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+app.post('/api/auth/2fa/verify-login', apiRateLimit, async (req, res) => {
+  try {
+    const { tempToken, code } = req.body;
+    if (!tempToken || !code) return res.status(400).json({ error: 'Dati non validi' });
+
+    const pending = pending2FALogins.get(tempToken);
+    if (!pending) return res.status(401).json({ error: 'Sessione scaduta' });
+
+    const admins = await safeReadJSON(ADMINS_PATH, []);
+    const admin = admins.find(a => a.id === pending.userId);
+    if (!admin || !admin.twoFASecret) {
+      pending2FALogins.delete(tempToken);
+      return res.status(401).json({ error: '2FA non configurata' });
+    }
+
+    const valid = verifyTOTP(code, admin.twoFASecret);
+    if (!valid) return res.status(401).json({ error: 'Codice non valido' });
+
+    pending2FALogins.delete(tempToken);
+
+    const accessToken = generateAccessToken({ userId: admin.id, username: admin.username, role: admin.role });
+    const refreshTokenId = createRefreshToken(admin.id, admin.role);
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: NODE_ENV === 'production',
+      sameSite: 'strict',
+      signed: true,
+      maxAge: ACCESS_EXPIRES_MS,
+    });
+    res.cookie('refreshToken', refreshTokenId, {
+      httpOnly: true,
+      secure: NODE_ENV === 'production',
+      sameSite: 'strict',
+      signed: true,
+      maxAge: REFRESH_EXPIRES_MS,
+    });
+
+    auditLog(admin.id, 'login', 'auth', { ip: req.ip });
+    logger.info('Login 2FA riuscito', { userId: admin.id, username: admin.username });
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Errore verifica 2FA login', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+app.post('/api/auth/refresh', apiRateLimit, async (req, res) => {
+  try {
+    const tokenId = req.signedCookies?.refreshToken || req.cookies?.refreshToken;
+    if (!tokenId) return res.status(401).json({ error: 'Refresh token mancante' });
+
+    const entry = validateRefreshToken(tokenId);
+    if (!entry) return res.status(401).json({ error: 'Refresh token non valido o revocato' });
+
+    revokeRefreshToken(tokenId);
+    const newRefreshTokenId = createRefreshToken(entry.userId, entry.role);
+
+    const accessToken = generateAccessToken({ userId: entry.userId, role: entry.role });
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: NODE_ENV === 'production',
+      sameSite: 'strict',
+      signed: true,
+      maxAge: ACCESS_EXPIRES_MS,
+    });
+    res.cookie('refreshToken', newRefreshTokenId, {
+      httpOnly: true,
+      secure: NODE_ENV === 'production',
+      sameSite: 'strict',
+      signed: true,
+      maxAge: REFRESH_EXPIRES_MS,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Errore refresh token', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
 app.get('/api/auth/2fa/status', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const admins = await safeReadJSON(ADMINS_PATH, []);
@@ -678,6 +865,20 @@ app.get('/api/data/stitched', apiRateLimit, async (req, res) => {
   }
 });
 
+app.get('/api/data/full', apiRateLimit, async (_req, res) => {
+  try {
+    const [towns, venues, prices] = await Promise.all([
+      safeReadJSON(TOWNS_PATH, []),
+      safeReadJSON(VENUES_PATH, []),
+      safeReadJSON(PRICES_PATH, [])
+    ]);
+    res.json({ towns, venues, prices });
+  } catch (err) {
+    logger.error('Errore recupero dati completi', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
 app.get('/api/data/towns', apiRateLimit, async (_req, res) => {
   try { res.json(await safeReadJSON(TOWNS_PATH, [])); }
   catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
@@ -756,8 +957,11 @@ app.post('/api/comments', apiRateLimit, async (req, res) => {
       return res.status(429).json({ error: waitMsg, retryAfter: rateLimit.waitSeconds });
     }
 
+    let maxCommentId = 0;
+    for (const c of existingComments) { if (c.id > maxCommentId) maxCommentId = c.id; }
+
     const newComment = {
-      id: existingComments.length > 0 ? Math.max(...existingComments.map(c => c.id)) + 1 : 1,
+      id: maxCommentId + 1,
       postId,
       author: sanitizedAuthor,
       content: sanitizedContent,
@@ -775,8 +979,11 @@ app.post('/api/comments', apiRateLimit, async (req, res) => {
       const priceEntry = (await safeReadJSON(PRICES_PATH, [])).find(p => p.pizzeriaId === postId);
       const currentPrice = priceEntry ? priceEntry.margheritaPrice : null;
 
+      let maxPropId = 0;
+      for (const p of proposals) { if (p.id > maxPropId) maxPropId = p.id; }
+
       proposals.push({
-        id: proposals.length > 0 ? Math.max(...proposals.map(p => p.id)) + 1 : 1,
+        id: maxPropId + 1,
         postId,
         pizzeriaId: postId,
         author: sanitizedAuthor,
@@ -810,6 +1017,30 @@ app.get('/api/comments/captcha', (_req, res) => {
   // Answer is signed server-side — never exposed to the client
   const captchaToken = createCaptchaToken(answer);
   res.json({ question, captchaToken });
+});
+
+app.get('/api/admin/dashboard-stats', apiRateLimit, requireRole('admin'), async (_req, res) => {
+  try {
+    const [proposals, comments, feedPosts, venues] = await Promise.all([
+      safeReadJSON(PROPOSALS_PATH, []),
+      safeReadJSON(COMMENTS_PATH, []),
+      safeReadJSON(FEED_POSTS_PATH, []),
+      safeReadJSON(VENUES_PATH, [])
+    ]);
+
+    const pendingComments = comments.filter(c => !c.approved);
+    const pendingFeedPosts = feedPosts.filter(p => !p.approved);
+
+    res.json({
+      proposals,
+      pendingComments,
+      pendingFeedPosts,
+      venues
+    });
+  } catch (err) {
+    logger.error('Errore dashboard stats', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
 });
 
 app.get('/api/admin/proposals', apiRateLimit, requireRole('admin'), async (_req, res) => {
@@ -903,7 +1134,7 @@ app.get('/api/feed', apiRateLimit, async (req, res) => {
   try {
     const comments = (await safeReadJSON(COMMENTS_PATH, [])).filter(c => c.approved);
     const proposals = await safeReadJSON(PROPOSALS_PATH, []);
-    const prices = await safeReadJSON(PRICES_PATH, []);
+
     const venues = await safeReadJSON(VENUES_PATH, []);
     const auditRaw = getAuditLog(200);
     const towns = await safeReadJSON(TOWNS_PATH, []);
@@ -1368,7 +1599,7 @@ app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), async (req, re
 });
 
 // Global error handler — log full stack for any uncaught error
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error('Unhandled error', {
     method: req.method,
     path: req.path,
@@ -1390,9 +1621,9 @@ let server;
 if (process.env.NODE_ENV !== 'test') {
   seedAdmin()
     .then(() => {
-      server = app.listen(PORT, '0.0.0.0', () => {
-        logger.info(`Server attivo su http://0.0.0.0:${PORT}`);
-        logger.info(`API: http://0.0.0.0:${PORT}/api/data/stitched`);
+      server = app.listen(PORT, '127.0.0.1', () => {
+        logger.info(`Server attivo su http://127.0.0.1:${PORT}`);
+        logger.info(`API: http://127.0.0.1:${PORT}/api/data/stitched`);
       });
     })
     .catch(err => {

@@ -6,6 +6,7 @@
   "nav": {
     "analytics": "Dashboard",
     "feed": "Feed",
+    "events": "Events",
     "directory": "Directory",
     "prices": "Prices",
     "network": "Network",
@@ -51,6 +52,20 @@
     "subtitle": "The latest pizzerias opened in the Sorrento Peninsula",
     "badge": "NEW OPENING",
     "openedAt": "Opened: {month} {year}"
+  },
+  "events": {
+    "title": "Events & Festivals",
+    "subtitle": "All pizza events, festivals and sagre across the Sorrento Peninsula",
+    "when": "WHEN",
+    "where": "WHERE",
+    "highlights": "HIGHLIGHTS",
+    "pastEvent": "PAST EVENT",
+    "upcoming": "UPCOMING",
+    "todayEvent": "TODAY!",
+    "daysRemaining": "{days} days away",
+    "multiDay": "{start} — {end} {month}",
+    "noEvents": "No upcoming events",
+    "discoverMore": "Discover all peninsula events"
   },
   "months": {
     "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "May", "06": "Jun",

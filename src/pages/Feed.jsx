@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../i18n/I18nContext';
+import { checkAuth } from '../services/authService';
 import { useComments } from '../hooks/useComments';
 import CommentForm from '../components/CommentForm';
 import CommentList from '../components/CommentList';
@@ -34,7 +35,7 @@ const FALLBACK = [
 
 function PostComments({ postId, show, onToggle }) {
   const { t } = useI18n();
-  const { comments, loading, addComment } = useComments(postId);
+  const { comments, loading, addComment } = useComments(postId, show);
 
   if (!show) return null;
 
@@ -60,13 +61,13 @@ function EditPostModal({ post, open, onClose, onSaved, t }) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (open && post) {
-      setTitle(post.title || '');
-      setDescription(post.description || '');
-      setError('');
-    }
-  }, [open, post]);
+  const [prevPost, setPrevPost] = useState(null);
+  if (open && post && post !== prevPost) {
+    setPrevPost(post);
+    setTitle(post.title || '');
+    setDescription(post.description || '');
+    setError('');
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -145,11 +146,11 @@ function FeedPost({ post, lang, t, isAdmin, onModAction, onEdit }) {
   return (
     <article className="bg-surface-bright border-2 border-primary/10 shadow-xl p-0 flex flex-col md:flex-row group hover:border-primary/40 transition-all duration-500 overflow-hidden">
       <div className="w-full md:w-2/5 relative overflow-hidden bg-primary aspect-square md:aspect-auto">
-        <img 
-          alt={lang === 'it' ? post.title_it : post.title_en} 
-          className="w-full h-full object-cover mix-blend-luminosity opacity-80 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out" 
-          src={post.img} 
-          loading="lazy" 
+        <img
+          alt={lang === 'it' ? post.title_it : post.title_en}
+          className="w-full h-full object-cover mix-blend-luminosity opacity-80 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
+          src={post.img}
+          loading="lazy"
         />
         <div className="absolute top-4 left-4 bg-primary text-on-primary font-headline font-black px-3 py-1 border border-on-primary/20 backdrop-blur-md bg-opacity-80 flex items-center gap-2">
           {post._isUserPost && (
@@ -184,7 +185,7 @@ function FeedPost({ post, lang, t, isAdmin, onModAction, onEdit }) {
             </div>
           )}
         </div>
-        
+
         <p className="font-body text-lg leading-relaxed mb-6 font-medium text-primary/80">
           {lang === 'it' ? post.description_it : post.description_en}
         </p>
@@ -243,18 +244,20 @@ function CreatePostModal({ open, onClose, t, onCreated }) {
     }
   }, [t]);
 
-  useEffect(() => {
-    if (open) {
-      fetchCaptcha();
-      setAuthor('');
-      setTitle('');
-      setDescription('');
-      setHoneypot('');
-      setCaptchaAnswer('');
-      setError('');
-      setSuccess(false);
-    }
-  }, [open, fetchCaptcha]);
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open && open !== prevOpen) {
+    setPrevOpen(open);
+    fetchCaptcha();
+    setAuthor('');
+    setTitle('');
+    setDescription('');
+    setHoneypot('');
+    setCaptchaAnswer('');
+    setError('');
+    setSuccess(false);
+  } else if (!open && open !== prevOpen) {
+    setPrevOpen(open);
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -334,7 +337,7 @@ function CreatePostModal({ open, onClose, t, onCreated }) {
               onClick={onClose}
               className="bg-secondary text-on-secondary font-headline font-black uppercase py-3 px-8 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors"
             >
-                {t('common.close')}
+              {t('common.close')}
             </button>
           </div>
         ) : (
@@ -461,14 +464,13 @@ export default function Feed() {
     fetch('/api/feed/posts')
       .then(r => r.ok ? r.json() : [])
       .then(data => setUserPosts(data))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
-    fetch('/api/admin/me', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : { user: null })
-      .then(data => setIsAdmin(!!data.user))
-      .catch(() => setIsAdmin(false));
+    checkAuth().then(user => {
+      setIsAdmin(user?.role === 'admin');
+    });
   }, []);
 
   useEffect(() => {
@@ -501,7 +503,7 @@ export default function Feed() {
         });
       }
       fetchUserPosts();
-    } catch {}
+    } catch (e) { console.error(e); }
   };
 
   const display = posts || FALLBACK;
@@ -510,7 +512,7 @@ export default function Feed() {
   let filtered = allPosts;
   if (search.trim()) {
     const s = search.toLowerCase();
-    filtered = filtered.filter(p => 
+    filtered = filtered.filter(p =>
       (lang === 'it' ? p.title_it : p.title_en)?.toLowerCase().includes(s) ||
       (lang === 'it' ? p.description_it : p.description_en)?.toLowerCase().includes(s) ||
       p.author?.toLowerCase().includes(s)
@@ -519,10 +521,10 @@ export default function Feed() {
 
   const sorted = filter === 'top'
     ? [...filtered].sort((a, b) => {
-        const ra = parseFloat(a.rating) || 0;
-        const rb = parseFloat(b.rating) || 0;
-        return rb - ra;
-      })
+      const ra = parseFloat(a.rating) || 0;
+      const rb = parseFloat(b.rating) || 0;
+      return rb - ra;
+    })
     : filtered;
 
   return (
@@ -531,7 +533,7 @@ export default function Feed() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-end border-b-2 border-primary/10 pb-6 gap-6">
           <div>
             <h2 className="font-headline text-5xl md:text-7xl font-black uppercase tracking-tighter mb-2">
-                {t('feed.title')}
+              {t('feed.title')}
             </h2>
             <p className="font-label font-bold text-secondary uppercase tracking-widest text-sm">
               {t('feed.subtitle')}

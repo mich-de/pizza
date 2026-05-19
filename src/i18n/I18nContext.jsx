@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const I18nContext = createContext();
 
 const STORAGE_KEY = 'pizza-peninsula-lang';
@@ -53,6 +54,7 @@ export function I18nProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useI18n() {
   const ctx = useContext(I18nContext);
   if (!ctx) throw new Error('useI18n must be used within I18nProvider');

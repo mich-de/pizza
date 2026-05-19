@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { useStitchedData } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { StatCard } from '../components/ui';
+
 import { groupByCity } from '../utils/groupByCity';
 
 function timeAgo(timestamp, t) {
@@ -76,66 +76,103 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto w-full">
-      <header className="relative overflow-hidden">
-        <div className="relative w-full aspect-[21/9] md:max-h-[500px]">
-          <img src="/images/header.png" alt="PizzaRadar Sorrentum" className="w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
-          <div className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(200,76,9,0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(200,76,9,0.3) 1px, transparent 1px)
-              `,
-              backgroundSize: '60px 60px',
-            }} />
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-              <div className="animate-slide-up">
-                <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight leading-[1.1] text-primary drop-shadow-sm">
-                  {t('dashboard.title')}
-                </h1>
-                <p className="text-base font-body text-on-surface-variant mt-2 max-w-xl leading-relaxed">
-                  {t('dashboard.subtitle')}
-                </p>
+      <header className="relative mb-24 w-full">
+        <div className="relative w-full aspect-[21/9] md:max-h-[500px] bg-cover bg-center rounded-b-xl md:rounded-b-3xl overflow-hidden" style={{ backgroundImage: "url('/images/marina-bg.png')" }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#009246]/35 via-white/5 to-[#CE2B37]/30 rounded-b-xl md:rounded-b-3xl" />
+        
+        <div className="absolute top-0 left-0 right-0 h-1.5 z-30 flex">
+          <div className="flex-1 bg-[#009246]" />
+          <div className="flex-1 bg-white/90" />
+          <div className="flex-1 bg-[#CE2B37]" />
+        </div>
+
+        <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-start">
+          <div className="animate-slide-up">
+            <h1 className="font-script text-5xl md:text-8xl text-white drop-shadow-lg leading-none">
+              Radar Pizza<br />
+              <span className="ml-12 md:ml-20">Sorrento</span>
+            </h1>
+            <div className="flex items-center gap-2 mt-3">
+              <span className="w-2 h-2 rounded-full bg-[#009246] inline-block" />
+              <span className="w-2 h-2 rounded-full bg-white/80 inline-block" />
+              <span className="w-2 h-2 rounded-full bg-[#CE2B37] inline-block" />
+            </div>
+            <p className="text-sm md:text-lg font-body text-white/95 mt-2 max-w-xl font-medium tracking-wide">
+              {t('dashboard.subtitle') || 'Monitoraggio Prezzi Margherita Penisola Sorrentina.'}
+            </p>
+          </div>
+          <div className="hidden md:block w-32 md:w-44 lg:w-56 animate-scale-in">
+            <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-full h-auto" />
+          </div>
+        </div>
+        </div>
+
+        <div className="relative -mt-10 mx-4 md:mx-auto max-w-4xl bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#E8E0D5] p-4 md:p-5 z-20 animate-slide-up">
+          <div className="flex items-stretch gap-0">
+            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2">
+              <span className="w-2 h-2 rounded-full bg-[#009246] mb-1.5" />
+              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{data.length}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Pizzerie</p>
+            </div>
+            <div className="w-px bg-gradient-to-b from-transparent via-[#D6CDC2] to-transparent my-2" />
+            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2">
+              <span className="w-2 h-2 rounded-full bg-white border border-[#D6CDC2] mb-1.5" />
+              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{Object.keys(grouped).length}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Città</p>
+            </div>
+            <div className="w-px bg-gradient-to-b from-transparent via-[#D6CDC2] to-transparent my-2" />
+            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2">
+              <span className="w-2 h-2 rounded-full bg-[#CE2B37] mb-1.5" />
+              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Fascia</p>
+            </div>
+            <div className="w-px bg-gradient-to-b from-transparent via-[#D6CDC2] to-transparent my-2" />
+            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2 relative">
+              <span className="w-2 h-2 rounded-full bg-gradient-to-br from-[#009246] via-white to-[#CE2B37] mb-1.5" />
+              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{t('common.euro')}{globalAvg.toFixed(2)}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Media</p>
+              <div className="hidden md:block absolute -right-14 -top-10 w-28 h-28 pointer-events-none z-30">
+                <img src="/images/floating-pizza.png" alt="Pizza" className="w-full h-auto drop-shadow-[0_8px_16px_rgba(0,0,0,0.25)]" />
               </div>
             </div>
           </div>
         </div>
-        <div className="bg-surface border-b border-outline-variant">
-          <div className="px-6 md:px-12 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-label">
-            <span className="flex items-center gap-2 text-primary">
-              <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>local_pizza</span>
-              <span className="font-semibold">{data.length}</span>
-              <span className="text-on-surface-variant">{t('dashboard.totalPizzerias')}</span>
-            </span>
-            <span className="w-px h-4 bg-outline-variant hidden sm:block" />
-            <span className="flex items-center gap-2 text-primary">
-              <span className="material-symbols-outlined text-lg">location_city</span>
-              <span className="font-semibold">{Object.keys(grouped).length}</span>
-              <span className="text-on-surface-variant">{t('dashboard.citiesCount')}</span>
-            </span>
-            <span className="w-px h-4 bg-outline-variant hidden sm:block" />
-            <span className="flex items-center gap-2">
-              <span className="text-primary font-semibold">{t('common.euro')}{globalMin.toFixed(2)}</span>
-              <span className="text-on-surface-variant">–</span>
-              <span className="text-primary font-semibold">{t('common.euro')}{globalMax.toFixed(2)}</span>
-              <span className="text-on-surface-variant text-xs"></span>
-            </span>
-            <span className="w-px h-4 bg-outline-variant hidden sm:block" />
-            <span className="flex items-center gap-2">
-              <span className="text-on-surface-variant text-xs">{t('dashboard.avgPrice')}</span>
-              <span className="font-semibold text-primary">{t('common.euro')}{globalAvg.toFixed(2)}</span>
-            </span>
-          </div>
-        </div>
       </header>
 
-      <div className="p-6 md:p-12 pt-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
-          <StatCard title={t('dashboard.totalPizzerias')} value={data.length} icon="local_pizza" color="primary" />
-          <StatCard title={t('dashboard.citiesCount')} value={Object.keys(grouped).length} icon="location_city" color="primaryContainer" />
-          <StatCard title={t('dashboard.avgPrice')} value={`${t('common.euro')}${globalAvg.toFixed(2)}`} icon="trending_up" color="tertiary" />
-          <StatCard title={t('dashboard.priceRange')} value={`${t('common.euro')}${globalMin.toFixed(2)} – ${t('common.euro')}${globalMax.toFixed(2)}`} icon="swap_vert" color="primary" subtitle={`${t('dashboard.bestPrice')}: ${bestPick.name.slice(0, 20)}`} />
+      <div className="p-6 md:p-12 pt-0">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-10">
+          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#009246] to-[#00B050]" />
+            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#009246] mb-1 md:mb-2">Pizzerie Totali</div>
+            <div className="font-display font-bold text-3xl md:text-4xl text-[#2C1810]">{data.length}</div>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#009246]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#009246]/70 transition-all" style={{ fontVariationSettings: "'FILL' 1" }}>local_pizza</span>
+          </div>
+          
+          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#D6CDC2] to-white" />
+            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#7A6E64] mb-1 md:mb-2">Città Monitorate</div>
+            <div className="font-display font-bold text-3xl md:text-4xl text-[#2C1810]">{Object.keys(grouped).length}</div>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#7A6E64]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#7A6E64]/70 transition-all">location_city</span>
+          </div>
+
+          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#CE2B37] to-[#E85050]" />
+            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#CE2B37] mb-1 md:mb-2">Prezzo Medio</div>
+            <div className="font-display font-bold text-3xl md:text-4xl text-[#2C1810]">{t('common.euro')}{globalAvg.toFixed(2)}</div>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#CE2B37]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#CE2B37]/70 transition-all">trending_up</span>
+          </div>
+
+          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
+            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#7A6E64] mb-1">Fascia Prezzo</div>
+            <div className="font-display font-bold text-xl md:text-2xl text-[#2C1810] leading-tight mb-1">
+              {t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}
+            </div>
+            <div className="text-[9px] md:text-[10px] font-body font-medium text-[#7A6E64] truncate max-w-[85%]">
+              Miglior Prezzo: {bestPick.name}
+            </div>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#7A6E64]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#7A6E64]/70 transition-all">swap_vert</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

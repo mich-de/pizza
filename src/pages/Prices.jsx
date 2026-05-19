@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { useStitchedData } from '../hooks/useDataFetch';
+import { checkAuth } from '../services/authService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PageHeader } from '../components/ui';
 import PricesTable from '../components/prices/PricesTable';
@@ -25,7 +26,7 @@ async function fetchWithAuth(url, options = {}) {
           headers: { 'Content-Type': 'application/json', ...options.headers },
         });
       }
-    } catch {}
+    } catch (e) { console.error(e); }
     throw new Error('SESSION_EXPIRED');
   }
   return res;
@@ -44,7 +45,7 @@ export default function Prices() {
 
   const [zoneFilter, setZoneFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
-  const [search, setSearch] = useState('');
+
   const [sortBy, setSortBy] = useState('price-asc');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
@@ -57,9 +58,15 @@ export default function Prices() {
   const [editForm, setEditForm] = useState({});
   const [toast, setToast] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (!allData.length) return;
+    checkAuth().then(user => setIsAdmin(user?.role === 'admin')).catch(() => {});
+  }, []);
+
+  const [prevAllData, setPrevAllData] = useState([]);
+  if (allData !== prevAllData && allData.length > 0) {
+    setPrevAllData(allData);
     const merged = allData.map((pz) => ({
       priceId: pz.priceId || null,
       pizzeriaId: pz.id,
@@ -73,12 +80,15 @@ export default function Prices() {
     }));
     setRows(merged);
     setInitialized(true);
-  }, [allData]);
+  }
 
-  useEffect(() => {
-    if (editMode && !initialized) return;
-    if (!editMode) { setEditingId(null); setEditForm({}); }
-  }, [editMode, initialized]);
+  const [prevEditMode, setPrevEditMode] = useState(false);
+  const [prevInitialized, setPrevInitialized] = useState(false);
+  if (editMode !== prevEditMode || initialized !== prevInitialized) {
+    setPrevEditMode(editMode);
+    setPrevInitialized(initialized);
+    if (!editMode && initialized) { setEditingId(null); setEditForm({}); }
+  }
 
   const data = editMode && initialized ? rows : allData;
 
@@ -89,12 +99,11 @@ export default function Prices() {
     return data.filter((p) => {
       const matchZone = zoneFilter === 'all' || p.cityName === zoneFilter;
       const matchCat = catFilter === 'all' || p.category === catFilter;
-      const matchSearch = search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || p.cityName.toLowerCase().includes(search.toLowerCase());
       const matchPriceMin = priceMin === '' || p.margheritaPrice >= parseFloat(priceMin);
       const matchPriceMax = priceMax === '' || p.margheritaPrice <= parseFloat(priceMax);
-      return matchZone && matchCat && matchSearch && matchPriceMin && matchPriceMax;
+      return matchZone && matchCat && matchPriceMin && matchPriceMax;
     });
-  }, [data, zoneFilter, catFilter, search, priceMin, priceMax]);
+  }, [data, zoneFilter, catFilter, priceMin, priceMax]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -261,15 +270,17 @@ export default function Prices() {
             <span className="material-symbols-outlined">download</span>
             {t('prices.exportCSV')}
           </button>
-          <button
-            onClick={() => setEditMode((v) => !v)}
-            className={`flex items-center gap-2 font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-colors ${
-              editMode ? 'bg-tertiary text-on-tertiary hover:bg-primary hover:text-on-primary' : 'bg-primary text-on-primary hover:bg-secondary'
-            }`}
-          >
-            <span className="material-symbols-outlined">{editMode ? 'visibility' : 'edit'}</span>
-            {editMode ? t('common.view') : t('common.edit')}
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setEditMode((v) => !v)}
+              className={`flex items-center gap-2 font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-colors ${
+                editMode ? 'bg-tertiary text-on-tertiary hover:bg-primary hover:text-on-primary' : 'bg-primary text-on-primary hover:bg-secondary'
+              }`}
+            >
+              <span className="material-symbols-outlined">{editMode ? 'visibility' : 'edit'}</span>
+              {editMode ? t('common.view') : t('common.edit')}
+            </button>
+          )}
         </div>
       </PageHeader>
 

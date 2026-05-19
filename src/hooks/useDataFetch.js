@@ -1,64 +1,56 @@
 import { useState, useEffect } from 'react';
+import { silentFetch } from '../utils/silentFetch';
+import { checkAuth } from '../services/authService';
 
 const API_BASE = '/api';
-const MAX_RETRIES = 2;
-const RETRY_DELAY = 1000;
 
-async function fetchWithRetry(url, retries = MAX_RETRIES) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res;
-    } catch (err) {
-      if (i === retries - 1) throw err;
-      await new Promise(r => setTimeout(r, RETRY_DELAY * (i + 1)));
-    }
-  }
+async function fetchFallback(files) {
+  const responses = await Promise.all(
+    files.map(f => silentFetch(f).then(r => r.ok ? r.json() : null))
+  );
+  return responses.every(r => r !== null) ? responses : null;
 }
 
-async function fetchJSON(url) {
-  const res = await fetchWithRetry(url);
-  return res.json();
-}
+let stitchedCache = null;
+let stitchedCacheTime = 0;
+let allDataCache = null;
+let allDataCacheTime = 0;
+const DATA_TTL = 30000; // 30 seconds cache for data
 
 export function useStitchedData() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(stitchedCache || []);
+  const [loading, setLoading] = useState(!stitchedCache);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
+    const now = Date.now();
+    if (stitchedCache && now - stitchedCacheTime < DATA_TTL) {
+      setLoading(false);
+      return;
+    }
+
     setError(null);
-
-    fetchJSON(`${API_BASE}/data/stitched`)
-      .then(async (stitched) => {
-        if (!cancelled) {
-          setData(stitched);
-          setLoading(false);
-        }
-      })
-      .catch(async (err) => {
-        if (cancelled) return;
-        console.warn('API stitching failed, falling back to static JSON:', err.message);
-        try {
-          const [locsRes, pizzeRes, pricesRes] = await Promise.all([
-            fetch('/data/towns.json'),
-            fetch('/data/venues.json'),
-            fetch('/data/prices.json'),
-          ]);
-
-          if (!locsRes.ok || !pizzeRes.ok || !pricesRes.ok) {
-            throw new Error('Failed to fetch fallback data');
+    silentFetch(`${API_BASE}/data/stitched`)
+      .then(async (res) => {
+        if (res.ok) {
+          const stitched = await res.json();
+          if (!cancelled) {
+            stitchedCache = stitched || [];
+            stitchedCacheTime = Date.now();
+            setData(stitchedCache);
+            setLoading(false);
           }
-
-          const [locs, venues, prices] = await Promise.all([
-            locsRes.json(),
-            pizzeRes.json(),
-            pricesRes.json(),
-          ]);
-
-          const fallback = venues
+        } else {
+          const fallback = await fetchFallback(['/data/towns.json', '/data/venues.json', '/data/prices.json']);
+          if (cancelled) return;
+          if (!fallback) {
+            setError('Impossibile caricare i dati. Riprova più tardi.');
+            setLoading(false);
+            return;
+          }
+          const [locs, venues, prices] = fallback;
+          const stitchedFallback = venues
             .filter(v => v.status !== 'closed')
             .map(v => {
               const priceEntry = prices.find(p => p.pizzeriaId === v.id);
@@ -72,14 +64,11 @@ export function useStitchedData() {
                 cityRegion: townEntry ? townEntry.region : '',
               };
             });
-
+          
           if (!cancelled) {
-            setData(fallback);
-            setLoading(false);
-          }
-        } catch {
-          if (!cancelled) {
-            setError('Impossibile caricare i dati. Riprova piÃ¹ tardi.');
+            stitchedCache = stitchedFallback;
+            stitchedCacheTime = Date.now();
+            setData(stitchedFallback);
             setLoading(false);
           }
         }
@@ -92,48 +81,52 @@ export function useStitchedData() {
 }
 
 export function useAllData() {
-  const [pizzerias, setPizzerias] = useState([]);
-  const [prices, setPrices] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [pizzerias, setPizzerias] = useState(allDataCache?.pizzerias || []);
+  const [prices, setPrices] = useState(allDataCache?.prices || []);
+  const [locations, setLocations] = useState(allDataCache?.locations || []);
+  const [loading, setLoading] = useState(!allDataCache);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    setError(null);
+    const now = Date.now();
+    if (allDataCache && now - allDataCacheTime < DATA_TTL) {
+      setLoading(false);
+      return;
+    }
 
-    Promise.all([
-      fetchJSON(`${API_BASE}/data/venues`),
-      fetchJSON(`${API_BASE}/data/prices`),
-      fetchJSON(`${API_BASE}/data/towns`),
-    ])
-      .then(([p, pr, l]) => {
-        if (!cancelled) {
-          setPizzerias(p);
-          setPrices(pr);
-          setLocations(l);
-          setLoading(false);
-        }
-      })
-      .catch(async (err) => {
-        if (cancelled) return;
-        console.warn('API failed, falling back to static JSON:', err.message);
-        try {
-          const [pRes, prRes, lRes] = await Promise.all([
-            fetch('/data/venues.json'),
-            fetch('/data/prices.json'),
-            fetch('/data/towns.json'),
-          ]);
-          const [p, pr, l] = await Promise.all([pRes.json(), prRes.json(), lRes.json()]);
+    setError(null);
+    silentFetch(`${API_BASE}/data/full`)
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
           if (!cancelled) {
-            setPizzerias(p);
-            setPrices(pr);
-            setLocations(l);
+            allDataCache = { 
+              pizzerias: data.venues || [], 
+              prices: data.prices || [], 
+              locations: data.towns || [] 
+            };
+            allDataCacheTime = Date.now();
+            setPizzerias(allDataCache.pizzerias);
+            setPrices(allDataCache.prices);
+            setLocations(allDataCache.locations);
             setLoading(false);
           }
-        } catch {
+        } else {
+          // Fallback to individual files if consolidated endpoint fails
+          const fallback = await fetchFallback(['/data/venues.json', '/data/prices.json', '/data/towns.json']);
+          if (cancelled) return;
+          if (!fallback) {
+            setError('Impossibile caricare i dati. Riprova più tardi.');
+            setLoading(false);
+            return;
+          }
           if (!cancelled) {
-            setError('Impossibile caricare i dati. Riprova piÃ¹ tardi.');
+            allDataCache = { pizzerias: fallback[0], prices: fallback[1], locations: fallback[2] };
+            allDataCacheTime = Date.now();
+            setPizzerias(allDataCache.pizzerias);
+            setPrices(allDataCache.prices);
+            setLocations(allDataCache.locations);
             setLoading(false);
           }
         }
@@ -145,4 +138,67 @@ export function useAllData() {
   return { pizzerias, prices, locations, loading, error };
 }
 
+let countsCache = null;
+let countsCacheTime = 0;
+const COUNTS_TTL = 15000; // 15 seconds cache for badge counts
 
+export function usePendingCounts() {
+  const [pendingCount, setPendingCount] = useState({ proposals: 0, comments: 0, posts: 0, total: 0 });
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function verify() {
+      try {
+        const user = await checkAuth();
+        if (cancelled) return;
+        
+        if (user && user.role === 'admin') {
+          setIsAdmin(true);
+
+          const now = Date.now();
+          if (countsCache && now - countsCacheTime < COUNTS_TTL) {
+            setPendingCount(countsCache);
+            return;
+          }
+          
+          const res = await silentFetch(`${API_BASE}/admin/dashboard-stats`, { credentials: 'include' });
+
+          if (cancelled) return;
+
+          let proposals = 0;
+          let comments = 0;
+          let posts = 0;
+
+          if (res.ok) {
+            const data = await res.json();
+            proposals = (data.proposals || []).filter(p => !p.reviewed).length;
+            comments = (data.pendingComments || []).filter(c => !c.approved).length;
+            posts = (data.pendingFeedPosts || []).filter(p => !p.approved).length;
+          }
+
+          if (!cancelled) {
+            const newCounts = {
+              proposals,
+              comments,
+              posts,
+              total: proposals + comments + posts
+            };
+            countsCache = newCounts;
+            countsCacheTime = Date.now();
+            setPendingCount(newCounts);
+          }
+        } else {
+          setIsAdmin(false);
+          setPendingCount({ proposals: 0, comments: 0, posts: 0, total: 0 });
+        }
+      } catch (e) {
+        console.error('Error fetching pending counts:', e);
+      }
+    }
+    verify();
+    return () => { cancelled = true; };
+  }, []);
+
+  return { ...pendingCount, isAdmin };
+}

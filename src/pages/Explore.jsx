@@ -9,7 +9,7 @@ import PriceProposalForm from '../components/explore/PriceProposalForm';
 import ExploreCards from '../components/explore/ExploreCards';
 import ExploreTable from '../components/explore/ExploreTable';
 import ExploreNetwork from '../components/explore/ExploreNetwork';
-import { PAGE_SIZE } from '../config/exploreConfig';
+
 
 function ExplorePriceReport({ selected, t }) {
   const [open, setOpen] = useState(false);

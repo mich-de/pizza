@@ -14,7 +14,7 @@ export default function CommentForm({ postId, onCommentSubmitted }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const initRef = useRef(false);
+
 
   const fetchCaptcha = useCallback(async () => {
     try {
@@ -27,9 +27,11 @@ export default function CommentForm({ postId, onCommentSubmitted }) {
     }
   }, [t]);
 
-  useEffect(() => {
+  const [didInit, setDidInit] = useState(false);
+  if (!didInit) {
+    setDidInit(true);
     fetchCaptcha();
-  }, [fetchCaptcha]);
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

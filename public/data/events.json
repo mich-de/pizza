@@ -1,0 +1,58 @@
+[
+  {
+    "id": "pizza-damare-2026",
+    "title": "Pizza d'aMare",
+    "titleIt": "Pizza d'aMare",
+    "dateStart": "2026-05-19",
+    "dateEnd": "2026-05-21",
+    "cityId": "meta",
+    "venue": "Marina di Meta",
+    "description": "The 5th edition of the most anticipated pizza festival on the Sorrento Coast. 18 pizzerias with live cooking stations, special guest Errico Porzio, kids workshops, sunset aperitivo and the best Margherita by the sea.",
+    "descriptionIt": "La V edizione del festival della pizza più atteso della Costiera Sorrentina. 18 pizzerie con postazioni di cottura dal vivo, special guest Errico Porzio, laboratori per bambini, aperitivo al tramonto e la miglior Margherita sul mare.",
+    "type": "festival",
+    "imageUrl": null,
+    "highlights": ["18 pizzerie", "Errico Porzio", "Live music", "Kids workshop"]
+  },
+  {
+    "id": "pizza-a-vico-2026",
+    "title": "Pizza a Vico",
+    "titleIt": "Pizza a Vico",
+    "dateStart": "2026-09-23",
+    "dateEnd": "2026-09-25",
+    "cityId": "vico-equense",
+    "venue": "Centro Storico, Vico Equense",
+    "description": "The 7th edition of the event celebrating Vico Equense's iconic De.Co. pizza. 30 local pizzerias in the historic center streets, wine cellars from across Campania, and the annual Pizza a Vico competition.",
+    "descriptionIt": "La VII edizione dell'evento che celebra la pizza De.Co. di Vico Equense. 30 pizzerie locali per le vie del centro storico, cantine da tutta la Campania e la gara annuale Pizza a Vico.",
+    "type": "festival",
+    "imageUrl": null,
+    "highlights": ["30 pizzerie", "Wine tasting", "De.Co. pizza", "Street food"]
+  },
+  {
+    "id": "intrecci-seiano-2026",
+    "title": "Intrecci di Gusto",
+    "titleIt": "Intrecci di Gusto",
+    "dateStart": "2026-06-05",
+    "dateEnd": "2026-06-05",
+    "cityId": "vico-equense",
+    "venue": "Saporì Pizza e Qualcos'altro, Seiano",
+    "description": "An exclusive pizza evening with Maestro Enzo Coccia (Pizzeria La Notizia, MICHELIN guide) at Saporì Pizza e Qualcos'altro in Seiano. A unique 'Intrecci' event celebrating high pizza art in the Sorrento Peninsula.",
+    "descriptionIt": "Una serata esclusiva con il Maestro Enzo Coccia (Pizzeria La Notizia, Guida MICHELIN) da Saporì Pizza e Qualcos'altro a Seiano. Un evento 'Intrecci' unico che celebra l'alta pizza in Penisola Sorrentina.",
+    "type": "event",
+    "imageUrl": null,
+    "highlights": ["Enzo Coccia", "Pizza gourmet", "Wine pairing", "MICHELIN chef"]
+  },
+  {
+    "id": "limoni-in-festa-2026",
+    "title": "Limoni in Festa",
+    "titleIt": "Limoni in Festa",
+    "dateStart": "2026-07-11",
+    "dateEnd": "2026-07-12",
+    "cityId": "massa-lubrense",
+    "venue": "Centro Storico, Massa Lubrense",
+    "description": "The 50th edition of the lemon festival celebrating Massa Lubrense's iconic oval lemon. Food tastings, pizza with lemon-infused toppings, artisan markets, live folk music, and guided tours of historic palaces.",
+    "descriptionIt": "La 50ª edizione della sagra del limone che celebra il limone ovale di Massa Lubrense. Degustazioni, pizza con condimenti al limone, mercatini artigianali, musica folk dal vivo e visite guidate ai palazzi storici.",
+    "type": "food festival",
+    "imageUrl": null,
+    "highlights": ["50th edition", "Lemon pizza", "Folk music", "Artisan market"]
+  }
+]

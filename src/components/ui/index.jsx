@@ -4,6 +4,7 @@ export function StatCard({ title, value, icon, color = 'primary', className = ''
     secondary: { bg: 'bg-secondary', border: 'border-secondary', text: 'text-on-secondary', iconText: 'text-on-secondary/80', badge: 'bg-on-secondary/10' },
     tertiary: { bg: 'bg-tertiary', border: 'border-tertiary', text: 'text-on-tertiary', iconText: 'text-on-tertiary/80', badge: 'bg-on-tertiary/10' },
     primaryContainer: { bg: 'bg-primary-container', border: 'border-primary/30', text: 'text-on-primary-container', iconText: 'text-primary', badge: 'bg-primary/10' },
+    warm: { bg: 'bg-[#F6F1EA]', border: 'border-[#D6CDC2]', text: 'text-[#2C1810]', iconText: 'text-primary', badge: 'bg-primary/10' },
   };
   const c = colorMap[color] || colorMap.primary;
 

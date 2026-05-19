@@ -6,6 +6,7 @@
   "nav": {
     "analytics": "Dashboard",
     "feed": "Feed",
+    "events": "Eventi",
     "directory": "Esplora",
     "prices": "Prezzi",
     "network": "Rete",
@@ -51,6 +52,20 @@
     "subtitle": "Le pizzerie più recenti aperte nella Penisola Sorrentina",
     "badge": "NUOVA APERTURA",
     "openedAt": "Apertura: {month} {year}"
+  },
+  "events": {
+    "title": "Eventi & Sagre",
+    "subtitle": "Tutti gli eventi, le sagre e i festival della pizza nella Penisola Sorrentina",
+    "when": "QUANDO",
+    "where": "DOVE",
+    "highlights": "IN EVIDENZA",
+    "pastEvent": "EVENTO PASSATO",
+    "upcoming": "IN ARRIVO",
+    "todayEvent": "OGGI!",
+    "daysRemaining": "Tra {days} giorni",
+    "multiDay": "{start} — {end} {month}",
+    "noEvents": "Nessun evento imminente",
+    "discoverMore": "Scopri tutti gli eventi della penisola"
   },
   "months": {
     "01": "Gen", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mag", "06": "Giu",

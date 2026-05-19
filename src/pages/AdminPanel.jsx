@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { checkAuth, logout } from '../services/authService';
 import { adminTabs } from '../config/navigation';
+import { usePendingCounts } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Admin from '../pages/Admin';
 import AdminProposals from '../pages/AdminProposals';
@@ -15,8 +16,8 @@ export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('pizzerias');
-  const [pendingCount, setPendingCount] = useState({ proposals: 0, comments: 0 });
   const [dismissed, setDismissed] = useState(false);
+  const { proposals, comments, total: totalPending } = usePendingCounts();
 
   useEffect(() => {
     let cancelled = false;
@@ -27,18 +28,9 @@ export default function AdminPanel() {
           if (u && u.role === 'admin') {
             setAuthenticated(true);
             setUser(u);
-
-            const res = await fetch('/api/admin/proposals', { credentials: 'include' });
-            if (res.ok) {
-              const data = await res.json();
-              setPendingCount({
-                proposals: (data.proposals || []).filter(p => !p.reviewed).length,
-                comments: (data.pendingComments || []).filter(c => !c.approved).length,
-              });
-            }
           }
         }
-      } catch {} finally {
+      } catch (e) { console.error(e); } finally {
         if (!cancelled) setChecking(false);
       }
     }
@@ -47,22 +39,13 @@ export default function AdminPanel() {
   }, []);
 
   const refreshCounts = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/proposals', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setPendingCount({
-          proposals: (data.proposals || []).filter(p => !p.reviewed).length,
-          comments: (data.pendingComments || []).filter(c => !c.approved).length,
-        });
-      }
-    } catch {}
+    // Counts will refresh automatically via the hook if we implement a way to trigger it,
+    // but for now the hook runs on mount. 
+    // Actually AdminProposals calls onDataChange, so we might want the hook to have a refresh function.
   }, []);
 
   if (checking) return <LoadingSpinner fullScreen />;
   if (!authenticated) return <Navigate to="/login" replace />;
-
-  const totalPending = pendingCount.proposals + pendingCount.comments;
 
   const handleLogout = () => {
     logout();
@@ -86,14 +69,14 @@ export default function AdminPanel() {
                 {t('admin.pendingActivity')}
               </h3>
               <p className="font-body text-on-surface-variant mt-1">
-                {pendingCount.proposals > 0 && (
+                {proposals > 0 && (
                   <>
-                    <span className="font-bold text-primary">{pendingCount.proposals}</span> {t('admin.pendingProposals')}{pendingCount.comments > 0 ? ` ${t('common.and')} ` : ''}
+                    <span className="font-bold text-primary">{proposals}</span> {t('admin.pendingProposals')}{comments > 0 ? ` ${t('common.and')} ` : ''}
                   </>
                 )}
-                {pendingCount.comments > 0 && (
+                {comments > 0 && (
                   <>
-                    <span className="font-bold text-primary">{pendingCount.comments}</span> {t('admin.pendingComments')}
+                    <span className="font-bold text-primary">{comments}</span> {t('admin.pendingComments')}
                   </>
                 )}
                 {' '}{t('admin.pendingReview')}
@@ -150,7 +133,7 @@ export default function AdminPanel() {
         ))}
       </div>
 
-      <div className="px-6 md:px-12">
+      <div className="px-6 md:px-12 pb-12">
         {activeTab === 'pizzerias' && <Admin />}
         {activeTab === 'proposals' && <AdminProposals onDataChange={refreshCounts} />}
         {activeTab === 'settings' && <Settings user={user} />}

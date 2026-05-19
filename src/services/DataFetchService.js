@@ -15,28 +15,33 @@ function sanitizeForAttribute(str) {
   return str.replace(/["'&<>/`]/g, '').trim();
 }
 
+async function fetchJSON(url, retries = 2, delay = 500) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      if (i < retries) await new Promise(r => setTimeout(r, delay * (i + 1)));
+    }
+  }
+  return null;
+}
+
 async function getStitchedData() {
-  const res = await fetch('/api/data/stitched');
-  if (!res.ok) throw new Error('Failed to fetch stitched data');
-  return res.json();
+  return await fetchJSON('/api/data/stitched') ?? [];
 }
 
 async function getLocations() {
-  const res = await fetch('/api/data/towns');
-  if (!res.ok) throw new Error('Failed to fetch towns');
-  return res.json();
+  return await fetchJSON('/api/data/towns') ?? [];
 }
 
 async function getPizzerias() {
-  const res = await fetch('/api/data/venues');
-  if (!res.ok) throw new Error('Failed to fetch venues');
-  return res.json();
+  return await fetchJSON('/api/data/venues') ?? [];
 }
 
 async function getPrices() {
-  const res = await fetch('/api/data/prices');
-  if (!res.ok) throw new Error('Failed to fetch prices');
-  return res.json();
+  return await fetchJSON('/api/data/prices') ?? [];
 }
 
 function groupByCity(stitchedData) {

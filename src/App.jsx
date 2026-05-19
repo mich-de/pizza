@@ -6,6 +6,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Events = lazy(() => import('./pages/Events'));
 const Feed = lazy(() => import('./pages/Feed'));
 const Directory = lazy(() => import('./pages/Directory'));
 const Prices = lazy(() => import('./pages/Prices'));
@@ -23,6 +24,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/" element={<Dashboard />} />
+              <Route path="/events" element={<Events />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/directory" element={<Directory />} />

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -21,7 +21,7 @@ async function fetchWithAuth(url, options = {}) {
           headers: { 'Content-Type': 'application/json', ...options.headers },
         });
       }
-    } catch {}
+    } catch (e) { console.error(e); }
     throw new Error('SESSION_EXPIRED');
   }
   return res;
@@ -55,20 +55,14 @@ export default function AdminProposals({ onDataChange }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchWithAuth('/api/admin/proposals');
+      const res = await fetchWithAuth('/api/admin/dashboard-stats');
       if (!res.ok) throw new Error(t('admin.toastLoadError'));
       const data = await res.json();
+      
       setProposals(data.proposals || []);
       setPendingComments(data.pendingComments || []);
-
-      const venuesRes = await fetch(`${API_BASE}/api/data/venues`, { credentials: 'include' });
-      if (venuesRes.ok) setVenues(await venuesRes.json());
-
-      const feedPostsRes = await fetchWithAuth('/api/admin/feed-posts');
-      if (feedPostsRes.ok) {
-        const allFeedPosts = await feedPostsRes.json();
-        setPendingFeedPosts(allFeedPosts.filter(p => !p.approved));
-      }
+      setPendingFeedPosts(data.pendingFeedPosts || []);
+      setVenues(data.venues || []);
     } catch (err) {
       if (err.message === 'SESSION_EXPIRED') {
         navigate('/login');
@@ -78,9 +72,13 @@ export default function AdminProposals({ onDataChange }) {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, t]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const [didInit, setDidInit] = useState(false);
+  if (!didInit) {
+    setDidInit(true);
+    fetchData();
+  }
 
   const getVenueName = (id) => venues.find(v => v.id === id)?.name || id;
 

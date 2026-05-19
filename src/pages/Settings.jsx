@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeContext';
+import { checkAuth } from '../services/authService';
 
 const ZONES = [
   'Massa Lubrense',
@@ -23,6 +24,7 @@ function Toggle({ value, onChange }) {
 }
 
 function TwoFAModal({ onClose, onEnabled }) {
+  const { t } = useI18n();
   const [step, setStep] = useState('setup');
   const [qrCode, setQrCode] = useState(null);
   const [secret, setSecret] = useState('');
@@ -172,6 +174,7 @@ function TwoFAModal({ onClose, onEnabled }) {
 }
 
 function TwoFADisableModal({ onClose, onDisabled }) {
+  const { t } = useI18n();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -284,19 +287,16 @@ export default function Settings({ user }) {
 
   useEffect(() => {
     if (user) {
-      fetch('/api/admin/me', { credentials: 'include' })
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data?.user) {
-            setSettings(prev => ({
-              ...prev,
-              displayName: data.user.displayName || data.user.username || prev.displayName,
-              email: data.user.email || '',
-              role: data.user.role || prev.role,
-            }));
-          }
-        })
-        .catch(() => {});
+      checkAuth().then(data => {
+        if (data) {
+          setSettings(prev => ({
+            ...prev,
+            displayName: data.displayName || data.username || prev.displayName,
+            email: data.email || '',
+            role: data.role || prev.role,
+          }));
+        }
+      });
 
       fetch('/api/auth/2fa/status', { credentials: 'include' })
         .then(r => r.ok ? r.json() : null)
@@ -307,13 +307,17 @@ export default function Settings({ user }) {
     }
   }, [user]);
 
-  useEffect(() => {
+  const [prevLang, setPrevLang] = useState(lang);
+  const [prevDark, setPrevDark] = useState(dark);
+  if (lang !== prevLang || dark !== prevDark) {
+    setPrevLang(lang);
+    setPrevDark(dark);
     setSettings((prev) => ({
       ...prev,
       language: lang,
       darkMode: dark,
     }));
-  }, [lang, dark]);
+  }
 
   const handleChange = (key, value) => {
     if (key === 'language') {
@@ -352,6 +356,16 @@ export default function Settings({ user }) {
       if (!res.ok) throw new Error(data.error || t('settings.saveError'));
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+      
+      // Refresh local state
+      const meData = await checkAuth();
+      if (meData) {
+        setSettings(prev => ({
+          ...prev,
+          displayName: meData.displayName || meData.username,
+          email: meData.email || '',
+        }));
+      }
     } catch (err) {
       setSaveError(err.message);
     } finally {
@@ -361,27 +375,24 @@ export default function Settings({ user }) {
 
   const handleReset = () => {
     if (user) {
-      fetch('/api/admin/me', { credentials: 'include' })
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data?.user) {
-            setSettings({
-              displayName: data.user.displayName || data.user.username || 'Admin',
-              email: data.user.email || '',
-              role: data.user.role || 'viewer',
-              defaultZone: 'Sorrento',
-              currency: 'EUR',
-              notifications: true,
-              emailAlerts: true,
-              lowStockAlerts: true,
-              priceChangeAlerts: true,
-              compactView: false,
-              autoRefresh: true,
-              refreshInterval: '30',
-            });
-          }
-        })
-        .catch(() => {});
+      checkAuth().then(data => {
+        if (data) {
+          setSettings({
+            displayName: data.displayName || data.username || 'Admin',
+            email: data.email || '',
+            role: data.role || 'viewer',
+            defaultZone: 'Sorrento',
+            currency: 'EUR',
+            notifications: true,
+            emailAlerts: true,
+            lowStockAlerts: true,
+            priceChangeAlerts: true,
+            compactView: false,
+            autoRefresh: true,
+            refreshInterval: '30',
+          });
+        }
+      });
     }
     setSaved(false);
     setSaveError(null);

@@ -1,5 +1,6 @@
 export const navItems = [
   { to: '/', icon: 'analytics', labelKey: 'nav.analytics' },
+  { to: '/events', icon: 'event', labelKey: 'nav.events' },
   { to: '/feed', icon: 'map', labelKey: 'nav.feed' },
   { to: '/explore', icon: 'storefront', labelKey: 'nav.directory' },
   { to: '/prices', icon: 'payments', labelKey: 'nav.prices' },

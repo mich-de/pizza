@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { navItems } from '../config/navigation';
-import { useStitchedData } from '../hooks/useDataFetch';
+import { useStitchedData, usePendingCounts } from '../hooks/useDataFetch';
 
 const activeLinkClass = 'text-primary bg-primary/8 rounded-sm px-3 py-2.5 my-0.5 flex items-center gap-3 font-label font-medium text-sm transition-all relative before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary before:rounded-full';
 const inactiveLinkClass = 'text-on-surface-variant/70 hover:text-primary hover:bg-primary/5 rounded-sm px-3 py-2.5 my-0.5 flex items-center gap-3 font-label font-medium text-sm transition-all duration-200';
@@ -9,6 +9,7 @@ const inactiveLinkClass = 'text-on-surface-variant/70 hover:text-primary hover:b
 export default function Sidebar() {
   const { t, lang, setLang } = useI18n();
   const { data } = useStitchedData();
+  const { total: pendingTotal, isAdmin } = usePendingCounts();
   const year = new Date().getFullYear();
 
   const globalAvg = data.length > 0
@@ -36,7 +37,7 @@ export default function Sidebar() {
         <div className="relative px-6 pt-8 pb-5">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gradient-to-br from-primary/15 to-primary/5 rounded-sm flex items-center justify-center overflow-hidden ring-2 ring-primary/20 shadow-md flex-shrink-0">
-              <img src="/images/logo.png" alt="Logo" className="w-full h-full object-cover" />
+              <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <h2 className="font-display font-bold text-xl tracking-tight text-primary leading-none">
@@ -103,6 +104,11 @@ export default function Sidebar() {
                   {item.icon}
                 </span>
                 <span className="flex-1">{t(item.labelKey)}</span>
+                {item.to === '/admin' && isAdmin && pendingTotal > 0 && (
+                  <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-error text-on-error text-[10px] font-bold rounded-full border border-surface shadow-sm">
+                    {pendingTotal}
+                  </span>
+                )}
                 {isActive && (
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-soft" />
                 )}
@@ -145,6 +151,14 @@ export default function Sidebar() {
               </button>
             </div>
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-1.5 mt-1 pt-1.5 border-t border-primary/10">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping flex-shrink-0" />
+              <span className="font-label text-[10px] font-semibold uppercase tracking-wider text-primary">
+                Admin
+              </span>
+            </div>
+          )}
           {data.length > 0 && (
             <div className="flex items-center gap-2 text-on-surface-variant/40">
               <span className="w-1 h-1 rounded-full bg-tertiary animate-pulse-soft" />
