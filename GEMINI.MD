@@ -24,4 +24,5 @@
 
 ## Recent Actions
 - Initialized `GEMINI.MD`, `TASKS.MD`, and `IMPLEMENTATION_PLAN.MD`.
-- Preparing for initial dependency installation.
+- Fixed CORS error during login by allowing more local origins and improving diagnostic logging.
+- Verified `ALLOWED_ORIGINS` environment variable usage.

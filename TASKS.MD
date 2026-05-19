@@ -17,5 +17,6 @@
 - [ ] Test authentication flow (Login/JWT)
 
 ## [COOLIFY] Deployment
-- [ ] Advise user on setting `ALLOWED_ORIGINS`
+- [x] Fix CORS error during login (added 127.0.0.1 and dynamic local origin allowing in dev)
+- [x] Advise user on setting `ALLOWED_ORIGINS` (improved logging provides this advice dynamically)
 - [ ] Advise user on setting `VITE_BASE_PATH=/` (though now default)
