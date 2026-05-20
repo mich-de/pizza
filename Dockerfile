@@ -7,7 +7,6 @@ RUN npm install
 
 COPY src/ ./src/
 COPY public/ ./public/
-COPY server/ ./server/
 
 RUN npm run build
 
@@ -26,7 +25,6 @@ COPY --from=builder /app/public ./public
 COPY server/ ./server/
 
 RUN mkdir -p server/private server/logs && \
-  echo '[]' > server/private/admins.json && \
   chown -R appuser:appgroup /app
 
 USER appuser
