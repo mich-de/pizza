@@ -32,7 +32,7 @@ app.use(compression());
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-me';
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'peninsula-ovserver';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || null;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000')
   .split(',')
@@ -385,7 +385,7 @@ async function seedAdmin() {
   }
 
   if (admins.length === 0) {
-    const hash = ADMIN_PASSWORD_HASH || await hashPassword(process.env.ADMIN_PASSWORD || 'PizzaAdmin2024!');
+    const hash = ADMIN_PASSWORD_HASH || await hashPassword(process.env.ADMIN_PASSWORD || 'pizzasorrento');
     admins.push({
       id: 1,
       username: ADMIN_USERNAME,
