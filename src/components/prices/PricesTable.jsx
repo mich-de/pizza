@@ -36,12 +36,12 @@ export default function PricesTable({ sorted, stats, page, setPage, t, editingId
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-primary text-on-primary font-headline uppercase tracking-widest text-sm border-b-4 border-primary">
-                <th className="p-4 border-r-2 border-outline-variant font-bold w-8">#</th>
+                <th className="p-4 border-r-2 border-outline-variant font-bold w-8 hidden md:table-cell">#</th>
                 <th className="p-4 border-r-2 border-outline-variant font-bold">{t('prices.pizzeria')}</th>
                 <th className="p-4 border-r-2 border-outline-variant font-bold">{t('prices.city')}</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-32">{t('prices.category')}</th>
+                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-32 hidden md:table-cell">{t('prices.category')}</th>
                 <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-40">{t('prices.margherita')}</th>
-                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-40">{t('prices.priceDistribution')}</th>
+                <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-40 hidden md:table-cell">{t('prices.priceDistribution')}</th>
                 <th className="p-4 border-r-2 border-outline-variant font-bold text-center w-16">{t('prices.rating')}</th>
                 <th className="p-4 font-bold text-center w-24">{t('prices.details')}</th>
                 {editMode && <th className="p-4 font-bold text-center w-24">Azioni</th>}
@@ -56,7 +56,7 @@ export default function PricesTable({ sorted, stats, page, setPage, t, editingId
                     key={`${pz.id}-${idx}`}
                     className={`border-b-2 border-primary hover:bg-surface-variant transition-colors ${tier === 'cheap' ? 'bg-tertiary-container/20' : tier === 'expensive' ? 'bg-secondary-container/20' : ''}`}
                   >
-                    <td className="p-4 border-r-2 border-primary font-mono text-xs text-on-surface-variant">{page * PAGE_SIZE + idx + 1}</td>
+                    <td className="p-4 border-r-2 border-primary font-mono text-xs text-on-surface-variant hidden md:table-cell">{page * PAGE_SIZE + idx + 1}</td>
                     <td className="p-4 border-r-2 border-primary">
                       {isEditing ? (
                         <input type="text" className="w-full bg-surface border-2 border-primary p-1 font-body font-bold text-primary focus:border-secondary" value={editForm.name || pz.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
@@ -74,7 +74,7 @@ export default function PricesTable({ sorted, stats, page, setPage, t, editingId
                         pz.cityName
                       )}
                     </td>
-                    <td className="p-4 border-r-2 border-primary text-sm text-center">
+                    <td className="p-4 border-r-2 border-primary text-sm text-center hidden md:table-cell">
                       {isEditing ? (
                         <select className="w-full bg-background border-2 border-primary p-1 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer" value={editForm.category || pz.category} onChange={(e) => setEditForm(f => ({ ...f, category: e.target.value }))}>
                           <option value="traditional">{t('common.traditional')}</option>
@@ -95,7 +95,7 @@ export default function PricesTable({ sorted, stats, page, setPage, t, editingId
                         </span>
                       )}
                     </td>
-                    <td className="p-4 border-r-2 border-primary">
+                    <td className="p-4 border-r-2 border-primary hidden md:table-cell">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-3 bg-surface-dim border border-outline-variant overflow-hidden">
                           <div className={`h-full transition-all ${tier === 'cheap' ? 'bg-tertiary' : tier === 'expensive' ? 'bg-secondary' : 'bg-primary-fixed-dim'}`} style={{ width: `${barWidth(pz.margheritaPrice)}%` }} />

@@ -107,30 +107,30 @@ export default function Dashboard() {
         </div>
         </div>
 
-        <div className="relative -mt-10 mx-4 md:mx-auto max-w-4xl bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#E8E0D5] p-4 md:p-5 z-20 animate-slide-up">
-          <div className="flex items-stretch gap-0">
-            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2">
+        <div className="relative -mt-10 mx-4 md:mx-auto max-w-4xl bg-surface rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-outline-variant p-4 md:p-5 z-20 animate-slide-up">
+          <div className="grid grid-cols-2 md:flex md:items-stretch gap-y-4 md:gap-y-0">
+            <div className="flex flex-col items-center justify-center py-1 md:py-2 px-2 md:flex-1">
               <span className="w-2 h-2 rounded-full bg-[#009246] mb-1.5" />
-              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{data.length}</p>
-              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Pizzerie</p>
+              <p className="font-label font-bold text-xs md:text-sm text-on-surface">{data.length}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold mt-0.5">Pizzerie</p>
             </div>
-            <div className="w-px bg-gradient-to-b from-transparent via-[#D6CDC2] to-transparent my-2" />
-            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2">
-              <span className="w-2 h-2 rounded-full bg-white border border-[#D6CDC2] mb-1.5" />
-              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{Object.keys(grouped).length}</p>
-              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Città</p>
+            <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-outline-variant to-transparent my-2" />
+            <div className="flex flex-col items-center justify-center py-1 md:py-2 px-2 md:flex-1">
+              <span className="w-2 h-2 rounded-full bg-surface border border-outline-variant mb-1.5" />
+              <p className="font-label font-bold text-xs md:text-sm text-on-surface">{Object.keys(grouped).length}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold mt-0.5">Città</p>
             </div>
-            <div className="w-px bg-gradient-to-b from-transparent via-[#D6CDC2] to-transparent my-2" />
-            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2">
+            <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-outline-variant to-transparent my-2" />
+            <div className="flex flex-col items-center justify-center py-1 md:py-2 px-2 md:flex-1">
               <span className="w-2 h-2 rounded-full bg-[#CE2B37] mb-1.5" />
-              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}</p>
-              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Fascia</p>
+              <p className="font-label font-bold text-xs md:text-sm text-on-surface">{t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold mt-0.5">Fascia</p>
             </div>
-            <div className="w-px bg-gradient-to-b from-transparent via-[#D6CDC2] to-transparent my-2" />
-            <div className="flex-1 flex flex-col items-center justify-center py-1 md:py-2 px-2 relative">
+            <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-outline-variant to-transparent my-2" />
+            <div className="flex flex-col items-center justify-center py-1 md:py-2 px-2 md:flex-1 relative">
               <span className="w-2 h-2 rounded-full bg-gradient-to-br from-[#009246] via-white to-[#CE2B37] mb-1.5" />
-              <p className="font-label font-bold text-xs md:text-sm text-[#2C1810]">{t('common.euro')}{globalAvg.toFixed(2)}</p>
-              <p className="font-label text-[9px] md:text-[10px] text-[#7A6E64] uppercase tracking-widest font-semibold mt-0.5">Media</p>
+              <p className="font-label font-bold text-xs md:text-sm text-on-surface">{t('common.euro')}{globalAvg.toFixed(2)}</p>
+              <p className="font-label text-[9px] md:text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold mt-0.5">Media</p>
               <div className="hidden md:block absolute -right-14 -top-10 w-28 h-28 pointer-events-none z-30">
                 <img src="/images/floating-pizza.png" alt="Pizza" className="w-full h-auto drop-shadow-[0_8px_16px_rgba(0,0,0,0.25)]" />
               </div>
@@ -141,37 +141,37 @@ export default function Dashboard() {
 
       <div className="p-6 md:p-12 pt-0">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-10">
-          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="bg-surface border border-outline-variant rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
             <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#009246] to-[#00B050]" />
             <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#009246] mb-1 md:mb-2">Pizzerie Totali</div>
-            <div className="font-display font-bold text-3xl md:text-4xl text-[#2C1810]">{data.length}</div>
-            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#009246]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#009246]/70 transition-all" style={{ fontVariationSettings: "'FILL' 1" }}>local_pizza</span>
+            <div className="font-display font-bold text-3xl md:text-4xl text-on-surface">{data.length}</div>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#009246]/30 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#009246]/60 transition-all" style={{ fontVariationSettings: "'FILL' 1" }}>local_pizza</span>
           </div>
           
-          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#D6CDC2] to-white" />
-            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#7A6E64] mb-1 md:mb-2">Città Monitorate</div>
-            <div className="font-display font-bold text-3xl md:text-4xl text-[#2C1810]">{Object.keys(grouped).length}</div>
-            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#7A6E64]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#7A6E64]/70 transition-all">location_city</span>
+          <div className="bg-surface border border-outline-variant rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-outline-variant to-transparent" />
+            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant mb-1 md:mb-2">Città Monitorate</div>
+            <div className="font-display font-bold text-3xl md:text-4xl text-on-surface">{Object.keys(grouped).length}</div>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-on-surface-variant/30 text-xl md:text-2xl material-symbols-outlined group-hover:text-on-surface-variant/60 transition-all">location_city</span>
           </div>
 
-          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="bg-surface border border-outline-variant rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
             <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#CE2B37] to-[#E85050]" />
             <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#CE2B37] mb-1 md:mb-2">Prezzo Medio</div>
-            <div className="font-display font-bold text-3xl md:text-4xl text-[#2C1810]">{t('common.euro')}{globalAvg.toFixed(2)}</div>
-            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#CE2B37]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#CE2B37]/70 transition-all">trending_up</span>
+            <div className="font-display font-bold text-3xl md:text-4xl text-on-surface">{t('common.euro')}{globalAvg.toFixed(2)}</div>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#CE2B37]/30 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#CE2B37]/60 transition-all">trending_up</span>
           </div>
 
-          <div className="bg-white border border-[#E8E0D5] rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
-            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-[#7A6E64] mb-1">Fascia Prezzo</div>
-            <div className="font-display font-bold text-xl md:text-2xl text-[#2C1810] leading-tight mb-1">
+          <div className="bg-surface border border-outline-variant rounded-lg p-4 md:p-6 relative overflow-hidden group hover-lift shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#009246] via-outline-variant to-[#CE2B37]" />
+            <div className="text-[9px] md:text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant mb-1">Fascia Prezzo</div>
+            <div className="font-display font-bold text-xl md:text-2xl text-on-surface leading-tight mb-1">
               {t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}
             </div>
-            <div className="text-[9px] md:text-[10px] font-body font-medium text-[#7A6E64] truncate max-w-[85%]">
+            <div className="text-[9px] md:text-[10px] font-body font-medium text-on-surface-variant truncate max-w-[85%]">
               Miglior Prezzo: {bestPick.name}
             </div>
-            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-[#7A6E64]/40 text-xl md:text-2xl material-symbols-outlined group-hover:text-[#7A6E64]/70 transition-all">swap_vert</span>
+            <span className="absolute bottom-3 right-3 md:bottom-5 md:right-5 text-on-surface-variant/30 text-xl md:text-2xl material-symbols-outlined group-hover:text-on-surface-variant/60 transition-all">swap_vert</span>
           </div>
         </div>
 

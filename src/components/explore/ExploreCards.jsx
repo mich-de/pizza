@@ -10,7 +10,7 @@ export default function ExploreCards({ filtered, t, lang, onSelect, onReportPric
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {filtered.map((pz) => (
         <article
           key={pz.id}

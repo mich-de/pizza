@@ -3,17 +3,18 @@ services:
     build: .
     container_name: pizza-radar
     restart: unless-stopped
-    ports:
-      - '3000:3000'
     environment:
       - NODE_ENV=production
       - PORT=3000
-    env_file:
-      - .env
+      - HOST=0.0.0.0
+      - TRUST_PROXY=1
+      - JWT_SECRET=${JWT_SECRET:?}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:?}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://pizzaradarsorrento.mdeangelis.me}
     volumes:
       - pizza-data:/app/server/private
     tmpfs:
-      - '/tmp:noexec,nosuid,size=64m'
+      - /tmp:noexec,nosuid,size=64m
     deploy:
       resources:
         limits:

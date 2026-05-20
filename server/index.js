@@ -27,6 +27,7 @@ const PRIVATE_DIR = join(__dirname, 'private');
 
 const app = express();
 export { app };
+app.set('trust proxy', process.env.TRUST_PROXY || 1);
 app.use(compression());
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -431,34 +432,47 @@ app.use(helmet({
   hsts: NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
 }));
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin is explicitly allowed
-    if (ALLOWED_ORIGINS.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    // Robust check for localhost and 127.0.0.1 in non-production environments
-    if (NODE_ENV !== 'production') {
-      const isLocal = origin.startsWith('http://localhost:') || 
-                      origin.startsWith('http://127.0.0.1:');
-      if (isLocal) return callback(null, true);
-    }
+const corsOptionsDelegate = (req, callback) => {
+  const origin = req.header('Origin');
+  let isAllowed = false;
 
-    // Special case: allow any origin if it's the same as the host (for production behind proxy)
-    // This is often needed when the frontend is served by the same server but the origin header is present
-    
+  if (!origin) {
+    isAllowed = true;
+  } else if (ALLOWED_ORIGINS.includes(origin)) {
+    isAllowed = true;
+  } else if (NODE_ENV !== 'production') {
+    const isLocal = origin.startsWith('http://localhost:') || 
+                    origin.startsWith('http://127.0.0.1:');
+    if (isLocal) isAllowed = true;
+  } else {
+    // Dynamic matching for proxy/SSL setup
+    try {
+      const originUrl = new URL(origin);
+      const host = req.header('Host');
+      const forwardedHost = req.header('X-Forwarded-Host');
+      if (originUrl.host === host || (forwardedHost && originUrl.host === forwardedHost)) {
+        isAllowed = true;
+      }
+    } catch (e) {
+      // Invalid URL in Origin header
+    }
+  }
+
+  if (isAllowed) {
+    callback(null, {
+      origin: true,
+      methods: ['GET', 'POST', 'DELETE', 'PUT'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+      credentials: true,
+      maxAge: 86400,
+    });
+  } else {
     console.warn(`[CORS] Rejected origin: "${origin}" (Allowed: ${ALLOWED_ORIGINS.join(', ')})`);
     callback(new Error('Not allowed by CORS'));
-  },
-  methods: ['GET', 'POST', 'DELETE', 'PUT'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  credentials: true,
-  maxAge: 86400,
-}));
+  }
+};
+
+app.use(cors(corsOptionsDelegate));
 
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -1621,9 +1635,10 @@ let server;
 if (process.env.NODE_ENV !== 'test') {
   seedAdmin()
     .then(() => {
-      server = app.listen(PORT, '127.0.0.1', () => {
-        logger.info(`Server attivo su http://127.0.0.1:${PORT}`);
-        logger.info(`API: http://127.0.0.1:${PORT}/api/data/stitched`);
+      const HOST = process.env.HOST || '0.0.0.0';
+      server = app.listen(PORT, HOST, () => {
+        logger.info(`Server attivo su http://${HOST}:${PORT}`);
+        logger.info(`API: http://${HOST}:${PORT}/api/data/stitched`);
       });
     })
     .catch(err => {

@@ -25,12 +25,12 @@ export default function ExploreTable({ sorted, stats, page, setPage, t, onSelect
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-variant/70 text-on-surface-variant/80 font-label text-xs uppercase tracking-wider border-b border-outline-variant">
-                <th className="p-4 border-r border-outline-variant font-semibold w-10">#</th>
+                <th className="p-4 border-r border-outline-variant font-semibold w-10 hidden md:table-cell">#</th>
                 <th className="p-4 border-r border-outline-variant font-semibold">{t('prices.pizzeria')}</th>
                 <th className="p-4 border-r border-outline-variant font-semibold">{t('prices.city')}</th>
-                <th className="p-4 border-r border-outline-variant font-semibold text-center w-28">{t('prices.category')}</th>
+                <th className="p-4 border-r border-outline-variant font-semibold text-center w-28 hidden md:table-cell">{t('prices.category')}</th>
                 <th className="p-4 border-r border-outline-variant font-semibold text-center w-28">{t('prices.margherita')}</th>
-                <th className="p-4 border-r border-outline-variant font-semibold text-center w-40">{t('prices.priceDistribution')}</th>
+                <th className="p-4 border-r border-outline-variant font-semibold text-center w-40 hidden md:table-cell">{t('prices.priceDistribution')}</th>
                 <th className="p-4 font-semibold text-center w-16">{t('prices.rating')}</th>
               </tr>
             </thead>
@@ -43,7 +43,7 @@ export default function ExploreTable({ sorted, stats, page, setPage, t, onSelect
                     onClick={() => onSelect?.(pz)}
                     className={`group border-b border-outline-variant cursor-pointer transition-all duration-200 ${tierBgColors[tier]} hover:bg-primary/[0.04]`}
                   >
-                    <td className="p-4 border-r border-outline-variant font-mono text-xs text-on-surface-variant/50 align-top relative">
+                    <td className="p-4 border-r border-outline-variant font-mono text-xs text-on-surface-variant/50 align-top relative hidden md:table-cell">
                       <span className="absolute left-0 top-4 bottom-4 w-0.5 bg-primary rounded-full scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top" />
                       {page * PAGE_SIZE + idx + 1}
                     </td>
@@ -52,7 +52,7 @@ export default function ExploreTable({ sorted, stats, page, setPage, t, onSelect
                       <div className="text-xs text-on-surface-variant/60 mt-0.5">{pz.address}</div>
                     </td>
                     <td className="p-4 border-r border-outline-variant text-on-surface-variant/80 align-top group-hover:text-primary/80 transition-colors duration-200">{pz.cityName}</td>
-                    <td className="p-4 border-r border-outline-variant text-center align-top">
+                    <td className="p-4 border-r border-outline-variant text-center align-top hidden md:table-cell">
                       <span className="font-label text-xs text-on-surface-variant/60 group-hover:text-primary/60 transition-colors duration-200">{t(`common.${pz.category === 'wood-fired' ? 'woodFired' : pz.category}`)}</span>
                     </td>
                     <td className="p-4 border-r border-outline-variant text-center align-top">
@@ -60,7 +60,7 @@ export default function ExploreTable({ sorted, stats, page, setPage, t, onSelect
                         €{pz.margheritaPrice?.toFixed(2)}
                       </span>
                     </td>
-                    <td className="p-4 border-r border-outline-variant align-top">
+                    <td className="p-4 border-r border-outline-variant align-top hidden md:table-cell">
                       <div className="flex items-center gap-2 h-9">
                         <div className="flex-1 h-2 bg-surface-dim rounded-full overflow-hidden">
                           <div className={`h-full rounded-full transition-all duration-300 ${tierBarColors[tier]} group-hover:opacity-80`} style={{ width: `${barWidth(pz.margheritaPrice)}%` }} />
