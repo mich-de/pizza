@@ -396,11 +396,19 @@ async function seedAdmin() {
     });
     changed = true;
     logger.info('Admin di default creato');
-  } else if (ADMIN_PASSWORD_HASH) {
+  } else if (process.env.ADMIN_PASSWORD || ADMIN_PASSWORD_HASH) {
     const idx = admins.findIndex(a => a.username === ADMIN_USERNAME);
-    if (idx !== -1 && admins[idx].passwordHash !== ADMIN_PASSWORD_HASH) {
-      admins[idx].passwordHash = ADMIN_PASSWORD_HASH;
-      changed = true;
+    if (idx !== -1) {
+      const envPassword = process.env.ADMIN_PASSWORD;
+      const storedHash = admins[idx].passwordHash;
+      const same = envPassword ? await verifyPassword(envPassword, storedHash).catch(() => false) : false;
+      if (!same && ADMIN_PASSWORD_HASH && storedHash !== ADMIN_PASSWORD_HASH) {
+        admins[idx].passwordHash = ADMIN_PASSWORD_HASH;
+        changed = true;
+      } else if (!same && envPassword) {
+        admins[idx].passwordHash = await hashPassword(envPassword);
+        changed = true;
+      }
     }
   }
 
