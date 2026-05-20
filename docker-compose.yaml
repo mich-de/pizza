@@ -5,11 +5,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - HOST=0.0.0.0
-      - TRUST_PROXY=1
       - JWT_SECRET=${JWT_SECRET:?}
-      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:?}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://pizzaradarsorrento.mdeangelis.me}
     volumes:
       - pizza-data:/app/server/private
