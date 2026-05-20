@@ -1,4 +1,4 @@
-# PizzaRadar Sorrentum — Sorrento Price Dashboard
+# PizzaRadar Sorrento — Sorrento Price Dashboard
 
 **Monitoraggio prezzi della pizza Margherita | 6 città della Penisola Sorrentina**
 
@@ -29,7 +29,7 @@
 
 | Field | Value |
 |---|---|
-| **Name** | PizzaRadar Sorrentum |
+| **Name** | PizzaRadar Sorrento |
 | **Version** | 0.0.0 |
 | **Value Proposition** | Dashboard per confrontare i prezzi della pizza Margherita nelle 6 città della Penisola Sorrentina (Massa Lubrense, Sorrento, Sant'Agnello, Piano di Sorrento, Meta, Vico Equense) con funzionalità social, segnalazioni prezzi e feed comunitario. |
 | **Domain** | Food & Beverage Pricing Intelligence, Community Reviews |

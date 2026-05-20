@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { useAllData } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PageHeader } from '../components/ui';
 import PizzeriaRow from '../components/admin/PizzeriaRow';
 import AddModal from '../components/admin/AddModal';
-import { generateId } from '../config/adminConfig';
+import { CATEGORIES } from '../config/adminConfig';
 
 const API_BASE = globalThis.process?.env?.VITE_API_BASE || '';
 
@@ -43,7 +42,7 @@ async function fetchCSRF() {
 export default function Admin() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { pizzerias, locations, loading, error: fetchError } = useAllData();
+  const { pizzerias, prices, locations, loading, error: fetchError } = useAllData();
 
   const [rows, setRows] = useState([]);
   const [initialized, setInitialized] = useState(false);
@@ -54,50 +53,79 @@ export default function Admin() {
   const [editForm, setEditForm] = useState({});
   const [deleteId, setDeleteId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional', rating: 4.0, description: '', descriptionIt: '', status: 'open', frazione: '', imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: '' });
+  const [addForm, setAddForm] = useState({
+    name: '', cityId: 'sorrento', address: '', phone: '',
+    category: 'traditional', rating: 4.0,
+    description: '', descriptionIt: '', status: 'open',
+    frazione: '', isNew: false, openedAt: '',
+    addPrice: false, margheritaPrice: '',
+  });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [dirty, setDirty] = useState(false);
 
-  // Initialize rows from fetched data
   useEffect(() => {
     if (!loading && pizzerias.length > 0 && locations.length > 0) {
       setRows(pizzerias.map(p => ({
         ...p,
         cityName: locations.find(l => l.id === p.cityId)?.name || p.cityId,
+        price: prices.find(pr => pr.pizzeriaId === p.id) || null,
       })));
       setInitialized(true);
     }
-  }, [pizzerias, locations, loading]);
+  }, [pizzerias, prices, locations, loading]);
 
   useEffect(() => {
-    if (fetchError) {
-      setError(t('admin.connError') + fetchError);
-    }
-  }, [fetchError, t]);
+    if (fetchError) setError(fetchError);
+  }, [fetchError]);
 
-  // Reset page when search or pageSize changes
   useEffect(() => {
     setPage(1);
   }, [search, pageSize]);
+
+  const showToast = useCallback((msg, isError = false) => {
+    setToast({ msg, isError, id: Date.now() });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const handleSessionExpired = useCallback(() => {
+    showToast(t('admin.sessionExpired'), true);
+    setTimeout(() => navigate('/login'), 1500);
+  }, [navigate, showToast, t]);
+
+  const stats = useMemo(() => {
+    const total = rows.length;
+    const open = rows.filter(r => r.status === 'open').length;
+    const closed = rows.filter(r => r.status === 'closed').length;
+    const withPrice = rows.filter(r => r.price?.margheritaPrice != null).length;
+    const avgPrice = withPrice > 0
+      ? rows.reduce((sum, r) => sum + (r.price?.margheritaPrice || 0), 0) / withPrice
+      : 0;
+    const byCategory = CATEGORIES.map(cat => ({
+      cat,
+      count: rows.filter(r => r.category === cat && r.status === 'open').length,
+    }));
+    return { total, open, closed, withPrice, avgPrice, byCategory };
+  }, [rows]);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
     const q = search.toLowerCase();
     return rows.filter(r =>
       r.name.toLowerCase().includes(q) ||
-      r.cityName.toLowerCase().includes(q) ||
-      r.address.toLowerCase().includes(q)
+      r.cityName?.toLowerCase().includes(q) ||
+      r.frazione?.toLowerCase().includes(q) ||
+      r.address?.toLowerCase().includes(q) ||
+      r.category?.toLowerCase().includes(q)
     );
   }, [rows, search]);
 
-  const totalPages = useMemo(() => pageSize === Infinity ? 1 : Math.ceil(filteredRows.length / pageSize), [filteredRows, pageSize]);
-  const paginatedRows = useMemo(() => pageSize === Infinity ? filteredRows : filteredRows.slice((page - 1) * pageSize, page * pageSize), [filteredRows, pageSize, page]);
+  const totalPages = useMemo(() =>
+    pageSize === Infinity ? 1 : Math.ceil(filteredRows.length / pageSize),
+  [filteredRows, pageSize]);
 
-  const showToast = useCallback((msg, isError = false) => {
-    setToast({ msg, isError });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
+  const paginatedRows = useMemo(() =>
+    pageSize === Infinity ? filteredRows : filteredRows.slice((page - 1) * pageSize, page * pageSize),
+  [filteredRows, pageSize, page]);
 
   const startEdit = (row) => {
     setEditingId(row.id);
@@ -120,7 +148,7 @@ export default function Admin() {
     if (isNaN(rating) || rating < 0 || rating > 5) { showToast(t('admin.ratingRequired'), true); return; }
     try {
       const csrfToken = await fetchCSRF();
-      const res = await fetchWithAuth(`${API_BASE}/api/pizzerias/${editingId}`, {
+      const res = await fetchWithAuth(`/api/pizzerias/${editingId}`, {
         method: 'PUT',
         headers: { 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ ...editForm, rating }),
@@ -130,15 +158,36 @@ export default function Admin() {
         throw new Error(data.error || t('common.saveError'));
       }
       setRows(prev => prev.map(r => r.id === editingId ? { ...r, ...editForm, rating } : r));
-      setDirty(false);
       setEditingId(null);
       setEditForm({});
       showToast(t('admin.toastPizzeriaUpdated'));
     } catch (err) {
-      if (err.message === 'SESSION_EXPIRED') {
-        navigate('/login');
-        return;
-      }
+      if (err.message === 'SESSION_EXPIRED') { handleSessionExpired(); return; }
+      showToast(err.message, true);
+    }
+  };
+
+  const savePrice = async (pizzeriaId, price) => {
+    if (isNaN(price) || price < 0 || price > 100) {
+      showToast(t('admin.invalidPrice'), true);
+      return;
+    }
+    try {
+      const csrfToken = await fetchCSRF();
+      const res = await fetchWithAuth(`/api/prices/${pizzeriaId}`, {
+        method: 'PUT',
+        headers: { 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ margheritaPrice: price, source: 'admin-manual' }),
+      });
+      if (!res.ok) throw new Error(t('common.saveError'));
+      setRows(prev => prev.map(r =>
+        r.id === pizzeriaId
+          ? { ...r, price: { ...(r.price || {}), pizzeriaId, margheritaPrice: price, lastUpdated: new Date().toISOString(), source: 'admin-manual' } }
+          : r
+      ));
+      showToast(t('admin.toastPriceUpdated'));
+    } catch (err) {
+      if (err.message === 'SESSION_EXPIRED') { handleSessionExpired(); return; }
       showToast(err.message, true);
     }
   };
@@ -146,7 +195,7 @@ export default function Admin() {
   const confirmDelete = async (id) => {
     try {
       const csrfToken = await fetchCSRF();
-      const res = await fetchWithAuth(`${API_BASE}/api/pizzerias/${id}`, {
+      const res = await fetchWithAuth(`/api/pizzerias/${id}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': csrfToken },
       });
@@ -157,23 +206,19 @@ export default function Admin() {
       if (editingId === id) cancelEdit();
       showToast(t('admin.toastPizzeriaDeleted'));
     } catch (err) {
-      if (err.message === 'SESSION_EXPIRED') {
-        navigate('/login');
-        return;
-      }
+      if (err.message === 'SESSION_EXPIRED') { handleSessionExpired(); return; }
       showToast(err.message, true);
       setDeleteId(null);
     }
   };
 
-  const addPizzeriaToServer = async () => {
+  const addPizzeria = async () => {
     if (!addForm.name || !addForm.cityId) { showToast(t('admin.nameRequired'), true); return; }
     const rating = parseFloat(addForm.rating);
     if (isNaN(rating) || rating < 0 || rating > 5) { showToast(t('admin.ratingRequired'), true); return; }
-
     try {
       const csrfToken = await fetchCSRF();
-      const res = await fetchWithAuth(`${API_BASE}/api/pizzerias/single`, {
+      const res = await fetchWithAuth('/api/pizzerias/single', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({
@@ -185,121 +230,143 @@ export default function Admin() {
           rating,
           description: addForm.description,
           descriptionIt: addForm.descriptionIt,
+          status: addForm.status,
+          frazione: addForm.frazione || null,
         }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || t('common.saveError'));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t('common.saveError'));
+
+      const newId = data.id || data.pizzeria?.id;
+      if (addForm.addPrice && addForm.margheritaPrice && newId) {
+        const priceRes = await fetchWithAuth(`/api/prices/${newId}`, {
+          method: 'PUT',
+          headers: { 'X-CSRF-Token': csrfToken },
+          body: JSON.stringify({ margheritaPrice: parseFloat(addForm.margheritaPrice), source: 'admin-manual' }),
+        });
+        if (!priceRes.ok) console.warn('Price save failed after venue creation');
       }
+
       showToast(t('admin.toastPizzeriaAdded'));
       setShowAddModal(false);
-      setAddForm({ name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional',
-        rating: 4.0, description: '', descriptionIt: '', status: 'open', frazione: '',
-        imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: '' });
+      setAddForm({
+        name: '', cityId: 'sorrento', address: '', phone: '',
+        category: 'traditional', rating: 4.0,
+        description: '', descriptionIt: '', status: 'open',
+        frazione: '', isNew: false, openedAt: '',
+        addPrice: false, margheritaPrice: '',
+      });
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
-      if (err.message === 'SESSION_EXPIRED') {
-        navigate('/login');
-        return;
-      }
+      if (err.message === 'SESSION_EXPIRED') { handleSessionExpired(); return; }
       showToast(err.message, true);
     }
   };
-
-  const addPizzeria = () => {
-    if (!addForm.name || !addForm.cityId) { showToast(t('admin.nameRequired'), true); return; }
-    const rating = parseFloat(addForm.rating);
-    if (isNaN(rating) || rating < 0 || rating > 5) { showToast(t('admin.ratingRequired'), true); return; }
-    const newP = {
-      id: generateId(), ...addForm, rating,
-      frazione: addForm.frazione || null,
-      openedAt: addForm.isNew ? (addForm.openedAt || new Date().toISOString().slice(0, 7)) : '',
-    };
-    setRows(prev => [...prev, { ...newP, cityName: locations.find(l => l.id === newP.cityId)?.name || newP.cityId }]);
-    setDirty(true);
-    setShowAddModal(false);
-    setAddForm({ name: '', cityId: 'sorrento', address: '', phone: '', category: 'traditional',
-      rating: 4.0, description: '', descriptionIt: '', status: 'open', frazione: '',
-      imageUrl: '/images/pizzerias/pizza-1.jpg', isNew: false, openedAt: '' });
-    showToast(t('admin.toastPizzeriaAdded'));
-  };
-
-  const exportJSON = () => {
-    const json = rows.map(r => ({
-      id: r.id, name: r.name, address: r.address, cityId: r.cityId,
-      phone: r.phone || '', category: r.category, rating: r.rating,
-      description: r.description || '',
-      descriptionIt: r.descriptionIt || '',
-      status: r.status,
-      frazione: r.frazione || null, imageUrl: r.imageUrl || '',
-      ...(r.isNew && { isNew: true }), ...(r.openedAt && { openedAt: r.openedAt }),
-    }));
-    const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'venues.json'; a.click();
-    URL.revokeObjectURL(url);
-    showToast(t('admin.toastExported'));
-  };
-
-  const reloadFromServer = () => window.location.reload();
 
   if (loading || !initialized) return <LoadingSpinner fullScreen />;
 
   return (
     <div className="p-6 md:p-12">
       {toast && (
-        <div className={`fixed top-4 right-4 z-[100] font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] ${toast.isError ? 'bg-secondary text-on-tertiary' : 'bg-primary text-on-primary'}`}>
-          {toast.msg}
+        <div key={toast.id} className="fixed top-4 right-4 z-[100]">
+          <div className={`font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center gap-3 ${
+            toast.isError ? 'bg-error text-on-error' : 'bg-primary text-on-primary'
+          }`}>
+            <span className="material-symbols-outlined">
+              {toast.isError ? 'error' : 'check_circle'}
+            </span>
+            {toast.msg}
+          </div>
         </div>
       )}
 
-      <PageHeader title={t('admin.title')} subtitle={t('admin.subtitle')}>
-        <div className="flex gap-3 flex-wrap">
-          <button onClick={reloadFromServer} className="flex items-center gap-2 bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors">
-            <span className="material-symbols-outlined">refresh</span> {t('admin.reload')}
-          </button>
-          <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 bg-primary text-on-primary font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container hover:text-on-primary-container transition-colors">
+      {/* Page header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="font-headline font-black uppercase text-sm tracking-[0.2em] text-on-surface-variant">
+            {t('admin.subtitle')}
+          </span>
+          <span className="w-8 h-[2px] bg-outline-variant" />
+          <span className="font-label font-bold uppercase text-xs tracking-wider text-on-surface-variant/60">
+            {rows.length} venues
+          </span>
+        </div>
+        <h1 className="font-headline font-black text-5xl md:text-7xl uppercase tracking-tight leading-none text-primary">
+          {t('admin.title')}
+        </h1>
+      </div>
+
+      {/* Stats banner */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+          <div className="font-headline font-black text-4xl md:text-5xl text-primary">{stats.total}</div>
+          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.totalVenues')}</div>
+        </div>
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+          <div className="font-headline font-black text-4xl md:text-5xl text-tertiary">{stats.open}</div>
+          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.openVenues')}</div>
+        </div>
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+          <div className="font-headline font-black text-4xl md:text-5xl text-primary">{stats.withPrice}</div>
+          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.withPrice')}</div>
+        </div>
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+          <div className="font-headline font-black text-4xl md:text-5xl text-secondary">&euro;{stats.avgPrice.toFixed(1)}</div>
+          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.avgPrice')}</div>
+        </div>
+      </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="mb-6 bg-error-container text-on-error-container border-4 border-error p-4 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+          <span className="material-symbols-outlined text-2xl">error</span>
+          <span className="font-headline font-bold uppercase text-sm">{error}</span>
+        </div>
+      )}
+
+      {/* Actions bar */}
+      <div className="mb-6 flex gap-3 flex-wrap items-center justify-between">
+        <div className="flex gap-3 flex-wrap items-center">
+          <button onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 bg-primary text-on-primary font-headline font-bold uppercase py-3.5 px-7 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-all">
             <span className="material-symbols-outlined">add</span> {t('admin.addNew')}
           </button>
-          <button onClick={exportJSON} className="flex items-center gap-2 bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors">
-            <span className="material-symbols-outlined">download</span> {t('admin.exportJSON')}
+          <button onClick={() => window.location.reload()}
+            className="flex items-center gap-2 bg-surface text-primary font-headline font-bold uppercase py-3.5 px-7 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-all">
+            <span className="material-symbols-outlined">refresh</span> {t('admin.reload')}
           </button>
         </div>
-      </PageHeader>
+      </div>
 
-      {error && (
-        <div className="mb-6 bg-error-container text-on-error-container border-4 border-on-error-container p-4 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <span className="material-symbols-outlined text-2xl">error</span>
-          <span className="font-headline font-bold uppercase">{error}</span>
-        </div>
-      )}
-
-      {dirty && (
-        <div className="mb-6 bg-secondary text-on-tertiary border-4 border-primary p-4 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <span className="material-symbols-outlined text-on-tertiary text-2xl">warning</span>
-          <span className="font-headline font-bold uppercase">{t('admin.unsavedWarning')}</span>
-        </div>
-      )}
-
+      {/* Search & filters */}
       <div className="mb-6 flex gap-4 flex-wrap items-center">
         <div className="relative flex-1 md:max-w-md">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary">search</span>
-          <input className="w-full bg-surface border-2 border-primary py-3 pl-12 pr-4 font-label uppercase focus:outline-none focus:border-secondary"
+          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary/60 text-xl">search</span>
+          <input className="w-full bg-surface border-4 border-primary py-3.5 pl-12 pr-4 font-body font-bold text-primary uppercase focus:outline-none focus:border-secondary shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]"
             placeholder={t('admin.searchPlaceholder')} type="text" value={search}
             onChange={(e) => setSearch(e.target.value)} />
+          {search && (
+            <button onClick={() => setSearch('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/60 hover:text-primary">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          )}
         </div>
-        <select value={pageSize === Infinity ? 'all' : pageSize} onChange={(e) => { setPageSize(e.target.value === 'all' ? Infinity : Number(e.target.value)); }}
-          className="bg-surface border-2 border-primary py-3 px-4 font-label uppercase focus:outline-none focus:border-secondary cursor-pointer">
+        <select value={pageSize === Infinity ? 'all' : pageSize}
+          onChange={(e) => setPageSize(e.target.value === 'all' ? Infinity : Number(e.target.value))}
+          className="bg-surface border-4 border-primary py-3.5 px-5 font-body font-bold text-primary uppercase focus:outline-none focus:border-secondary cursor-pointer shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
           <option value="10">{t('admin.pageSize', { n: 10 })}</option>
           <option value="25">{t('admin.pageSize', { n: 25 })}</option>
           <option value="50">{t('admin.pageSize', { n: 50 })}</option>
           <option value="all">{t('admin.allPages')}</option>
         </select>
-        <span className="font-headline font-bold text-lg text-primary self-center">{filteredRows.length}/{rows.length}</span>
+        <span className="font-headline font-bold text-sm uppercase text-on-surface-variant bg-surface-variant border-2 border-primary px-3 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+          {filteredRows.length}/{rows.length}
+        </span>
       </div>
 
-      <div className="space-y-4">
+      {/* Pizzeria list */}
+      <div className="space-y-5">
         {paginatedRows.map((row) => (
           <PizzeriaRow
             key={row.id}
@@ -311,30 +378,42 @@ export default function Admin() {
             onSaveEdit={saveEdit}
             onCancelEdit={cancelEdit}
             onDelete={() => setDeleteId(row.id)}
+            price={row.price}
+            onPriceChange={() => {}}
+            onPriceSave={savePrice}
           />
         ))}
       </div>
 
+      {filteredRows.length === 0 && (
+        <div className="text-center py-16 bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+          <span className="material-symbols-outlined text-6xl text-outline mb-4 block">search_off</span>
+          <div className="font-headline font-black text-2xl uppercase text-on-surface-variant">{t('admin.noResult')}</div>
+          <p className="font-body text-sm text-on-surface-variant/60 mt-2">{t('admin.noResultHint')}</p>
+        </div>
+      )}
+
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6 pt-4 border-t-2 border-outline-variant">
-          <span className="font-label text-sm text-on-surface-variant">
-            {t('admin.paginationOf', { from: (page - 1) * pageSize + 1, to: Math.min(page * pageSize, filteredRows.length), total: filteredRows.length })}
+        <div className="flex items-center justify-between mt-8 pt-6 border-t-4 border-primary">
+          <span className="font-body font-bold text-sm text-on-surface-variant">
+            {t('admin.paginationOf', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, filteredRows.length),
+              total: filteredRows.length,
+            })}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-colors">
+              className="px-6 py-3 border-4 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-all shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
               {t('admin.previous')}
             </button>
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-              className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-colors">
+              className="px-6 py-3 border-4 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-all shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
               {t('admin.next')}
             </button>
           </div>
         </div>
-      )}
-
-      {filteredRows.length === 0 && (
-        <div className="text-center py-12 text-on-surface-variant font-headline font-bold uppercase">{t('admin.noResult')}</div>
       )}
 
       <AddModal
@@ -343,34 +422,35 @@ export default function Admin() {
         setAddForm={setAddForm}
         onAdd={addPizzeria}
         onCancel={() => setShowAddModal(false)}
-        onAddToServer={addPizzeriaToServer}
       />
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4">
-          <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
+          <div className="bg-surface border-4 border-error shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
             <div className="p-6">
-              <h2 className="text-xl font-headline font-black uppercase text-primary mb-4">
-                {t('admin.deleteConfirmTitle', { name: rows.find(r => r.id === deleteId)?.name })}
-              </h2>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="material-symbols-outlined text-3xl text-error">warning</span>
+                <h2 className="text-xl font-headline font-black uppercase text-error leading-tight">
+                  {t('admin.deleteConfirmTitle', { name: rows.find(r => r.id === deleteId)?.name })}
+                </h2>
+              </div>
+              <p className="font-body text-sm text-on-surface-variant mb-6 leading-relaxed">
+                {t('admin.deleteWarning')}
+              </p>
               <div className="flex gap-3 justify-end">
-                <button onClick={cancelDelete} className="bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors">{t('admin.cancel')}</button>
-                <button onClick={() => confirmDelete(deleteId)} className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors">{t('common.delete')}</button>
+                <button onClick={cancelDelete}
+                  className="bg-surface text-on-surface font-headline font-bold uppercase text-sm py-3 px-6 border-2 border-outline-variant shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-surface-variant transition-all">
+                  {t('admin.cancel')}
+                </button>
+                <button onClick={() => confirmDelete(deleteId)}
+                  className="bg-error text-on-error font-headline font-bold uppercase text-sm py-3 px-6 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error/80 transition-all flex items-center gap-2">
+                  <span className="material-symbols-outlined">delete_forever</span> {t('common.delete')}
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      <div className="mt-12 bg-surface-variant border-4 border-primary p-6 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-        <h3 className="text-xl font-black font-headline uppercase text-primary mb-3">{t('admin.guideTitle')}</h3>
-        <ul className="font-body font-bold text-on-surface-variant space-y-2 text-sm">
-          <li>{t('admin.guideStep1')}</li>
-          <li>{t('admin.guideStep3')}</li>
-          <li>{t('admin.guideStep4')}</li>
-          <li>{t('admin.guideStep2')}</li>
-        </ul>
-      </div>
     </div>
   );
 }

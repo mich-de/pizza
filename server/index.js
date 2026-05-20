@@ -32,7 +32,7 @@ app.use(compression());
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-me';
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'pizza';
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || null;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000')
   .split(',')
@@ -297,7 +297,6 @@ async function stitchData(includeUnapproved = false) {
 
   return venues
     .filter(v => {
-      if (v.status === 'closed') return false;
       if (!includeUnapproved && v.status === 'pending') return false;
       return true;
     })
@@ -385,7 +384,7 @@ async function seedAdmin() {
   }
 
   if (admins.length === 0) {
-    const hash = ADMIN_PASSWORD_HASH || await hashPassword(process.env.ADMIN_PASSWORD || 'pizzasorrento');
+    const hash = ADMIN_PASSWORD_HASH || await hashPassword(process.env.ADMIN_PASSWORD || 'pizza');
     admins.push({
       id: 1,
       username: ADMIN_USERNAME,
@@ -754,6 +753,36 @@ app.post('/api/auth/refresh', apiRateLimit, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     logger.error('Errore refresh token', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+app.put('/api/auth/change-password', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Password attuale e nuova password richieste' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'La nuova password deve contenere almeno 6 caratteri' });
+    }
+
+    const admins = await safeReadJSON(ADMINS_PATH, []);
+    const admin = admins.find(a => a.id === req.user.userId);
+    if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
+
+    const valid = await verifyPassword(currentPassword, admin.passwordHash);
+    if (!valid) return res.status(401).json({ error: 'Password attuale non valida' });
+
+    admin.passwordHash = await hashPassword(newPassword);
+    await safeWriteJSON(ADMINS_PATH, admins);
+
+    auditLog(req.user.userId, 'change_password', 'auth', { ip: req.ip });
+    logger.info('Password cambiata', { userId: admin.id });
+
+    res.json({ success: true, message: 'Password aggiornata con successo' });
+  } catch (err) {
+    logger.error('Errore cambio password', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
   }
 });

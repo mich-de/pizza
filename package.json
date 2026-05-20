@@ -7,7 +7,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5173",
     "dev:all": "concurrently -n \"VITE,EXPR\" -c \"cyan,magenta\" \"npm run dev\" \"npm run server:dev\"",
     "server": "node server/index.js",
     "server:dev": "node --watch server/index.js",

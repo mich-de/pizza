@@ -4,9 +4,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { useStitchedData } from '../hooks/useDataFetch';
 import { checkAuth } from '../services/authService';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PageHeader } from '../components/ui';
 import PricesTable from '../components/prices/PricesTable';
 import { DetailModal } from '../components/prices/PricesDetail';
+import { priceTier } from '../config/pricesConfig';
 
 const API_BASE = globalThis.process?.env?.VITE_API_BASE || '';
 
@@ -38,14 +38,297 @@ async function fetchCSRF() {
   return data.csrfToken;
 }
 
+function PriceHeatMap({ sorted, stats }) {
+  const maxBars = 120;
+  const step = Math.max(1, Math.floor(sorted.length / maxBars));
+  const samples = sorted.filter((_, i) => i % step === 0).slice(0, maxBars);
+
+  return (
+    <div className="flex gap-[2px] items-stretch h-10 w-full">
+      {samples.length === 0 ? (
+        <div className="w-full bg-surface-dim" />
+      ) : (
+        samples.map((p, i) => {
+          const tier = priceTier(p.margheritaPrice, stats.min, stats.range);
+          const color = tier === 'cheap' ? 'bg-tertiary'
+            : tier === 'expensive' ? 'bg-secondary'
+            : 'bg-primary-fixed-dim';
+          const opacity = 0.5 + (i / samples.length) * 0.5;
+          return (
+            <div
+              key={i}
+              className={`flex-1 ${color} rounded-sm hover:scale-y-125 hover:opacity-100 transition-all cursor-crosshair origin-bottom`}
+              style={{ opacity }}
+              title={`${p.name}: \u20AC${p.margheritaPrice?.toFixed(2)}`}
+            />
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+function IndexHero({ stats, allData, sorted, editMode, t, isAdmin, exportCSV, exportJSON, toggleEdit }) {
+  return (
+    <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] mb-8">
+      <div className="bg-primary text-on-primary p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="font-headline font-black uppercase text-sm md:text-base tracking-[0.2em] text-on-primary/80">
+                {t('prices.subtitle')}
+              </span>
+              <span className="w-8 h-[2px] bg-on-primary/40" />
+              <span className="font-label font-bold uppercase text-xs tracking-wider text-on-primary/60">
+                {allData.length} {t('nav.network')}
+              </span>
+            </div>
+            <h1 className="font-headline font-black text-5xl md:text-7xl lg:text-8xl uppercase tracking-tight leading-none">
+              {t('prices.title')}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {editMode && (
+              <button onClick={exportJSON} className="flex items-center gap-2 bg-on-primary/20 text-on-primary font-headline font-bold uppercase py-2 px-4 border-2 border-on-primary/40 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] hover:bg-on-primary hover:text-primary transition-colors text-sm">
+                <span className="material-symbols-outlined text-sm">download</span>
+                {t('admin.exportJSON')}
+              </button>
+            )}
+            <button onClick={exportCSV} className="flex items-center gap-2 bg-on-primary text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-on-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:bg-on-primary/80 transition-colors">
+              <span className="material-symbols-outlined">download</span>
+              {t('prices.exportCSV')}
+            </button>
+            {isAdmin && (
+              <button onClick={toggleEdit} className={`flex items-center gap-2 font-headline font-bold uppercase py-3 px-6 border-2 border-on-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] transition-colors ${editMode ? 'bg-tertiary text-on-tertiary hover:bg-tertiary/80' : 'bg-on-primary/20 text-on-primary hover:bg-on-primary hover:text-primary'}`}>
+                <span className="material-symbols-outlined">{editMode ? 'visibility' : 'edit'}</span>
+                {editMode ? t('common.view') : t('common.edit')}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-6">
+          <div>
+            <div className="text-sm font-headline font-black uppercase tracking-widest text-on-surface-variant mb-1">
+              {t('prices.avgPrice')}
+            </div>
+            <div className="flex items-baseline gap-3">
+              <span className="font-headline font-black text-6xl md:text-7xl lg:text-8xl text-primary leading-none tracking-tight">
+                &euro;{stats.avg.toFixed(2)}
+              </span>
+              <span className="bg-primary-container text-primary font-headline font-bold text-sm uppercase px-3 py-1 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+                {t('prices.medianTitle')} &euro;{stats.median.toFixed(2)}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="bg-surface-variant border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+              <span className="font-label font-bold text-xs uppercase text-on-surface-variant">{t('prices.minPrice')}</span>
+              <span className="font-headline font-black text-xl md:text-2xl text-tertiary ml-2">&euro;{stats.min.toFixed(2)}</span>
+            </div>
+            <div className="bg-surface-variant border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+              <span className="font-label font-bold text-xs uppercase text-on-surface-variant">{t('prices.maxPrice')}</span>
+              <span className="font-headline font-black text-xl md:text-2xl text-secondary ml-2">&euro;{stats.max.toFixed(2)}</span>
+            </div>
+            <div className="bg-primary-container border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+              <span className="font-label font-bold text-xs uppercase text-primary">{t('prices.rangeTitle')}</span>
+              <span className="font-headline font-black text-xl md:text-2xl text-primary ml-2">&euro;{stats.range.toFixed(2)}</span>
+            </div>
+            <div className="bg-surface-variant border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+              <span className="font-label font-bold text-xs uppercase text-on-surface-variant">{t('nav.network')}</span>
+              <span className="font-headline font-black text-xl md:text-2xl text-primary ml-2">{allData.length}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs font-label font-bold uppercase tracking-wider">
+            <span className="text-tertiary">{t('prices.cheapestTitle')} &euro;{stats.min.toFixed(2)}</span>
+            <span className="text-primary">{t('prices.medianTitle')} &euro;{stats.median.toFixed(2)}</span>
+            <span className="text-secondary">{t('prices.priciestTitle')} &euro;{stats.max.toFixed(2)}</span>
+          </div>
+          <PriceHeatMap sorted={sorted} stats={stats} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilter, availableFrazioni, catFilter, setCatFilter, searchQuery, setSearchQuery, priceMin, setPriceMin, priceMax, setPriceMax, sortBy, setSortBy, cities, categories, t, setPage, allData, filtered, editMode }) {
+  return (
+    <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-4 md:p-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="md:col-span-1">
+          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">
+            <span className="material-symbols-outlined text-sm align-text-bottom mr-1">search</span>
+            {t('prices.searchPlaceholder')}
+          </label>
+          <input
+            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:outline-none focus:border-secondary"
+            placeholder={t('prices.searchPlaceholder')}
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.zoneFilter')}</label>
+          <select
+            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+            value={zoneFilter}
+            onChange={(e) => { setZoneFilter(e.target.value); setPage(0); }}
+          >
+            {cities.map((c) => (
+              <option key={c} value={c}>{c === 'all' ? t('prices.allZones') : c}</option>
+            ))}
+          </select>
+        </div>
+        {zoneFilter !== 'all' && availableFrazioni.length > 1 && (
+          <div>
+            <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.frazione')}</label>
+            <select
+              className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+              value={frazioneFilter}
+              onChange={(e) => { setFrazioneFilter(e.target.value); setPage(0); }}
+            >
+              {availableFrazioni.map((f) => (
+                <option key={f} value={f}>{f === 'all' ? t('prices.allFrazioni') : f}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {zoneFilter === 'all' && <div />}
+        <div>
+          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.category')}</label>
+          <select
+            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+            value={catFilter}
+            onChange={(e) => { setCatFilter(e.target.value); setPage(0); }}
+          >
+            {categories.map((c) => (
+              <option key={c} value={c}>{c === 'all' ? t('prices.allCategories') : t(`common.${c === 'wood-fired' ? 'woodFired' : c}`)}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.priceRange')}</label>
+          <div className="flex gap-1.5 items-center">
+            <input
+              className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:outline-none focus:border-secondary"
+              placeholder={t('prices.from')}
+              type="number"
+              min="0"
+              step="0.5"
+              value={priceMin}
+              onChange={(e) => { setPriceMin(e.target.value); setPage(0); }}
+            />
+            <span className="font-headline font-black text-primary">—</span>
+            <input
+              className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:outline-none focus:border-secondary"
+              placeholder={t('prices.to')}
+              type="number"
+              min="0"
+              step="0.5"
+              value={priceMax}
+              onChange={(e) => { setPriceMax(e.target.value); setPage(0); }}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.sortBy')}</label>
+          <select
+            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="price-asc">{t('prices.sortPriceAsc')}</option>
+            <option value="price-desc">{t('prices.sortPriceDesc')}</option>
+            <option value="name-asc">{t('prices.sortNameAsc')}</option>
+            <option value="rating-desc">{t('prices.sortRatingDesc')}</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 mt-3 pt-3 border-t-2 border-outline-variant">
+        <span className="font-headline font-black uppercase text-xs tracking-wider text-on-surface-variant">
+          {allData.length} {t('prices.pizzeriaPlural')}
+        </span>
+        <span className="w-[2px] h-4 bg-outline-variant" />
+        <span className="font-headline font-bold uppercase text-xs text-on-surface-variant">
+          {[...new Set(allData.map(d => d.cityName))].length} {t('nav.network')}
+        </span>
+        <span className="w-[2px] h-4 bg-outline-variant" />
+        <span className="font-headline font-bold uppercase text-xs bg-tertiary-container text-tertiary px-2 py-0.5">
+          {t('common.filter').toLowerCase()}: {filtered.length}
+        </span>
+        {editMode && (
+          <>
+            <span className="w-[2px] h-4 bg-outline-variant" />
+            <span className="font-headline font-bold uppercase text-xs bg-primary-container text-primary px-2 py-0.5 border border-primary">
+              {t('prices.editModeBadge')}
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MarketMovers({ cheapest, priciest, stats, t }) {
+  return (
+    <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      {cheapest && (
+        <div className="bg-tertiary-container border-4 border-tertiary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-bl-full" />
+          <div className="flex items-center gap-3 mb-3">
+            <span className="material-symbols-outlined text-tertiary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
+            <span className="text-sm font-black font-headline uppercase tracking-widest text-tertiary">{t('prices.cheapestTitle')}</span>
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="font-headline font-black text-xl md:text-2xl text-tertiary">{cheapest.name}</p>
+              <p className="font-label font-bold text-sm text-tertiary/70 uppercase mt-1">{cheapest.cityName}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-headline font-black text-3xl md:text-4xl text-tertiary leading-none">&euro;{cheapest.margheritaPrice?.toFixed(2)}</p>
+              <p className="text-xs font-label font-bold text-tertiary/60 mt-1">{((cheapest.margheritaPrice / stats.avg - 1) * 100).toFixed(1)}% vs media</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {priciest && (
+        <div className="bg-secondary-container border-4 border-secondary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-bl-full" />
+          <div className="flex items-center gap-3 mb-3">
+            <span className="material-symbols-outlined text-secondary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
+            <span className="text-sm font-black font-headline uppercase tracking-widest text-secondary">{t('prices.priciestTitle')}</span>
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="font-headline font-black text-xl md:text-2xl text-secondary">{priciest.name}</p>
+              <p className="font-label font-bold text-sm text-secondary/70 uppercase mt-1">{priciest.cityName}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-headline font-black text-3xl md:text-4xl text-secondary leading-none">&euro;{priciest.margheritaPrice?.toFixed(2)}</p>
+              <p className="text-xs font-label font-bold text-secondary/60 mt-1">+{((priciest.margheritaPrice / stats.avg - 1) * 100).toFixed(1)}% vs media</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Prices() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { data: allData, loading } = useStitchedData();
 
   const [zoneFilter, setZoneFilter] = useState('all');
+  const [frazioneFilter, setFrazioneFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
-
+  const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('price-asc');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
@@ -90,20 +373,32 @@ export default function Prices() {
     if (!editMode && initialized) { setEditingId(null); setEditForm({}); }
   }
 
+  const [prevZone, setPrevZone] = useState('all');
+  if (zoneFilter !== prevZone) {
+    setPrevZone(zoneFilter);
+    setFrazioneFilter('all');
+  }
+
   const data = editMode && initialized ? rows : allData;
 
   const cities = useMemo(() => ['all', ...new Set(data.map((d) => d.cityName))], [data]);
   const categories = useMemo(() => ['all', ...new Set(data.map((d) => d.category))], [data]);
+  const availableFrazioni = useMemo(() => {
+    if (zoneFilter === 'all') return [];
+    return ['all', ...new Set(data.filter(d => d.cityName === zoneFilter).map(d => d.frazione).filter(Boolean))];
+  }, [data, zoneFilter]);
 
   const filtered = useMemo(() => {
     return data.filter((p) => {
       const matchZone = zoneFilter === 'all' || p.cityName === zoneFilter;
+      const matchFrazione = frazioneFilter === 'all' || p.frazione === frazioneFilter;
       const matchCat = catFilter === 'all' || p.category === catFilter;
       const matchPriceMin = priceMin === '' || p.margheritaPrice >= parseFloat(priceMin);
       const matchPriceMax = priceMax === '' || p.margheritaPrice <= parseFloat(priceMax);
-      return matchZone && matchCat && matchPriceMin && matchPriceMax;
+      const matchSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.cityName.toLowerCase().includes(searchQuery.toLowerCase()) || (p.frazione && p.frazione.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchZone && matchFrazione && matchCat && matchPriceMin && matchPriceMax && matchSearch;
     });
-  }, [data, zoneFilter, catFilter, priceMin, priceMax]);
+  }, [data, zoneFilter, frazioneFilter, catFilter, priceMin, priceMax, searchQuery]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -243,6 +538,8 @@ export default function Prices() {
     showToast(t('admin.toastExported'));
   };
 
+  const toggleEdit = () => setEditMode((v) => !v);
+
   if (loading) return <LoadingSpinner fullScreen />;
 
   return (
@@ -253,171 +550,34 @@ export default function Prices() {
         </div>
       )}
 
-      <PageHeader title={t('prices.title')} subtitle={t('prices.subtitle')}>
-        <div className="flex items-center gap-3">
-          {editMode && (
-            <>
-              <button onClick={exportJSON} className="flex items-center gap-2 bg-surface text-primary font-headline font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors text-sm">
-                <span className="material-symbols-outlined text-sm">download</span>
-                {t('admin.exportJSON')}
-              </button>
-            </>
-          )}
-          <button
-            onClick={exportCSV}
-            className="flex items-center gap-2 bg-background text-primary font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors"
-          >
-            <span className="material-symbols-outlined">download</span>
-            {t('prices.exportCSV')}
-          </button>
-          {isAdmin && (
-            <button
-              onClick={() => setEditMode((v) => !v)}
-              className={`flex items-center gap-2 font-headline font-bold uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-colors ${
-                editMode ? 'bg-tertiary text-on-tertiary hover:bg-primary hover:text-on-primary' : 'bg-primary text-on-primary hover:bg-secondary'
-              }`}
-            >
-              <span className="material-symbols-outlined">{editMode ? 'visibility' : 'edit'}</span>
-              {editMode ? t('common.view') : t('common.edit')}
-            </button>
-          )}
-        </div>
-      </PageHeader>
+      <IndexHero
+        stats={stats}
+        allData={allData}
+        sorted={sorted}
+        editMode={editMode}
+        t={t}
+        isAdmin={isAdmin}
+        exportCSV={exportCSV}
+        exportJSON={exportJSON}
+        toggleEdit={toggleEdit}
+      />
 
-      <div className="flex items-center gap-4 mb-6">
-        <span className="font-headline font-bold uppercase text-sm bg-secondary text-on-secondary px-3 py-1 border-2 border-primary">
-          {allData.length} {allData.length === 1 ? t('prices.pizzeriaSingular') : t('prices.pizzeriaPlural')}
-        </span>
-        <span className="font-headline font-bold uppercase text-sm text-on-surface-variant">
-          {cities.length - 1} {t('nav.network')}
-        </span>
-        <span className="font-headline font-bold uppercase text-sm bg-tertiary text-on-tertiary px-3 py-1 border-2 border-primary">
-          {filtered.length} {t('common.filter').toLowerCase()}
-        </span>
-        {editMode && (
-          <span className="font-headline font-bold uppercase text-sm bg-primary-container text-primary px-3 py-1 border-2 border-primary">
-            {t('prices.editModeBadge')}
-          </span>
-        )}
-      </div>
-
-      <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-surface-variant border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-2 text-primary">
-            {t('prices.zoneFilter')}
-          </label>
-          <select
-            className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
-            value={zoneFilter}
-            onChange={(e) => { setZoneFilter(e.target.value); setPage(0); }}
-          >
-            {cities.map((c) => (
-              <option key={c} value={c}>{c === 'all' ? t('prices.allZones') : c}</option>
-            ))}
-          </select>
-        </div>
-        <div className="bg-surface-variant border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-2 text-primary">
-            {t('prices.category')}
-          </label>
-          <select
-            className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
-            value={catFilter}
-            onChange={(e) => { setCatFilter(e.target.value); setPage(0); }}
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>{c === 'all' ? t('prices.allCategories') : t(`common.${c === 'wood-fired' ? 'woodFired' : c}`)}</option>
-            ))}
-          </select>
-        </div>
-        <div className="bg-primary-container border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center justify-between">
-          <div>
-            <div className="text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">{t('prices.avgPrice')}</div>
-            <div className="text-3xl font-black font-headline text-primary">&euro;{stats.avg.toFixed(2)}</div>
-          </div>
-          <span className="material-symbols-outlined text-4xl text-primary">trending_up</span>
-        </div>
-        <div className="bg-surface-variant border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center justify-between">
-          <div>
-            <div className="text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">{t('prices.medianTitle')}</div>
-            <div className="text-3xl font-black font-headline text-primary">&euro;{stats.median.toFixed(2)}</div>
-          </div>
-          <span className="material-symbols-outlined text-4xl text-primary">balance</span>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">{t('prices.priceRange')}</label>
-          <div className="flex gap-2">
-            <input
-              className="w-full bg-surface border-2 border-primary py-2 px-3 font-body focus:outline-none focus:border-secondary"
-              placeholder={t('prices.from')}
-              type="number"
-              min="0"
-              step="0.5"
-              value={priceMin}
-              onChange={(e) => { setPriceMin(e.target.value); setPage(0); }}
-            />
-            <input
-              className="w-full bg-surface border-2 border-primary py-2 px-3 font-body focus:outline-none focus:border-secondary"
-              placeholder={t('prices.to')}
-              type="number"
-              min="0"
-              step="0.5"
-              value={priceMax}
-              onChange={(e) => { setPriceMax(e.target.value); setPage(0); }}
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1 text-primary">{t('prices.sortBy')}</label>
-          <select
-            className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="price-asc">{t('prices.sortPriceAsc')}</option>
-            <option value="price-desc">{t('prices.sortPriceDesc')}</option>
-            <option value="name-asc">{t('prices.sortNameAsc')}</option>
-            <option value="rating-desc">{t('prices.sortRatingDesc')}</option>
-          </select>
-        </div>
-      </section>
+      <FilterBar
+        zoneFilter={zoneFilter} setZoneFilter={setZoneFilter}
+        frazioneFilter={frazioneFilter} setFrazioneFilter={setFrazioneFilter}
+        availableFrazioni={availableFrazioni}
+        catFilter={catFilter} setCatFilter={setCatFilter}
+        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+        priceMin={priceMin} setPriceMin={setPriceMin}
+        priceMax={priceMax} setPriceMax={setPriceMax}
+        sortBy={sortBy} setSortBy={setSortBy}
+        cities={cities} categories={categories}
+        t={t} setPage={setPage}
+        allData={allData} filtered={filtered} editMode={editMode}
+      />
 
       {sorted.length > 0 && (
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {cheapest && (
-            <div className="bg-tertiary-container border-4 border-tertiary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
-                <span className="text-xs font-black font-headline uppercase tracking-widest text-tertiary">{t('prices.cheapestTitle')}</span>
-              </div>
-              <p className="font-headline font-black text-lg text-tertiary">{cheapest.name}</p>
-              <p className="font-headline font-bold text-2xl text-tertiary">&euro;{cheapest.margheritaPrice?.toFixed(2)}</p>
-              <p className="text-xs font-label text-tertiary/70 uppercase">{cheapest.cityName}</p>
-            </div>
-          )}
-          <div className="bg-primary-container border-4 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>balance</span>
-              <span className="text-xs font-black font-headline uppercase tracking-widest text-primary">{t('prices.rangeTitle')}</span>
-            </div>
-            <p className="font-headline font-bold text-2xl text-primary">&euro;{stats.min.toFixed(2)} - &euro;{stats.max.toFixed(2)}</p>
-            <p className="text-xs font-label text-primary/70 uppercase">{t('prices.minPrice')}: &euro;{stats.min.toFixed(2)} &middot; {t('prices.maxPrice')}: &euro;{stats.max.toFixed(2)}</p>
-          </div>
-          {priciest && (
-            <div className="bg-secondary-container border-4 border-secondary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
-                <span className="text-xs font-black font-headline uppercase tracking-widest text-secondary">{t('prices.priciestTitle')}</span>
-              </div>
-              <p className="font-headline font-black text-lg text-secondary">{priciest.name}</p>
-              <p className="font-headline font-bold text-2xl text-secondary">&euro;{priciest.margheritaPrice?.toFixed(2)}</p>
-              <p className="text-xs font-label text-secondary/70 uppercase">{priciest.cityName}</p>
-            </div>
-          )}
-        </section>
+        <MarketMovers cheapest={cheapest} priciest={priciest} stats={stats} t={t} />
       )}
 
       <PricesTable

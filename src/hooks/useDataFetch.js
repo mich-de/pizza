@@ -51,7 +51,6 @@ export function useStitchedData() {
           }
           const [locs, venues, prices] = fallback;
           const stitchedFallback = venues
-            .filter(v => v.status !== 'closed')
             .map(v => {
               const priceEntry = prices.find(p => p.pizzeriaId === v.id);
               const townEntry = locs.find(t => t.id === v.cityId);

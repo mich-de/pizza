@@ -1,4 +1,4 @@
-# PizzaRadar Sorrentum - Dynamic Roadmap
+# PizzaRadar Sorrento - Dynamic Roadmap
 
 ## [DEVOPS] Initial Setup
 - [x] Clone repository

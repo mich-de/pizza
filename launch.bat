@@ -1,8 +1,8 @@
 @echo off
-title PizzaRadar Sorrentum
+title PizzaRadar Sorrento
 setlocal enabledelayedexpansion
 
-echo === PizzaRadar Sorrentum Unified Launcher ===
+echo === PizzaRadar Sorrento Unified Launcher ===
 echo.
 
 if not exist ".env" (

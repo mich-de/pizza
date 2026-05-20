@@ -90,8 +90,8 @@ function TwoFAModal({ onClose, onEnabled }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md my-8">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto pt-[15vh]">
+      <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
         <div className="bg-primary text-on-primary p-4 border-b-4 border-primary flex justify-between items-center">
           <h3 className="font-headline font-black text-lg uppercase">
             {step === 'setup' ? t('settings.enable2FA') : t('settings.verify2FA')}
@@ -205,8 +205,8 @@ function TwoFADisableModal({ onClose, onDisabled }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md my-8">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto pt-[15vh]">
+      <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
         <div className="bg-error-container text-error p-4 border-b-4 border-error flex justify-between items-center">
           <h3 className="font-headline font-black text-lg uppercase">{t('settings.disable2FA')}</h3>
           <button onClick={onClose} className="text-error hover:opacity-75">
@@ -274,6 +274,11 @@ export default function Settings({ user }) {
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [showTwoFAModal, setShowTwoFAModal] = useState(false);
   const [showTwoFADisableModal, setShowTwoFADisableModal] = useState(false);
+  const [currentPwd, setCurrentPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [changingPwd, setChangingPwd] = useState(false);
+  const [pwdChanged, setPwdChanged] = useState(false);
+  const [pwdError, setPwdError] = useState(null);
 
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -449,6 +454,35 @@ export default function Settings({ user }) {
       URL.revokeObjectURL(url);
     } catch (err) {
       setSaveError(err.message);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setChangingPwd(true);
+    setPwdError(null);
+    setPwdChanged(false);
+    try {
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+      const { csrfToken } = await csrfRes.json();
+
+      const res = await fetch('/api/auth/change-password', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ currentPassword: currentPwd, newPassword: newPwd }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t('settings.passwordError'));
+
+      setPwdChanged(true);
+      setCurrentPwd('');
+      setNewPwd('');
+      setTimeout(() => setPwdChanged(false), 3000);
+    } catch (err) {
+      setPwdError(err.message);
+      setTimeout(() => setPwdError(null), 3000);
+    } finally {
+      setChangingPwd(false);
     }
   };
 
@@ -705,6 +739,44 @@ export default function Settings({ user }) {
                 >
                   {t('settings.enable2FA')}
                 </button>
+              )}
+            </div>
+            <div className="border-t-2 border-outline-variant" />
+            <div>
+              <h4 className="font-headline font-bold uppercase mb-3">{t('settings.changePassword')}</h4>
+              <p className="font-body text-sm text-on-surface-variant mb-3">{t('settings.changePasswordDesc')}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  type="password"
+                  placeholder={t('settings.currentPasswordPlaceholder')}
+                  value={currentPwd}
+                  onChange={(e) => setCurrentPwd(e.target.value)}
+                  className="w-full bg-background border-2 border-primary p-3 font-body font-bold text-primary focus:ring-0 focus:border-secondary"
+                />
+                <input
+                  type="password"
+                  placeholder={t('settings.newPasswordPlaceholder')}
+                  value={newPwd}
+                  onChange={(e) => setNewPwd(e.target.value)}
+                  className="w-full bg-background border-2 border-primary p-3 font-body font-bold text-primary focus:ring-0 focus:border-secondary"
+                />
+              </div>
+              <button
+                onClick={handleChangePassword}
+                disabled={changingPwd || !currentPwd || !newPwd || newPwd.length < 6}
+                className="mt-3 bg-primary text-on-primary font-label font-bold uppercase px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-colors disabled:opacity-50"
+              >
+                {changingPwd ? '...' : t('settings.saveSettings')}
+              </button>
+              {pwdChanged && (
+                <span className="ml-3 font-label font-bold uppercase text-primary">
+                  {t('settings.passwordChanged')}
+                </span>
+              )}
+              {pwdError && (
+                <span className="ml-3 font-label font-bold uppercase text-error">
+                  {pwdError}
+                </span>
               )}
             </div>
             <div className="border-t-2 border-outline-variant" />

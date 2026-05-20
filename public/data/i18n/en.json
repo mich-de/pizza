@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "PizzaRadar Sorrentum",
+    "title": "PizzaRadar Sorrento",
     "subtitle": "MARGHERITA PRICES — SORRENTO"
   },
   "nav": {
@@ -45,7 +45,12 @@
     "reviewPlural": "reviews",
     "noReviews": "No reviews",
     "median": "Median",
-    "maps": "Maps"
+    "maps": "Maps",
+    "pizzerie": "pizzerias",
+    "citta": "towns",
+    "media": "avg",
+    "prezzoMedio": "Avg Price",
+    "fasciaPrezzo": "Price Range"
   },
   "newOpenings": {
     "title": "New Openings",
@@ -68,8 +73,18 @@
     "discoverMore": "Discover all peninsula events"
   },
   "months": {
-    "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "May", "06": "Jun",
-    "07": "Jul", "08": "Aug", "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec",
+    "01": "Jan",
+    "02": "Feb",
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep"
   },
   "feed": {
     "title": "Pizza Feed",
@@ -118,7 +133,8 @@
     "withFilters": "{count} with filters",
     "maps": "Maps",
     "currentLabel": "(current)",
-    "tripAdvisor": "TripAdvisor"
+    "tripAdvisor": "TripAdvisor",
+    "closedPermanently": "CLOSED PERMANENTLY"
   },
   "directory": {
     "title": "Directory",
@@ -198,7 +214,9 @@
     "pizzeriaPlural": "pizzerias",
     "editModeBadge": "EDIT",
     "reportWrongPrice": "Report wrong price",
-    "deleteConfirmPrice": "Delete price for {name}?"
+    "deleteConfirmPrice": "Delete price for {name}?",
+    "frazione": "District",
+    "allFrazioni": "All districts"
   },
   "inventory": {
     "title": "Inventory",
@@ -242,7 +260,7 @@
     "saveServer": "Save to Server",
     "saving": "Saving...",
     "saved": "Saved to server successfully",
-    "unsavedWarning": "Unsaved changes — click \"Save to Server\" to write to prices.json",
+    "unsavedWarning": "Unsaved changes — click \"Save to Server\" to write to venues.json",
     "price": "Price",
     "source": "Source",
     "date": "Date",
@@ -275,8 +293,6 @@
     "toastPizzeriaAdded": "Pizzeria added successfully",
     "toastPizzeriaUpdated": "Pizzeria updated",
     "toastPizzeriaDeleted": "Pizzeria deleted",
-    "toastExported": "JSON exported",
-    "unsavedWarning": "Unsaved changes — click \"Save to Server\" to write to venues.json",
     "pendingActivity": "Pending Activity",
     "pendingProposals": "price proposals",
     "pendingComments": "comments to approve",
@@ -348,7 +364,24 @@
     "statusClosed": "Closed",
     "statusPending": "Pending",
     "confirm": "Confirm",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "margherita": "Margherita",
+    "savePrice": "Save",
+    "editDetails": "EDIT DETAILS",
+    "deleteWarning": "This action cannot be undone. The pizzeria and its price will be permanently removed.",
+    "totalVenues": "Total venues",
+    "openVenues": "Open",
+    "withPrice": "With price",
+    "avgPrice": "Average",
+    "toastPriceUpdated": "Price updated",
+    "invalidPrice": "Invalid price (must be 0-100)",
+    "sessionExpired": "Session expired. Please login again.",
+    "newPizzeriaDesc": "Fill in the details below to add a new pizzeria to the database.",
+    "details": "DETAILS",
+    "descriptions": "DESCRIPTIONS",
+    "extras": "EXTRAS",
+    "addPrice": "Add price",
+    "margheritaPrice": "Margherita price (€)"
   },
   "settings": {
     "title": "Settings",
@@ -385,6 +418,14 @@
     "security": "Security",
     "twoFactor": "Two-Factor Authentication",
     "twoFactorDesc": "Add an extra layer of protection to your account",
+    "changePassword": "Change Password",
+    "changePasswordDesc": "Update your admin panel login password",
+    "currentPassword": "Current Password",
+    "currentPasswordPlaceholder": "Enter current password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password (min. 6 chars)",
+    "passwordChanged": "Password changed successfully",
+    "passwordError": "Password change error",
     "enable": "Enable",
     "apiAccessKey": "API Access Key",
     "apiAccessKeyDesc": "Manage your API credentials for external integrations",
@@ -445,7 +486,7 @@
     "allRights": "All rights reserved.",
     "dataFresh": "Data updated in real-time",
     "backToTop": "Back to top",
-    "disclaimer": "Legal Disclaimer: PizzaRadar Sorrentum is a non-commercial project born out of passion. While we strive for accuracy, prices and information may be outdated or incorrect. We strongly advise users to verify all details by contacting the establishment directly before visiting. We accept no liability for any discrepancies."
+    "disclaimer": "Legal Disclaimer: PizzaRadar Sorrento is a non-commercial project born out of passion. While we strive for accuracy, prices and information may be outdated or incorrect. We strongly advise users to verify all details by contacting the establishment directly before visiting. We accept no liability for any discrepancies."
   },
   "comments": {
     "title": "Comments",
@@ -486,7 +527,7 @@
     "codeLabel": "6-digit Code",
     "verify": "Verify",
     "verifying": "Verifying…",
-    "pizzaRadar": "PizzaRadar Sorrentum",
+    "pizzaRadar": "PizzaRadar Sorrento",
     "penisola": "Sorrento Peninsula",
     "areaRiservata": "Restricted Area",
     "username": "Username",

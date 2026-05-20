@@ -1,7 +1,7 @@
-# Gemini Memory Log - PizzaRadar Sorrentum
+# Gemini Memory Log - PizzaRadar Sorrento
 
 ## Project Overview
-**PizzaRadar Sorrentum** is a dashboard for monitoring and comparing Margherita pizza prices across 6 towns in the Sorrento Peninsula. It features a community feed, price proposals, and an admin panel for verification.
+**PizzaRadar Sorrento** is a dashboard for monitoring and comparing Margherita pizza prices across 6 towns in the Sorrento Peninsula. It features a community feed, price proposals, and an admin panel for verification.
 
 ## Current State
 - Repository cloned from `https://github.com/mich-de/pizza.git`.

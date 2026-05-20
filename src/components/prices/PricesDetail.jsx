@@ -26,6 +26,9 @@ export function DetailModal({ selected, setSelected, stats, t, lang }) {
           <div className="border-b-4 border-primary pb-4">
             <h3 className="text-3xl font-headline font-black text-primary uppercase tracking-tight">{selected.name}</h3>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
+              {selected.status === 'closed' && (
+                <span className="bg-error text-on-error font-headline font-black uppercase text-xs py-1 px-3">{t('explore.closedPermanently')}</span>
+              )}
               <span className="bg-primary text-on-primary font-headline font-bold uppercase text-xs py-1 px-3">
                 {t(`common.${selected.category === 'wood-fired' ? 'woodFired' : selected.category}`)}
               </span>

@@ -40,6 +40,7 @@ export default function Directory() {
   const { t, lang } = useI18n();
   const [filter, setFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
+  const [frazioneFilter, setFrazioneFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [admin, setAdmin] = useState(null);
   const [editVenue, setEditVenue] = useState(null);
@@ -67,6 +68,16 @@ export default function Directory() {
   ], [t]);
 
   const cities = useMemo(() => ['all', ...new Set(data.map(d => d.cityName))].sort(), [data]);
+  const availableFrazioni = useMemo(() => {
+    if (cityFilter === 'all') return [];
+    return ['all', ...new Set(data.filter(d => d.cityName === cityFilter).map(d => d.frazione).filter(Boolean))];
+  }, [data, cityFilter]);
+
+  const [prevCityFilter, setPrevCityFilter] = useState('all');
+  if (cityFilter !== prevCityFilter) {
+    setPrevCityFilter(cityFilter);
+    setFrazioneFilter('all');
+  }
 
   const allCountsByCity = useMemo(() => {
     return data.reduce((acc, p) => {
@@ -79,10 +90,11 @@ export default function Directory() {
     return data.filter((p) => {
       const matchCat = filter === 'all' || p.category === filter;
       const matchCity = cityFilter === 'all' || p.cityName === cityFilter;
-      const matchSearch = search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || p.cityName.toLowerCase().includes(search.toLowerCase());
-      return matchCat && matchCity && matchSearch;
+      const matchFrazione = frazioneFilter === 'all' || p.frazione === frazioneFilter;
+      const matchSearch = search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || p.cityName.toLowerCase().includes(search.toLowerCase()) || (p.frazione && p.frazione.toLowerCase().includes(search.toLowerCase()));
+      return matchCat && matchCity && matchFrazione && matchSearch;
     });
-  }, [data, filter, cityFilter, search]);
+  }, [data, filter, cityFilter, frazioneFilter, search]);
 
   const activeFiltersCount = [filter !== 'all', cityFilter !== 'all', search !== ''].filter(Boolean).length;
 
@@ -190,11 +202,33 @@ export default function Directory() {
         </div>
       </div>
 
+      {cityFilter !== 'all' && availableFrazioni.length > 1 && (
+        <div className="mb-8 flex flex-wrap gap-2 items-center">
+          <span className="font-label font-bold text-xs uppercase tracking-wider text-on-surface-variant/60 mr-1">{t('prices.frazione')}:</span>
+          {availableFrazioni.map((f) => {
+            const isActive = frazioneFilter === f;
+            return (
+              <button
+                key={f}
+                onClick={() => setFrazioneFilter(isActive ? 'all' : f)}
+                className={`px-3 py-1 font-label font-bold text-xs uppercase tracking-wider border-2 transition-all ${
+                  isActive
+                    ? 'bg-primary text-on-primary border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]'
+                    : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-variant hover:border-primary shadow-[1px_1px_0px_0px_rgba(26,26,26,1)]'
+                }`}
+              >
+                {f === 'all' ? t('prices.allFrazioni') : f}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filtered.map((pz) => (
           <article
             key={pz.id}
-            className="bg-surface border border-outline-variant rounded-sm flex flex-col group relative overflow-hidden hover-lift"
+            className={`bg-surface border border-outline-variant rounded-sm flex flex-col group relative overflow-hidden hover-lift ${pz.status === 'closed' ? 'opacity-70' : ''}`}
           >
             <div className="h-44 border-b border-outline-variant relative overflow-hidden bg-surface-variant">
               {pz.imageUrl ? (
@@ -210,6 +244,12 @@ export default function Directory() {
               <div className={`absolute top-3 right-3 px-2.5 py-1 font-label font-medium text-[11px] tracking-wider rounded-sm ${CATEGORY_BADGE_COLORS[pz.category] || 'bg-primary/90 text-on-primary'}`}>
                 {pz.category === 'traditional' ? t('common.traditional') : pz.category === 'gourmet' ? t('common.gourmet') : pz.category === 'wood-fired' ? t('common.woodFired') : t('common.restaurant')}
               </div>
+              {pz.status === 'closed' && (
+                <div className="absolute top-3 left-3 bg-error/90 text-on-error px-2.5 py-1 font-label font-bold text-[11px] tracking-widest rounded-sm flex items-center gap-1 uppercase">
+                  <span className="material-symbols-outlined text-sm">block</span>
+                  {t('explore.closedPermanently')}
+                </div>
+              )}
               {pz.isNew && (
                 <div className="absolute top-3 left-3 bg-tertiary/90 text-on-tertiary px-2 py-1 font-label font-medium text-[11px] tracking-wider rounded-sm flex items-center gap-1">
                   <span className="material-symbols-outlined text-sm">fiber_new</span>
