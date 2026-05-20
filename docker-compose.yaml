@@ -6,6 +6,9 @@ services:
     environment:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET:?}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:?}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-pizza}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-pizza}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://pizzaradarsorrento.mdeangelis.me}
     volumes:
       - pizza-data:/app/server/private
