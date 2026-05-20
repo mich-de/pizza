@@ -385,8 +385,7 @@ async function seedAdmin() {
   }
 
   if (admins.length === 0) {
-    const defaultPassword = process.env.ADMIN_PASSWORD || 'PizzaAdmin2024!';
-    const hash = await hashPassword(defaultPassword);
+    const hash = ADMIN_PASSWORD_HASH || await hashPassword(process.env.ADMIN_PASSWORD || 'PizzaAdmin2024!');
     admins.push({
       id: 1,
       username: ADMIN_USERNAME,
@@ -398,11 +397,9 @@ async function seedAdmin() {
     });
     changed = true;
     logger.info('Admin di default creato');
-  }
-
-  if (ADMIN_PASSWORD_HASH) {
+  } else if (ADMIN_PASSWORD_HASH) {
     const idx = admins.findIndex(a => a.username === ADMIN_USERNAME);
-    if (idx !== -1) {
+    if (idx !== -1 && admins[idx].passwordHash !== ADMIN_PASSWORD_HASH) {
       admins[idx].passwordHash = ADMIN_PASSWORD_HASH;
       changed = true;
     }
