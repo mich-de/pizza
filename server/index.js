@@ -384,7 +384,7 @@ async function seedAdmin() {
   }
 
   if (admins.length === 0) {
-    const hash = ADMIN_PASSWORD_HASH || await hashPassword(process.env.ADMIN_PASSWORD || 'pizza');
+    const hash = ADMIN_PASSWORD_HASH || await hashPassword(process.env.ADMIN_PASSWORD || 'sorrento');
     admins.push({
       id: 1,
       username: ADMIN_USERNAME,
@@ -590,6 +590,26 @@ app.use((req, res, next) => {
     }
   });
 }
+
+app.get('/api/admin/admins', apiRateLimit, async (_req, res) => {
+  try {
+    const admins = await safeReadJSON(ADMINS_PATH, []);
+    res.json(admins.map(({ id, username, role, displayName }) => ({ id, username, role, displayName })));
+  } catch { res.status(500).json({ error: 'Errore interno del server' }); }
+});
+
+app.post('/api/admin/verify-login', apiRateLimit, async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ ok: false, error: 'Username e password richiesti' });
+    const admins = await safeReadJSON(ADMINS_PATH, []);
+    const admin = admins.find(a => a.username === username);
+    if (!admin) return res.status(401).json({ ok: false, error: 'Credenziali errate' });
+    const valid = await verifyPassword(password, admin.passwordHash);
+    if (!valid) return res.status(401).json({ ok: false, error: 'Credenziali errate' });
+    res.json({ ok: true, user: { id: admin.id, username: admin.username, role: admin.role } });
+  } catch { res.status(500).json({ ok: false, error: 'Errore interno del server' }); }
+});
 
 app.use(authMiddleware);
 app.use(csrfMiddleware);
@@ -914,12 +934,17 @@ app.get('/api/data/stitched', apiRateLimit, async (req, res) => {
 });
 
 app.get('/api/data/full', apiRateLimit, async (_req, res) => {
+  const start = Date.now();
   try {
     const [towns, venues, prices] = await Promise.all([
       safeReadJSON(TOWNS_PATH, []),
       safeReadJSON(VENUES_PATH, []),
       safeReadJSON(PRICES_PATH, [])
     ]);
+    const duration = Date.now() - start;
+    if (duration > 1000) {
+      logger.warn('Slow data fetch (full)', { duration, towns: towns.length, venues: venues.length, prices: prices.length });
+    }
     res.json({ towns, venues, prices });
   } catch (err) {
     logger.error('Errore recupero dati completi', { error: err.message });
@@ -1659,9 +1684,6 @@ app.use((err, req, res, _next) => {
   }
 });
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
 
 
 let server;

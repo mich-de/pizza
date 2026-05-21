@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { useAllData } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -41,7 +40,6 @@ async function fetchCSRF() {
 
 export default function Admin() {
   const { t } = useI18n();
-  const navigate = useNavigate();
   const { pizzerias, prices, locations, loading, error: fetchError } = useAllData();
 
   const [rows, setRows] = useState([]);
@@ -89,8 +87,8 @@ export default function Admin() {
 
   const handleSessionExpired = useCallback(() => {
     showToast(t('admin.sessionExpired'), true);
-    setTimeout(() => navigate('/login'), 1500);
-  }, [navigate, showToast, t]);
+    window.location.reload();
+  }, [showToast, t]);
 
   const stats = useMemo(() => {
     const total = rows.length;
@@ -266,7 +264,7 @@ export default function Admin() {
   if (loading || !initialized) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="p-6 md:p-12">
+    <div className="max-w-7xl mx-auto w-full p-6 md:p-12">
       {toast && (
         <div key={toast.id} className="fixed top-4 right-4 z-[100]">
           <div className={`font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center gap-3 ${
@@ -281,36 +279,44 @@ export default function Admin() {
       )}
 
       {/* Page header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="font-headline font-black uppercase text-sm tracking-[0.2em] text-on-surface-variant">
-            {t('admin.subtitle')}
-          </span>
-          <span className="w-8 h-[2px] bg-outline-variant" />
-          <span className="font-label font-bold uppercase text-xs tracking-wider text-on-surface-variant/60">
-            {rows.length} venues
-          </span>
+      <header className="mb-14 border-b-4 border-primary pb-8">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="w-3 h-3 rounded-full bg-primary animate-pulse-soft" />
+              <span className="font-headline font-bold text-sm uppercase tracking-widest text-primary">
+                {t('admin.subtitle')}
+              </span>
+            </div>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tight leading-[1.05] text-primary">
+              {t('admin.title')}
+            </h1>
+            <p className="text-lg md:text-xl font-body text-on-surface-variant mt-4 max-w-3xl leading-relaxed">
+              {rows.length} {t('admin.venuesCount')}
+            </p>
+          </div>
         </div>
-        <h1 className="font-headline font-black text-5xl md:text-7xl uppercase tracking-tight leading-none text-primary">
-          {t('admin.title')}
-        </h1>
-      </div>
+      </header>
 
       {/* Stats banner */}
       <div className="flex flex-wrap gap-4 mb-8">
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
           <div className="font-headline font-black text-4xl md:text-5xl text-primary">{stats.total}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.totalVenues')}</div>
         </div>
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-bl-full" />
           <div className="font-headline font-black text-4xl md:text-5xl text-tertiary">{stats.open}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.openVenues')}</div>
         </div>
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
           <div className="font-headline font-black text-4xl md:text-5xl text-primary">{stats.withPrice}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.withPrice')}</div>
         </div>
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5">
+        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-bl-full" />
           <div className="font-headline font-black text-4xl md:text-5xl text-secondary">&euro;{stats.avgPrice.toFixed(1)}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.avgPrice')}</div>
         </div>

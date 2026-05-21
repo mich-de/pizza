@@ -1,4 +1,4 @@
-const TIMEOUT = 5000;
+const TIMEOUT = 10000;
 
 export function silentFetch(url, options = {}) {
     return new Promise((resolve) => {

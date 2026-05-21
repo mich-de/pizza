@@ -42,6 +42,7 @@ export default function PizzeriaRow({ row, isEditing, editForm, setEditForm, onS
         isEditing ? 'ring-2 ring-primary-fixed-dim scale-[1.01]' : 'hover:shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-0.5'
       }`}
     >
+      <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-bl-full" />
       <div className={`p-5 flex flex-col md:flex-row md:items-start gap-4 ${isEditing ? 'bg-primary-container/10' : ''}`}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">

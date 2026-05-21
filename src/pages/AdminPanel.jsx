@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { checkAuth, logout } from '../services/authService';
 import { adminTabs } from '../config/navigation';
@@ -8,6 +8,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Admin from '../pages/Admin';
 import AdminProposals from '../pages/AdminProposals';
 import Settings from '../pages/Settings';
+
+const API_BASE = globalThis.process?.env?.VITE_API_BASE || '';
 
 export default function AdminPanel() {
   const { t } = useI18n();
@@ -18,6 +20,18 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('pizzerias');
   const [dismissed, setDismissed] = useState(false);
   const { proposals, comments, total: totalPending } = usePendingCounts();
+
+  const [localAuth, setLocalAuth] = useState(null);
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [knownAdmins, setKnownAdmins] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/admin/admins`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => setKnownAdmins(data))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +59,21 @@ export default function AdminPanel() {
   }, []);
 
   if (checking) return <LoadingSpinner fullScreen />;
-  if (!authenticated) return <Navigate to="/login" replace />;
+  if (!authenticated && !localAuth) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+        <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-sm p-8">
+          <h1 className="font-headline font-black text-3xl uppercase text-primary mb-6">Admin Login</h1>
+          <form onSubmit={async (e) => { e.preventDefault(); try { const r = await fetch(`${API_BASE}/api/admin/verify-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ username: loginUser, password: loginPass }) }); const d = await r.json(); if (d.ok) setLocalAuth(true); else alert(d.error || 'Credenziali errate'); } catch (_) { alert('Errore di connessione'); } }} className="space-y-4">
+            <input value={loginUser} onChange={(e) => setLoginUser(e.target.value)} list="admin-users" placeholder="User" className="w-full bg-surface border-4 border-primary py-3 px-4 font-body font-bold uppercase focus:outline-none focus:border-secondary" />
+            <datalist id="admin-users">{knownAdmins.map(a => <option key={a.id} value={a.username} />)}</datalist>
+            <input value={loginPass} onChange={(e) => setLoginPass(e.target.value)} type="password" placeholder="Password" className="w-full bg-surface border-4 border-primary py-3 px-4 font-body font-bold uppercase focus:outline-none focus:border-secondary" />
+            <button type="submit" className="w-full bg-primary text-on-primary font-headline font-bold uppercase py-4 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-all">Entra</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogout = () => {
     logout();

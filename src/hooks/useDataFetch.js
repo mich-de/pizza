@@ -174,6 +174,10 @@ export function usePendingCounts() {
             proposals = (data.proposals || []).filter(p => !p.reviewed).length;
             comments = (data.pendingComments || []).filter(c => !c.approved).length;
             posts = (data.pendingFeedPosts || []).filter(p => !p.approved).length;
+          } else if (res.status === 401) {
+            // Token likely expired since checkAuth()
+            localStorage.removeItem('pizza_session_hint');
+            setIsAdmin(false);
           }
 
           if (!cancelled) {

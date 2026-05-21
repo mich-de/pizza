@@ -205,6 +205,7 @@ export default function Explore() {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState(null);
   const [reportPz, setReportPz] = useState(null);
 
@@ -252,6 +253,12 @@ export default function Explore() {
       }
     });
   }, [filtered, sortBy]);
+
+  const totalPages = pageSize === Infinity ? 1 : Math.ceil(sorted.length / pageSize);
+  const paginated = useMemo(() => {
+    if (pageSize === Infinity) return sorted;
+    return sorted.slice(page * pageSize, (page + 1) * pageSize);
+  }, [sorted, page, pageSize]);
 
   const stats = useMemo(() => {
     const prices = sorted.map((p) => p.margheritaPrice || 0);
@@ -375,7 +382,39 @@ export default function Explore() {
               </select>
             </div>
           </div>
-          <ExploreCards filtered={sorted} stats={stats} t={t} lang={lang}
+
+          {/* Pagination controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <span className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant">{t('explore.perPage')}</span>
+              <select value={pageSize === Infinity ? 'all' : pageSize}
+                onChange={(e) => { setPageSize(e.target.value === 'all' ? Infinity : Number(e.target.value)); setPage(0); }}
+                className="bg-surface border-2 border-primary py-2 px-3 font-body font-bold text-sm text-primary focus:outline-none focus:border-secondary cursor-pointer shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="all">{t('explore.all')}</option>
+              </select>
+              <span className="font-headline font-bold text-xs uppercase text-on-surface-variant bg-surface-variant border border-primary px-2.5 py-1.5 shadow-[1px_1px_0px_0px_rgba(26,26,26,1)]">
+                {pageSize === Infinity ? sorted.length : `${page * pageSize + 1}–${Math.min((page + 1) * pageSize, sorted.length)}`} / {sorted.length}
+              </span>
+            </div>
+            {totalPages > 1 && (
+              <div className="flex gap-2">
+                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                  className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-xs disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-all shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+                  {t('admin.previous')}
+                </button>
+                <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+                  className="px-4 py-2 border-2 border-primary font-headline font-bold uppercase text-xs disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-all shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+                  {t('admin.next')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <ExploreCards filtered={paginated} stats={stats} t={t} lang={lang}
             onSelect={(pz) => setSelected(pz)}
             onReportPrice={(pz) => setReportPz(pz)}
           />

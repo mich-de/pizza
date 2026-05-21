@@ -4,6 +4,7 @@ const CSRF_COOKIE = 'csrf-token';
 const CSRF_HEADER = 'x-csrf-token';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const EXEMPT_ROUTES = new Set(['/api/auth/login', '/api/auth/refresh']);
 
 const TOKENS = new Map();
 const TOKEN_TTL = 60 * 60 * 1000;
@@ -16,7 +17,7 @@ setInterval(() => {
 }, 15 * 60 * 1000);
 
 export function csrfMiddleware(req, res, next) {
-  if (SAFE_METHODS.has(req.method)) return next();
+  if (SAFE_METHODS.has(req.method) || EXEMPT_ROUTES.has(req.path)) return next();
 
   const clientToken = req.headers[CSRF_HEADER];
   const cookieToken = req.signedCookies?.[CSRF_COOKIE] || req.cookies?.[CSRF_COOKIE];

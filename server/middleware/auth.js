@@ -2,6 +2,7 @@ import { verifyAccessToken } from '../utils/jwt.js';
 
 const PUBLIC_ROUTES = [
   '/api/data/stitched',
+  '/api/data/full',
   '/api/data/towns',
   '/api/data/venues',
   '/api/data/prices',

@@ -5,6 +5,7 @@ import { useComments } from '../hooks/useComments';
 import CommentForm from '../components/CommentForm';
 import CommentList from '../components/CommentList';
 import SocialActions from '../components/SocialActions';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const FALLBACK = [
   {
@@ -144,80 +145,92 @@ function FeedPost({ post, lang, t, isAdmin, onModAction, onEdit }) {
   const postId = post._originalId || post.id;
 
   return (
-    <article className="bg-surface-bright border-2 border-primary/10 shadow-xl p-0 flex flex-col md:flex-row group hover:border-primary/40 transition-all duration-500 overflow-hidden">
-      <div className="w-full md:w-2/5 relative overflow-hidden bg-primary aspect-square md:aspect-auto">
-        <img
-          alt={lang === 'it' ? post.title_it : post.title_en}
-          className="w-full h-full object-cover mix-blend-luminosity opacity-80 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
-          src={post.img}
-          loading="lazy"
-        />
-        <div className="absolute top-4 left-4 bg-primary text-on-primary font-headline font-black px-3 py-1 border border-on-primary/20 backdrop-blur-md bg-opacity-80 flex items-center gap-2">
-          {post._isUserPost && (
-            <span className="material-symbols-outlined text-xs">add_a_photo</span>
-          )}
-          {post.id}
-        </div>
-        {post._isUserPost && (
-          <div className="absolute top-4 right-4 bg-secondary text-on-secondary font-label font-bold text-[10px] uppercase px-2 py-1 tracking-widest">
-            {t('feed.shared')}
+    <article className="group relative bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] overflow-hidden cursor-default hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
+      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
+      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
+      <div className="flex flex-col md:flex-row">
+        {post.img && (
+          <div className="w-full md:w-44 lg:w-52 relative overflow-hidden bg-primary shrink-0">
+            <img
+              alt={lang === 'it' ? post.title_it : post.title_en}
+              className="w-full h-full object-cover mix-blend-luminosity opacity-80 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
+              src={post.img}
+              loading="lazy"
+            />
+            {post._isUserPost && (
+              <div className="absolute top-3 right-3 bg-secondary text-on-secondary font-label font-bold text-[10px] uppercase px-2 py-0.5 tracking-widest">
+                {t('feed.shared')}
+              </div>
+            )}
           </div>
         )}
-      </div>
-      <div className="p-6 md:p-8 flex-1 flex flex-col">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex-1">
-            <h3 className="font-headline text-2xl md:text-4xl font-black uppercase tracking-tight mb-2 group-hover:text-secondary transition-colors duration-300">
-              {lang === 'it' ? post.title_it : post.title_en}
-            </h3>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center border border-primary/10 overflow-hidden">
-                <span className="material-symbols-outlined text-xs text-secondary">person</span>
-              </div>
-              <p className="font-label font-bold text-primary/60 uppercase text-xs tracking-widest">
-                {post.author} &bull; {post.time} {post._isUserPost ? '' : t('common.hrsAgo')?.toUpperCase()}
-              </p>
+        <div className="p-7 flex-1">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="material-symbols-outlined text-primary text-base flex-shrink-0">person</span>
+              <span className="font-headline font-bold text-sm uppercase tracking-wider text-on-surface-variant/60 truncate">
+                {post.author}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {post.rating && (
+                <div className="bg-primary text-on-primary font-headline font-black text-sm px-2.5 py-1 border-b-4 border-secondary">
+                  {post.rating}
+                </div>
+              )}
+              <span className="font-headline font-bold text-sm uppercase tracking-wider text-on-surface-variant/40">
+                {post.time}{post._isUserPost ? '' : t('common.hrsAgo')?.toUpperCase()}
+              </span>
             </div>
           </div>
-          {post.rating && (
-            <div className="bg-primary text-on-primary font-headline font-black text-xl px-4 py-2 border-b-4 border-secondary">
-              {post.rating}
-            </div>
-          )}
-        </div>
 
-        <p className="font-body text-lg leading-relaxed mb-6 font-medium text-primary/80">
-          {lang === 'it' ? post.description_it : post.description_en}
-        </p>
-
-        <div className="mt-auto">
-          <SocialActions fires={post.fires} onCommentClick={() => setShowComments(!showComments)} t={t} />
-          {isAdmin && post._isUserPost && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-primary/10">
-              <span className="font-label font-bold text-[10px] uppercase tracking-widest text-primary/40 mr-2">{t('feed.adminLabel')}</span>
-              <button
-                onClick={() => onModAction?.(postId, 'approve')}
-                className="flex items-center gap-1 bg-tertiary text-on-tertiary font-label font-bold uppercase text-[10px] py-1 px-3 border border-primary/20 hover:bg-tertiary-container hover:text-tertiary transition-colors"
-              >
-                <span className="material-symbols-outlined text-sm">check_circle</span> {t('feed.approve')}
-              </button>
-              <button
-                onClick={() => onEdit?.(post)}
-                className="flex items-center gap-1 bg-surface text-primary font-label font-bold uppercase text-[10px] py-1 px-3 border border-primary/20 hover:bg-primary hover:text-on-primary transition-colors"
-              >
-                <span className="material-symbols-outlined text-sm">edit</span> {t('feed.edit')}
-              </button>
-              <button
-                onClick={() => onModAction?.(postId, 'reject')}
-                className="flex items-center gap-1 bg-error text-on-error font-label font-bold uppercase text-[10px] py-1 px-3 border border-error/20 hover:bg-error-container hover:text-error transition-colors"
-              >
-                <span className="material-symbols-outlined text-sm">delete</span> {t('feed.delete')}
-              </button>
+          <div className="flex items-start gap-5">
+            <div className="hidden md:block text-center flex-shrink-0 w-16">
+              <div className="font-headline font-bold text-sm uppercase tracking-widest text-primary/50">
+                {post.id}
+              </div>
+              <div className="text-4xl md:text-5xl font-display font-black text-primary leading-none">
+                {post.rating?.split('/')[0] || '--'}
+              </div>
+              <div className="font-headline font-bold text-xs text-on-surface-variant/50 mt-1">
+                voto
+              </div>
             </div>
-          )}
-          <PostComments postId={post.id} show={showComments} onToggle={() => setShowComments(false)} />
+
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display font-black text-xl md:text-2xl leading-tight text-primary group-hover:text-primary transition-colors mb-2">
+                {lang === 'it' ? post.title_it : post.title_en}
+              </h3>
+              <p className="font-body text-sm md:text-base text-on-surface-variant leading-relaxed line-clamp-3">
+                {lang === 'it' ? post.description_it : post.description_en}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 mt-5 pt-4 border-t-2 border-primary/10">
+                <SocialActions fires={post.fires} onCommentClick={() => setShowComments(!showComments)} t={t} />
+              </div>
+
+              {isAdmin && post._isUserPost && (
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-primary/10">
+                  <span className="font-label font-bold text-[10px] uppercase tracking-widest text-primary/40 mr-2">{t('feed.adminLabel')}</span>
+                  <button onClick={() => onModAction?.(postId, 'approve')}
+                    className="flex items-center gap-1 bg-tertiary text-on-tertiary font-label font-bold uppercase text-[10px] py-1 px-3 border border-primary/20 hover:bg-tertiary-container hover:text-tertiary transition-colors">
+                    <span className="material-symbols-outlined text-sm">check_circle</span> {t('feed.approve')}
+                  </button>
+                  <button onClick={() => onEdit?.(post)}
+                    className="flex items-center gap-1 bg-surface text-primary font-label font-bold uppercase text-[10px] py-1 px-3 border border-primary/20 hover:bg-primary hover:text-on-primary transition-colors">
+                    <span className="material-symbols-outlined text-sm">edit</span> {t('feed.edit')}
+                  </button>
+                  <button onClick={() => onModAction?.(postId, 'reject')}
+                    className="flex items-center gap-1 bg-error text-on-error font-label font-bold uppercase text-[10px] py-1 px-3 border border-error/20 hover:bg-error-container hover:text-error transition-colors">
+                    <span className="material-symbols-outlined text-sm">delete</span> {t('feed.delete')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+      <PostComments postId={post.id} show={showComments} onToggle={() => setShowComments(false)} />
     </article>
   );
 }
@@ -528,14 +541,20 @@ export default function Feed() {
     : filtered;
 
   return (
-    <div className="p-4 md:p-8 flex flex-col lg:flex-row gap-8">
-      <div className="flex-1 flex flex-col gap-8 max-w-4xl mx-auto w-full">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end border-b-2 border-primary/10 pb-6 gap-6">
+    <div className="max-w-7xl mx-auto w-full">
+      <header className="mb-14 border-b-4 border-primary pb-8">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
           <div>
-            <h2 className="font-headline text-5xl md:text-7xl font-black uppercase tracking-tighter mb-2">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="w-3 h-3 rounded-full bg-primary animate-pulse-soft" />
+              <span className="font-headline font-bold text-sm uppercase tracking-widest text-primary">
+                Feed
+              </span>
+            </div>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tight leading-[1.05] text-primary">
               {t('feed.title')}
-            </h2>
-            <p className="font-label font-bold text-secondary uppercase tracking-widest text-sm">
+            </h1>
+            <p className="text-lg md:text-xl font-body text-on-surface-variant mt-4 max-w-3xl leading-relaxed">
               {t('feed.subtitle')}
             </p>
           </div>
@@ -558,24 +577,25 @@ export default function Feed() {
             </div>
           </div>
         </div>
+      </header>
 
         <CreatePost t={t} onCreated={fetchUserPosts} />
 
         {loading ? (
-          <div className="flex justify-center p-12">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
+          <LoadingSpinner fullScreen />
         ) : sorted.length === 0 ? (
-          <div className="bg-surface-bright border-4 border-primary p-8 text-center shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-            <p className="font-headline text-xl font-bold uppercase">{t('common.noResults')}</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <span className="material-symbols-outlined text-7xl text-primary/20" style={{ fontVariationSettings: "'FILL' 1" }}>rss_feed</span>
+            <p className="font-headline font-bold text-xl text-on-surface-variant/50 mt-5">{t('common.noResults')}</p>
           </div>
         ) : (
-          sorted.map((post) => (
-            <FeedPost key={post.id} post={post} lang={lang} t={t} isAdmin={isAdmin}
-              onModAction={handleModAction} onEdit={setEditPost} />
-          ))
+          <div className="flex flex-col gap-6 stagger-children">
+            {sorted.map((post) => (
+              <FeedPost key={post.id} post={post} lang={lang} t={t} isAdmin={isAdmin}
+                onModAction={handleModAction} onEdit={setEditPost} />
+            ))}
+          </div>
         )}
-      </div>
 
       <EditPostModal post={editPost} open={!!editPost} onClose={() => setEditPost(null)} t={t} onSaved={fetchUserPosts} />
     </div>

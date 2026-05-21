@@ -145,7 +145,8 @@ export default function Dashboard() {
         </div>
         </div>
 
-        <div className="relative -mt-14 mx-4 md:mx-auto max-w-5xl bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 z-20 animate-slide-up">
+        <div className="relative -mt-14 mx-4 md:mx-auto max-w-5xl bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 z-20 animate-slide-up overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0">
             <div className="flex flex-col items-center justify-center py-2 md:py-3 px-3 md:border-r-4 md:border-primary">
               <span className="w-3 h-3 rounded-full bg-[#009246] mb-2 shadow-[0_0_6px_rgba(0,146,70,0.4)]" />
@@ -175,6 +176,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
           <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] to-[#00B050]" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#009246]/10 rounded-bl-full" />
             <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-[#009246] mb-2">{t('dashboard.totalPizzerias') || 'Pizzerie Totali'}</div>
             <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight">{data.length}</div>
             <span className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-[#009246]/20 text-3xl md:text-4xl material-symbols-outlined group-hover:text-[#009246]/40 group-hover:scale-110 transition-all" style={{ fontVariationSettings: "'FILL' 1" }}>local_pizza</span>
@@ -182,6 +184,7 @@ export default function Dashboard() {
 
           <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-secondary" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
             <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-primary mb-2">{t('dashboard.citiesCount')}</div>
             <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight">{Object.keys(grouped).length}</div>
             <span className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-primary/20 text-3xl md:text-4xl material-symbols-outlined group-hover:text-primary/40 group-hover:scale-110 transition-all">location_city</span>
@@ -189,6 +192,7 @@ export default function Dashboard() {
 
           <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#CE2B37] to-[#E85050]" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#CE2B37]/10 rounded-bl-full" />
             <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-[#CE2B37] mb-2">{t('dashboard.avgPrice') || 'Prezzo Medio'}</div>
             <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight">{t('common.euro')}{globalAvg.toFixed(2)}</div>
             <span className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-[#CE2B37]/20 text-3xl md:text-4xl material-symbols-outlined group-hover:text-[#CE2B37]/40 group-hover:scale-110 transition-all">trending_up</span>
@@ -196,6 +200,7 @@ export default function Dashboard() {
 
           <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] via-primary to-[#CE2B37]" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
             <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-primary mb-2">{t('dashboard.priceRange') || 'Fascia'}</div>
             <div className="font-display font-black text-2xl md:text-3xl text-primary leading-tight mb-1">
               {t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}
@@ -330,9 +335,10 @@ export default function Dashboard() {
                   return (
                     <div key={city}
                       onClick={() => setExpandedCity(expandedCity === city ? null : city)}
-                      className={`bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-7 ${pizzerias.length > 4 ? 'cursor-pointer' : ''} hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all`
+                      className={`bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-7 relative overflow-hidden ${pizzerias.length > 4 ? 'cursor-pointer' : ''} hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all`
                         + (expandedCity === city ? ' bg-primary/5' : '')}
                       style={{ animationDelay: `${0.2 + cityIdx * 0.08}s` }}>
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
                       <div className="flex items-center justify-between mb-5">
                         <h4 className="font-display font-black text-2xl md:text-3xl group-hover:text-primary transition-colors">{city}</h4>
                         <div className="flex items-center gap-3">
@@ -403,7 +409,8 @@ export default function Dashboard() {
           </div>
 
           <div className="lg:col-span-4 flex flex-col gap-8">
-            <div className="bg-primary border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="bg-primary border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] animate-slide-up overflow-hidden" style={{ animationDelay: '0.2s' }}>
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full" />
               <div className="p-6 md:p-7 border-b-4 border-white/20">
                 <div className="flex items-center justify-between">
                   <h3 className="text-2xl font-display font-black text-white flex items-center gap-3">
@@ -445,7 +452,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] p-7 animate-slide-up" style={{ animationDelay: '0.25s' }}>
+            <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] p-7 animate-slide-up relative overflow-hidden" style={{ animationDelay: '0.25s' }}>
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
               <h4 className="font-headline font-bold text-sm uppercase tracking-widest text-primary mb-6 border-b-4 border-primary pb-3">
                 {t('dashboard.priceRange')}
               </h4>

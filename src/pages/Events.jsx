@@ -102,6 +102,8 @@ export default function Events() {
       {featured && (
         <section className="mb-20">
           <div className="relative bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] overflow-hidden group cursor-default">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute inset-0" style={{
                 backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(200,76,9,0.06) 0%, transparent 60%)',
@@ -188,6 +190,8 @@ export default function Events() {
                       : 'border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]'
                   } hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all`}
                 >
+                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
                   {evIsPast && (
                     <div className="absolute top-4 right-4 z-10">
                       <span className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant/40 bg-surface px-3 py-1 border-2 border-outline-variant/50">
