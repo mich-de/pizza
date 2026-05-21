@@ -446,9 +446,11 @@ Per far girare il sito su Coolify o in qualsiasi ambiente dove l'app è servita 
 2. **Variabili d'Ambiente**: Su Coolify, configura le seguenti variabili:
    - `NODE_ENV=production`
    - `PORT=3000`
+   - `HOST=0.0.0.0` (Binds the app to all network interfaces inside Docker)
+   - `TRUST_PROXY=1` (Instructs Express to trust reverse proxy headers, like `X-Forwarded-For` or `X-Forwarded-Proto`)
    - `JWT_SECRET=tuo-segreto-molto-forte`
    - `JWT_REFRESH_SECRET=altro-segreto-molto-forte`
-   - `ALLOWED_ORIGINS=https://tuo-dominio.it` (IMPORTANTE per il CORS)
+   - `ALLOWED_ORIGINS=https://tuo-dominio.it` (Permette il CORS dinamico per questo origine)
 3. **Volume**: Se usi Docker Compose, assicurati che i volumi per `public/data` e `server/private` siano persistenti.
 
 ```bash
@@ -475,7 +477,14 @@ ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 
 ### Testing
 
-The project currently has **no automated tests**. Manual testing flow:
+The project includes an automated test suite powered by **Vitest** and **Supertest** for testing both frontend helpers and backend routing.
+
+To run the automated tests:
+```bash
+npm test
+```
+
+Manual testing flow:
 1. Start dev servers
 2. Navigate to `http://localhost:5173`
 3. Verify all pages render (Dashboard, Feed, Explore, Directory, Prices, Network)
