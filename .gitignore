@@ -24,6 +24,9 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Local Claude Code settings (per-developer, not shared)
+.claude/settings.local.json
 *.suo
 *.ntvs*
 *.njsproj

@@ -20,7 +20,7 @@ export function silentFetch(url, options = {}) {
                 json: () => {
                     try {
                         return Promise.resolve(xhr.responseText ? JSON.parse(xhr.responseText) : null);
-                    } catch (e) {
+                    } catch {
                         return Promise.resolve(null);
                     }
                 }

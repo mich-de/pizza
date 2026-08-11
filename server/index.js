@@ -4,11 +4,34 @@ import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync, readdirSync, statSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { createLogger, format, transports } from 'winston';
-import { randomBytes, createHmac } from 'crypto';
+import { existsSync, statSync } from 'fs';
+import { join } from 'path';
+import { randomBytes } from 'crypto';
+
+import { 
+  PORT, NODE_ENV, JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD_HASH,
+  ALLOWED_ORIGINS, ADMINS_PATH, root, VENUES_PATH, TOWNS_PATH,
+  PRICES_PATH, COMMENTS_PATH, PROPOSALS_PATH, FEED_POSTS_PATH,
+  MIN_NAME_LENGTH, MAX_NAME_LENGTH, MIN_CONTENT_LENGTH, MAX_CONTENT_LENGTH
+} from './config.js';
+
+import { LoginSchema, CommentSchema, FeedPostSchema } from './schemas.js';
+import { logger } from './utils/logger.js';
+import { 
+  checkLoginRateLimit, recordLoginAttempt, checkAccountLockout, 
+  recordFailedLogin, clearFailedLogins, apiRateLimit, 
+  checkRateLimit, recordComment 
+} from './utils/rateLimit.js';
+
+import { 
+  createCaptchaToken, verifyCaptchaToken, sanitize, 
+  removeDangerousContent, containsBannedWords, sanitizeObject 
+} from './utils/security.js';
+
+import {
+  safeReadJSON, safeWriteJSON, stitchData
+} from './services/storage.js';
+
 import { hashPassword, verifyPassword } from './utils/password.js';
 import { generateAccessToken, ACCESS_EXPIRES_MS, REFRESH_EXPIRES_MS } from './utils/jwt.js';
 import { createRefreshToken, validateRefreshToken, revokeRefreshToken } from './utils/refreshTokens.js';
@@ -16,357 +39,20 @@ import { createSecret, createKeyUri, createQRCodeDataURI, verifyTOTP } from './u
 import { authMiddleware, requireRole } from './middleware/auth.js';
 import { csrfMiddleware, csrfToken } from './middleware/csrf.js';
 import { auditLog, getAuditLog } from './utils/auditLog.js';
-import sanitizeHtml from 'sanitize-html';
-import { z } from 'zod';
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const root = process.cwd();
-const PRIVATE_DIR = join(__dirname, 'private');
 
 const app = express();
 export { app };
+
 app.set('trust proxy', process.env.TRUST_PROXY || 1);
 app.use(compression());
-const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-me';
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'pizza';
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || null;
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000')
-  .split(',')
-  .map(s => s.trim());
 
-const DATA_DIR = join(root, 'public', 'data');
-const TOWNS_PATH = join(DATA_DIR, 'towns.json');
-const VENUES_PATH = join(DATA_DIR, 'venues.json');
-const PRICES_PATH = join(DATA_DIR, 'prices.json');
-const COMMENTS_PATH = join(PRIVATE_DIR, 'comments.json');
-const PROPOSALS_PATH = join(PRIVATE_DIR, 'price-proposals.json');
-const ADMINS_PATH = join(PRIVATE_DIR, 'admins.json');
-const FEED_POSTS_PATH = join(PRIVATE_DIR, 'feed-posts.json');
+// --- Shared State ---
+const pending2FALogins = new Map();
 
-const BANNED_WORDS = [
-  'buy now', 'click here', 'cheap meds', 'viagra', 'cialis',
-  'casino', 'gambling', 'earn money', 'work from home',
-  'http://', 'https://', 'www.', '.com', '.org', '.net',
-  'SEO', 'backlink', 'phentermine', 'tramadol', 'mortgage',
-  'free gift card', 'amazon gift', 'crypto', 'bitcoin',
-];
-
-const MAX_COMMENTS_PER_5MIN = 3;
-const MAX_COMMENTS_PER_HOUR = 10;
-const MIN_CONTENT_LENGTH = 5;
-const MAX_CONTENT_LENGTH = 500;
-const MIN_NAME_LENGTH = 2;
-const MAX_NAME_LENGTH = 30;
-
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOGIN_WINDOW_MS = 15 * 60 * 1000;
-const ACCOUNT_LOCKOUT_MS = 15 * 60 * 1000;
-const CAPTCHA_TTL_MS = 10 * 60 * 1000;
-
-// --- Zod Schemas ---
-const LoginSchema = z.object({
-  username: z.string().min(1).max(100),
-  password: z.string().min(1).max(200),
-});
-
-const CommentSchema = z.object({
-  postId: z.string().min(1).max(50),
-  author: z.string().min(MIN_NAME_LENGTH).max(MAX_NAME_LENGTH),
-  content: z.string().min(MIN_CONTENT_LENGTH).max(MAX_CONTENT_LENGTH),
-  proposedPrice: z.number().positive().max(100).optional(),
-  honeypot: z.string().optional(),
-  mathAnswer: z.number(),
-  captchaToken: z.string().min(1),
-});
-
-const FeedPostSchema = z.object({
-  author: z.string().min(2).max(30),
-  title: z.string().min(3).max(100),
-  description: z.string().max(500).optional().default(''),
-  honeypot: z.string().optional(),
-  mathAnswer: z.number(),
-  captchaToken: z.string().min(1),
-});
-
-// --- Login Rate Limiting & Account Lockout ---
-const loginAttemptMap = new Map();
-
-function checkLoginRateLimit(ip) {
-  const now = Date.now();
-  if (!loginAttemptMap.has(ip)) loginAttemptMap.set(ip, []);
-  const attempts = loginAttemptMap.get(ip).filter(t => t > now - LOGIN_WINDOW_MS);
-  loginAttemptMap.set(ip, attempts);
-  if (attempts.length >= MAX_LOGIN_ATTEMPTS) {
-    const waitSeconds = Math.ceil((attempts[0] + LOGIN_WINDOW_MS - now) / 1000);
-    return { allowed: false, waitSeconds };
-  }
-  return { allowed: true };
-}
-
-function recordLoginAttempt(ip) {
-  const now = Date.now();
-  if (!loginAttemptMap.has(ip)) loginAttemptMap.set(ip, []);
-  loginAttemptMap.get(ip).push(now);
-}
-
-
-
-function checkAccountLockout(admin) {
-  if (!admin.lockedUntil) return { locked: false };
-  if (Date.now() < new Date(admin.lockedUntil).getTime()) {
-    const waitSeconds = Math.ceil((new Date(admin.lockedUntil).getTime() - Date.now()) / 1000);
-    return { locked: true, waitSeconds };
-  }
-  return { locked: false };
-}
-
-function recordFailedLogin(admin, admins) {
-  admin.failedAttempts = (admin.failedAttempts || 0) + 1;
-  if (admin.failedAttempts >= MAX_LOGIN_ATTEMPTS) {
-    admin.lockedUntil = new Date(Date.now() + ACCOUNT_LOCKOUT_MS).toISOString();
-    admin.failedAttempts = 0;
-  }
-  safeWriteJSON(ADMINS_PATH, admins);
-}
-
-function clearFailedLogins(admin, admins) {
-  if (admin.failedAttempts || admin.lockedUntil) {
-    admin.failedAttempts = 0;
-    delete admin.lockedUntil;
-    safeWriteJSON(ADMINS_PATH, admins);
-  }
-}
-
-// --- Server-side Captcha ---
-function createCaptchaToken(answer) {
-  const expires = Date.now() + CAPTCHA_TTL_MS;
-  const payload = `${answer}:${expires}`;
-  const sig = createHmac('sha256', JWT_SECRET).update(payload).digest('hex');
-  return `${payload}:${sig}`;
-}
-
-function verifyCaptchaToken(token, userAnswer) {
-  if (!token || typeof token !== 'string') return false;
-  const parts = token.split(':');
-  if (parts.length !== 3) return false;
-  const [answer, expires, sig] = parts;
-  const expectedSig = createHmac('sha256', JWT_SECRET).update(`${answer}:${expires}`).digest('hex');
-  if (sig !== expectedSig) return false;
-  if (Date.now() > parseInt(expires)) return false;
-  return parseInt(answer) === userAnswer;
-}
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, attempts] of loginAttemptMap.entries()) {
-    const cleaned = attempts.filter(t => t > now - LOGIN_WINDOW_MS);
-    if (cleaned.length === 0) loginAttemptMap.delete(ip);
-    else loginAttemptMap.set(ip, cleaned);
-  }
-}, 5 * 60 * 1000);
-
-const logger = createLogger({
-  level: 'info',
-  format: format.combine(
-    format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    format.errors({ stack: true }),
-    format.json()
-  ),
-  transports: [
-    new transports.Console({
-      format: NODE_ENV === 'production'
-        ? format.combine(format.timestamp(), format.json())
-        : format.combine(format.colorize(), format.simple()),
-    }),
-  ],
-});
-
-const fileLocks = new Map();
-
-function withFileLock(filePath, fn) {
-  if (!fileLocks.has(filePath)) fileLocks.set(filePath, Promise.resolve());
-  const lock = fileLocks.get(filePath).then(fn, fn);
-  fileLocks.set(filePath, lock);
-  return lock;
-}
-
-const rateLimitMap = new Map();
-
-function sanitize(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .trim();
-}
-
-function removeDangerousContent(str) {
-  return sanitizeHtml(str, {
-    allowedTags: [],
-    allowedAttributes: {},
-  });
-}
-
-
-function containsBannedWords(str) {
-  const lower = str.toLowerCase();
-  return BANNED_WORDS.some(word => lower.includes(word));
-}
-
-function isDuplicateComment(comments, author, content) {
-  const lowerContent = content.toLowerCase().trim();
-  return comments.some(c =>
-    c.author.toLowerCase() === author.toLowerCase() &&
-    c.content.toLowerCase().trim() === lowerContent
-  );
-}
-
-function checkRateLimit(ip) {
-  const now = Date.now();
-  if (!rateLimitMap.has(ip)) rateLimitMap.set(ip, []);
-  const timestamps = rateLimitMap.get(ip);
-  const fiveMinAgo = now - 5 * 60 * 1000;
-  const oneHourAgo = now - 60 * 60 * 1000;
-  const recent5min = timestamps.filter(t => t > fiveMinAgo);
-  const recent1hr = timestamps.filter(t => t > oneHourAgo);
-  rateLimitMap.set(ip, recent1hr);
-  if (recent5min.length >= MAX_COMMENTS_PER_5MIN) {
-    return { allowed: false, reason: 'rate_5min', waitSeconds: Math.ceil((timestamps[0] + 5 * 60 * 1000 - now) / 1000) };
-  }
-  if (recent1hr.length >= MAX_COMMENTS_PER_HOUR) {
-    return { allowed: false, reason: 'rate_1hr', waitSeconds: Math.ceil((timestamps[0] + 60 * 60 * 1000 - now) / 1000) };
-  }
-  return { allowed: true };
-}
-
-function recordComment(ip) {
-  const now = Date.now();
-  if (!rateLimitMap.has(ip)) rateLimitMap.set(ip, []);
-  rateLimitMap.get(ip).push(now);
-}
-
-setInterval(() => {
-  const now = Date.now();
-  const oneHourAgo = now - 60 * 60 * 1000;
-  for (const [ip, timestamps] of rateLimitMap.entries()) {
-    const cleaned = timestamps.filter(t => t > oneHourAgo);
-    if (cleaned.length === 0) rateLimitMap.delete(ip);
-    else rateLimitMap.set(ip, cleaned);
-  }
-}, 10 * 60 * 1000);
-
-function readJSON(filePath, fallback = []) {
-  try {
-    if (!existsSync(filePath)) return fallback;
-    const raw = readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
-
-function atomicWriteJSON(filePath, data) {
-  const dir = dirname(filePath);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  const tmpPath = `${filePath}.tmp.${Date.now()}.${process.pid}`;
-  writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
-  renameSync(tmpPath, filePath);
-}
-
-function safeWriteJSON(filePath, data) {
-  return withFileLock(filePath, () => {
-    atomicWriteJSON(filePath, data);
-  });
-}
-
-function safeReadJSON(filePath, fallback = []) {
-  return withFileLock(filePath, () => readJSON(filePath, fallback));
-}
-
-async function stitchData(includeUnapproved = false) {
-  const towns = await safeReadJSON(TOWNS_PATH, []);
-  const venues = await safeReadJSON(VENUES_PATH, []);
-  const prices = await safeReadJSON(PRICES_PATH, []);
-  const proposals = await safeReadJSON(PROPOSALS_PATH, []);
-
-  return venues
-    .filter(v => {
-      if (!includeUnapproved && v.status === 'pending') return false;
-      return true;
-    })
-    .map(v => {
-      const priceEntry = prices.find(p => p.pizzeriaId === v.id);
-      const pendingProposal = proposals.find(p => p.pizzeriaId === v.id && !p.reviewed);
-      const townEntry = towns.find(t => t.id === v.cityId);
-      return {
-        ...v,
-        margheritaPrice: priceEntry ? priceEntry.margheritaPrice : 0,
-        lastUpdated: priceEntry ? priceEntry.lastUpdated : null,
-        priceSource: priceEntry ? priceEntry.source : null,
-        pendingProposal: pendingProposal ? {
-          proposedPrice: pendingProposal.proposedPrice,
-          author: pendingProposal.author,
-          createdAt: pendingProposal.createdAt,
-        } : null,
-        cityName: townEntry ? townEntry.name : 'Unknown',
-        cityRegion: townEntry ? townEntry.region : '',
-      };
-    });
-}
-
-function sanitizeObject(obj) {
-  const sanitized = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === 'string') sanitized[key] = sanitize(removeDangerousContent(value));
-    else sanitized[key] = value;
-  }
-  return sanitized;
-}
-
+// --- API Helpers ---
 function prodError(msg) {
   return NODE_ENV === 'production' ? 'Errore interno del server' : msg;
 }
-
-const apiRateLimitMap = new Map();
-
-function apiRateLimit(req, res, next) {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
-  const now = Date.now();
-  if (!apiRateLimitMap.has(ip)) apiRateLimitMap.set(ip, []);
-  const timestamps = apiRateLimitMap.get(ip).filter(t => t > now - 60 * 1000);
-  if (timestamps.length >= 100) {
-    logger.warn('Rate limit exceeded', { ip });
-    return res.status(429).json({ error: 'Troppe richieste. Riprova tra un minuto.' });
-  }
-  timestamps.push(now);
-  apiRateLimitMap.set(ip, timestamps);
-  next();
-}
-
-setInterval(() => {
-  const now = Date.now();
-  const oneMinAgo = now - 60 * 1000;
-  for (const [ip, timestamps] of apiRateLimitMap.entries()) {
-    const cleaned = timestamps.filter(t => t > oneMinAgo);
-    if (cleaned.length === 0) apiRateLimitMap.delete(ip);
-    else apiRateLimitMap.set(ip, cleaned);
-  }
-}, 5 * 60 * 1000);
-
-const pending2FALogins = new Map();
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [token, data] of pending2FALogins.entries()) {
-    if (now - data.createdAt > 5 * 60 * 1000) pending2FALogins.delete(token);
-  }
-}, 60 * 1000);
 
 async function seedAdmin() {
   const admins = await safeReadJSON(ADMINS_PATH, []);
@@ -392,22 +78,35 @@ async function seedAdmin() {
       role: 'admin',
       displayName: ADMIN_USERNAME,
       email: '',
+      mustChangePassword: true,
       createdAt: new Date().toISOString(),
     });
     changed = true;
-    logger.info('Admin di default creato');
-  } else if (process.env.ADMIN_PASSWORD || ADMIN_PASSWORD_HASH) {
-    const idx = admins.findIndex(a => a.username === ADMIN_USERNAME);
+    logger.info('Admin di default creato con mustChangePassword=true');
+  } else {
+    let idx = admins.findIndex(a => a.id === 1);
     if (idx !== -1) {
-      const envPassword = process.env.ADMIN_PASSWORD;
-      const storedHash = admins[idx].passwordHash;
-      const same = envPassword ? await verifyPassword(envPassword, storedHash).catch(() => false) : false;
-      if (!same && ADMIN_PASSWORD_HASH && storedHash !== ADMIN_PASSWORD_HASH) {
-        admins[idx].passwordHash = ADMIN_PASSWORD_HASH;
+      if (admins[idx].username !== ADMIN_USERNAME) {
+        logger.info(`Aggiornamento username admin: ${admins[idx].username} -> ${ADMIN_USERNAME}`);
+        admins[idx].username = ADMIN_USERNAME;
+        admins[idx].displayName = ADMIN_USERNAME;
+        admins[idx].mustChangePassword = true;
         changed = true;
-      } else if (!same && envPassword) {
-        admins[idx].passwordHash = await hashPassword(envPassword);
-        changed = true;
+      }
+
+      if (process.env.ADMIN_PASSWORD || ADMIN_PASSWORD_HASH) {
+        const envPassword = process.env.ADMIN_PASSWORD;
+        const storedHash = admins[idx].passwordHash;
+        const same = envPassword ? await verifyPassword(envPassword, storedHash).catch(() => false) : false;
+        if (!same && ADMIN_PASSWORD_HASH && storedHash !== ADMIN_PASSWORD_HASH) {
+          admins[idx].passwordHash = ADMIN_PASSWORD_HASH;
+          admins[idx].mustChangePassword = true;
+          changed = true;
+        } else if (!same && envPassword) {
+          admins[idx].passwordHash = await hashPassword(envPassword);
+          admins[idx].mustChangePassword = true;
+          changed = true;
+        }
       }
     }
   }
@@ -436,20 +135,20 @@ app.use(helmet({
   hsts: NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
 }));
 
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`, { ip: req.ip });
+  next();
+});
+
 const corsOptionsDelegate = (req, callback) => {
   const origin = req.header('Origin');
   let isAllowed = false;
 
-  if (!origin) {
+  if (!origin || NODE_ENV !== 'production') {
     isAllowed = true;
   } else if (ALLOWED_ORIGINS.includes(origin)) {
     isAllowed = true;
-  } else if (NODE_ENV !== 'production') {
-    const isLocal = origin.startsWith('http://localhost:') || 
-                    origin.startsWith('http://127.0.0.1:');
-    if (isLocal) isAllowed = true;
   } else {
-    // Dynamic matching for proxy/SSL setup
     try {
       const originUrl = new URL(origin);
       const host = req.header('Host');
@@ -457,10 +156,11 @@ const corsOptionsDelegate = (req, callback) => {
       if (originUrl.host === host || (forwardedHost && originUrl.host === forwardedHost)) {
         isAllowed = true;
       }
-    } catch (e) {
-      // Invalid URL in Origin header
+    } catch {
+      // Malformed Origin header — treat as disallowed
     }
   }
+
 
   if (isAllowed) {
     callback(null, {
@@ -487,34 +187,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files EARLY, before auth/csrf middleware (using sendFile directly to avoid serve-static bugs)
+// Serve static files
 {
   const distDir = join(root, 'dist');
-
-  // Startup Diagnostics
-  if (existsSync(distDir)) {
-    try {
-      const files = readdirSync(distDir);
-      logger.info('dist/ directory found', { files, root, cwd: process.cwd() });
-      if (existsSync(join(distDir, 'assets'))) {
-        const assets = readdirSync(join(distDir, 'assets')).slice(0, 5);
-        logger.info('dist/assets/ sample', { assets });
-      }
-    } catch (err) {
-      logger.error('Error reading dist/ directory', { error: err.message });
-    }
-  } else {
-    logger.warn('dist/ directory NOT found at ' + distDir + ' (root=' + root + ', cwd=' + process.cwd() + ')');
-  }
-
-  // Serve static files via sendFile with root option (bypass serve-static@2.x which crashes on .js)
   app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
-
     const fileName = req.path === '/' ? 'index.html' : req.path;
     const filePath = join(distDir, fileName);
-
-    // Skip directories and missing files
     if (!existsSync(filePath)) return next();
     const stat = statSync(filePath);
     if (!stat.isFile()) return next();
@@ -528,19 +207,11 @@ app.use((req, res, next) => {
       xml: 'application/xml', map: 'application/json',
       woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', eot: 'application/vnd.ms-fontobject',
     };
-    const contentType = mime[ext] || 'application/octet-stream';
-
-    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Type', mime[ext] || 'application/octet-stream');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', ext === 'html' ? 'no-cache' : 'public, max-age=31536000, immutable');
-
     res.sendFile(fileName, { root: distDir }, (err) => {
-      if (err) {
-        logger.error('sendFile failed', { path: filePath, error: err.message, code: err.code });
-        if (!res.headersSent) {
-          res.status(500).type('text/plain').send('Internal Server Error');
-        }
-      }
+      if (err && !res.headersSent) res.status(500).type('text/plain').send('Internal Server Error');
     });
   });
 }
@@ -548,46 +219,19 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser(JWT_SECRET));
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
-});
-
+app.get('/health', (_req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 app.get('/api/csrf-token', csrfToken);
 
-// ASSET PROTECTION: Prevent fall-through to auth/csrf for missing assets
-app.use((req, res, next) => {
-  if (req.path.startsWith('/assets/') || req.path.includes('.')) {
-    if (!req.path.startsWith('/api/')) {
-      logger.warn('Asset not found on disk', {
-        requestedPath: req.path,
-        resolvedPath: join(root, 'dist', req.path),
-      });
-      return res.status(404).type('text/plain').send('Asset not found');
-    }
-  }
-  next();
-});
-
-// SPA Fallback — AFTER static files + asset protection, BEFORE auth/csrf
+// SPA Fallback
 {
   const distIndex = join(root, 'dist', 'index.html');
   app.get(/^(?!\/api).*$/, (req, res, next) => {
-    if (req.path.includes('.') || req.path.startsWith('/assets/')) {
-      return next();
-    }
-
+    if (req.path.includes('.') || req.path.startsWith('/assets/')) return next();
     if (existsSync(distIndex)) {
       res.sendFile(distIndex, (err) => {
-        if (err) {
-          logger.error('SPA fallback failed', { path: distIndex, error: err.message });
-          if (!res.headersSent) {
-            res.status(500).json({ error: 'Internal server error' });
-          }
-        }
+        if (err && !res.headersSent) res.status(500).json({ error: 'Internal server error' });
       });
-    } else {
-      next();
-    }
+    } else next();
   });
 }
 
@@ -623,64 +267,39 @@ app.post('/api/auth/login', apiRateLimit, async (req, res) => {
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
 
     const ipCheck = checkLoginRateLimit(clientIp);
-    if (!ipCheck.allowed) {
-      return res.status(429).json({ error: `Troppi tentativi. Riprova tra ${ipCheck.waitSeconds} secondi` });
-    }
+    if (!ipCheck.allowed) return res.status(429).json({ error: `Troppi tentativi. Riprova tra ${ipCheck.waitSeconds} secondi` });
 
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.username === username);
-    if (!admin) {
-      recordLoginAttempt(clientIp);
-      return res.status(401).json({ error: 'Credenziali non valide' });
-    }
+    if (!admin) { recordLoginAttempt(clientIp); return res.status(401).json({ error: 'Credenziali non valide' }); }
 
     const lockCheck = checkAccountLockout(admin);
-    if (lockCheck.locked) {
-      return res.status(429).json({ error: `Account bloccato. Riprova tra ${lockCheck.waitSeconds} secondi` });
-    }
+    if (lockCheck.locked) return res.status(429).json({ error: `Account bloccato. Riprova tra ${lockCheck.waitSeconds} secondi` });
 
     const validPassword = await verifyPassword(password, admin.passwordHash);
     if (!validPassword) {
       recordLoginAttempt(clientIp);
-      recordFailedLogin(admin, admins);
+      await recordFailedLogin(admin, admins);
       return res.status(401).json({ error: 'Credenziali non valide' });
     }
 
-    clearFailedLogins(admin, admins);
+    await clearFailedLogins(admin, admins);
 
     if (admin.twoFASecret) {
       const tempToken = randomBytes(32).toString('hex');
-      pending2FALogins.set(tempToken, {
-        userId: admin.id,
-        username: admin.username,
-        role: admin.role,
-        createdAt: Date.now(),
-      });
+      pending2FALogins.set(tempToken, { userId: admin.id, username: admin.username, role: admin.role, createdAt: Date.now() });
       return res.json({ requires2FA: true, tempToken });
     }
 
     const accessToken = generateAccessToken({ userId: admin.id, username: admin.username, role: admin.role });
     const refreshTokenId = createRefreshToken(admin.id, admin.role);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      signed: true,
-      maxAge: ACCESS_EXPIRES_MS,
-    });
-    res.cookie('refreshToken', refreshTokenId, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      signed: true,
-      maxAge: REFRESH_EXPIRES_MS,
-    });
+    res.cookie('accessToken', accessToken, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true, maxAge: ACCESS_EXPIRES_MS });
+    res.cookie('refreshToken', refreshTokenId, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true, maxAge: REFRESH_EXPIRES_MS });
 
     auditLog(admin.id, 'login', 'auth', { ip: clientIp });
     logger.info('Login riuscito', { userId: admin.id, username: admin.username });
-
-    res.json({ success: true });
+    res.json({ success: true, mustChangePassword: !!admin.mustChangePassword });
   } catch (err) {
     logger.error('Errore login', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
@@ -691,10 +310,8 @@ app.post('/api/auth/logout', async (req, res) => {
   try {
     const tokenId = req.signedCookies?.refreshToken || req.cookies?.refreshToken;
     if (tokenId) revokeRefreshToken(tokenId);
-
-    res.clearCookie('accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', signed: true });
-    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', signed: true });
-
+    res.clearCookie('accessToken', { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true });
+    res.clearCookie('refreshToken', { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true });
     res.json({ success: true });
   } catch (err) {
     logger.error('Errore logout', { error: err.message });
@@ -712,37 +329,19 @@ app.post('/api/auth/2fa/verify-login', apiRateLimit, async (req, res) => {
 
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === pending.userId);
-    if (!admin || !admin.twoFASecret) {
-      pending2FALogins.delete(tempToken);
-      return res.status(401).json({ error: '2FA non configurata' });
-    }
+    if (!admin || !admin.twoFASecret) { pending2FALogins.delete(tempToken); return res.status(401).json({ error: '2FA non configurata' }); }
 
-    const valid = verifyTOTP(code, admin.twoFASecret);
-    if (!valid) return res.status(401).json({ error: 'Codice non valido' });
+    if (!verifyTOTP(code, admin.twoFASecret)) return res.status(401).json({ error: 'Codice non valido' });
 
     pending2FALogins.delete(tempToken);
-
     const accessToken = generateAccessToken({ userId: admin.id, username: admin.username, role: admin.role });
     const refreshTokenId = createRefreshToken(admin.id, admin.role);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      signed: true,
-      maxAge: ACCESS_EXPIRES_MS,
-    });
-    res.cookie('refreshToken', refreshTokenId, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      signed: true,
-      maxAge: REFRESH_EXPIRES_MS,
-    });
+    res.cookie('accessToken', accessToken, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true, maxAge: ACCESS_EXPIRES_MS });
+    res.cookie('refreshToken', refreshTokenId, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true, maxAge: REFRESH_EXPIRES_MS });
 
     auditLog(admin.id, 'login', 'auth', { ip: req.ip });
     logger.info('Login 2FA riuscito', { userId: admin.id, username: admin.username });
-
     res.json({ success: true });
   } catch (err) {
     logger.error('Errore verifica 2FA login', { error: err.message });
@@ -760,23 +359,10 @@ app.post('/api/auth/refresh', apiRateLimit, async (req, res) => {
 
     revokeRefreshToken(tokenId);
     const newRefreshTokenId = createRefreshToken(entry.userId, entry.role);
-
     const accessToken = generateAccessToken({ userId: entry.userId, role: entry.role });
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      signed: true,
-      maxAge: ACCESS_EXPIRES_MS,
-    });
-    res.cookie('refreshToken', newRefreshTokenId, {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-      signed: true,
-      maxAge: REFRESH_EXPIRES_MS,
-    });
+    res.cookie('accessToken', accessToken, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true, maxAge: ACCESS_EXPIRES_MS });
+    res.cookie('refreshToken', newRefreshTokenId, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict', signed: true, maxAge: REFRESH_EXPIRES_MS });
 
     res.json({ success: true });
   } catch (err) {
@@ -788,26 +374,20 @@ app.post('/api/auth/refresh', apiRateLimit, async (req, res) => {
 app.put('/api/auth/change-password', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Password attuale e nuova password richieste' });
-    }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'La nuova password deve contenere almeno 6 caratteri' });
-    }
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Password attuale e nuova password richieste' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'La nuova password deve contenere almeno 6 caratteri' });
 
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
 
-    const valid = await verifyPassword(currentPassword, admin.passwordHash);
-    if (!valid) return res.status(401).json({ error: 'Password attuale non valida' });
+    if (!(await verifyPassword(currentPassword, admin.passwordHash))) return res.status(401).json({ error: 'Password attuale non valida' });
 
     admin.passwordHash = await hashPassword(newPassword);
+    admin.mustChangePassword = false;
     await safeWriteJSON(ADMINS_PATH, admins);
 
     auditLog(req.user.userId, 'change_password', 'auth', { ip: req.ip });
-    logger.info('Password cambiata', { userId: admin.id });
-
     res.json({ success: true, message: 'Password aggiornata con successo' });
   } catch (err) {
     logger.error('Errore cambio password', { error: err.message });
@@ -820,11 +400,7 @@ app.get('/api/auth/2fa/status', apiRateLimit, requireRole('admin'), async (req, 
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
-
-    res.json({
-      enabled: !!admin.twoFASecret,
-      username: admin.username,
-    });
+    res.json({ enabled: !!admin.twoFASecret, username: admin.username });
   } catch (err) {
     logger.error('Errore stato 2FA', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
@@ -836,10 +412,7 @@ app.post('/api/auth/2fa/setup', apiRateLimit, requireRole('admin'), async (req, 
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
-
-    if (admin.twoFASecret) {
-      return res.status(400).json({ error: '2FA già attiva' });
-    }
+    if (admin.twoFASecret) return res.status(400).json({ error: '2FA già attiva' });
 
     const secret = createSecret();
     const keyUri = createKeyUri(secret, admin.username);
@@ -847,12 +420,7 @@ app.post('/api/auth/2fa/setup', apiRateLimit, requireRole('admin'), async (req, 
 
     admin.twoFATempSecret = secret;
     await safeWriteJSON(ADMINS_PATH, admins);
-
-    res.json({
-      secret,
-      keyUri,
-      qrCode,
-    });
+    res.json({ secret, keyUri, qrCode });
   } catch (err) {
     logger.error('Errore setup 2FA', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
@@ -863,7 +431,6 @@ app.post('/api/auth/2fa/verify-setup', apiRateLimit, requireRole('admin'), async
   try {
     const { code } = req.body;
     if (!code) return res.status(400).json({ error: 'Codice mancante' });
-
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
@@ -871,18 +438,13 @@ app.post('/api/auth/2fa/verify-setup', apiRateLimit, requireRole('admin'), async
     const secret = admin.twoFATempSecret || admin.twoFASecret;
     if (!secret) return res.status(400).json({ error: 'Nessun setup in corso' });
 
-    const valid = verifyTOTP(code, secret);
-    if (!valid) {
-      return res.status(401).json({ error: 'Codice non valido' });
-    }
+    if (!verifyTOTP(code, secret)) return res.status(401).json({ error: 'Codice non valido' });
 
     admin.twoFASecret = secret;
     delete admin.twoFATempSecret;
     await safeWriteJSON(ADMINS_PATH, admins);
 
     auditLog(admin.id, '2fa_enabled', 'auth', { ip: req.ip });
-    logger.info('2FA attivata', { userId: admin.id, username: admin.username });
-
     res.json({ success: true, message: '2FA attivata con successo' });
   } catch (err) {
     logger.error('Errore verifica setup 2FA', { error: err.message });
@@ -898,23 +460,15 @@ app.post('/api/auth/2fa/disable', apiRateLimit, requireRole('admin'), async (req
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const admin = admins.find(a => a.id === req.user.userId);
     if (!admin) return res.status(404).json({ error: 'Utente non trovato' });
+    if (!admin.twoFASecret) return res.status(400).json({ error: '2FA non attiva' });
 
-    if (!admin.twoFASecret) {
-      return res.status(400).json({ error: '2FA non attiva' });
-    }
-
-    const validPassword = await verifyPassword(password, admin.passwordHash);
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Password non valida' });
-    }
+    if (!(await verifyPassword(password, admin.passwordHash))) return res.status(401).json({ error: 'Password non valida' });
 
     delete admin.twoFASecret;
     delete admin.twoFATempSecret;
     await safeWriteJSON(ADMINS_PATH, admins);
 
     auditLog(admin.id, '2fa_disabled', 'auth', { ip: req.ip });
-    logger.info('2FA disattivata', { userId: admin.id, username: admin.username });
-
     res.json({ success: true, message: '2FA disattivata' });
   } catch (err) {
     logger.error('Errore disattivazione 2FA', { error: err.message });
@@ -924,9 +478,7 @@ app.post('/api/auth/2fa/disable', apiRateLimit, requireRole('admin'), async (req
 
 app.get('/api/data/stitched', apiRateLimit, async (req, res) => {
   try {
-    const isAdmin = req.user?.role === 'admin';
-    const stitched = await stitchData(isAdmin);
-    res.json(stitched);
+    res.json(await stitchData(req.user?.role === 'admin'));
   } catch (err) {
     logger.error('Errore stitching', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
@@ -942,9 +494,7 @@ app.get('/api/data/full', apiRateLimit, async (_req, res) => {
       safeReadJSON(PRICES_PATH, [])
     ]);
     const duration = Date.now() - start;
-    if (duration > 1000) {
-      logger.warn('Slow data fetch (full)', { duration, towns: towns.length, venues: venues.length, prices: prices.length });
-    }
+    if (duration > 1000) logger.warn('Slow data fetch (full)', { duration, towns: towns.length, venues: venues.length, prices: prices.length });
     res.json({ towns, venues, prices });
   } catch (err) {
     logger.error('Errore recupero dati completi', { error: err.message });
@@ -967,10 +517,6 @@ app.get('/api/data/prices', apiRateLimit, async (_req, res) => {
   catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-app.post('/api/prices', (_req, res) => {
-  res.status(403).json({ error: 'Scrittura diretta non consentita. Usa le proposte.' });
-});
-
 app.get('/api/comments', apiRateLimit, async (req, res) => {
   try {
     const comments = await safeReadJSON(COMMENTS_PATH, []);
@@ -978,14 +524,8 @@ app.get('/api/comments', apiRateLimit, async (req, res) => {
     const { postId, type } = req.query;
     let filtered = comments;
     if (postId) filtered = filtered.filter(c => c.postId === postId);
-    if (type) {
-      filtered = filtered.filter(c => c.type === type);
-    } else {
-      filtered = filtered.filter(c =>
-        c.type !== 'price_proposal' &&
-        !c.content?.startsWith('Prezzo Margherita proposto a')
-      );
-    }
+    if (type) filtered = filtered.filter(c => c.type === type);
+    else filtered = filtered.filter(c => c.type !== 'price_proposal' && !c.content?.startsWith('Prezzo Margherita proposto a'));
     if (!isAdmin) filtered = filtered.filter(c => c.approved);
     res.json(filtered);
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
@@ -1004,42 +544,18 @@ app.post('/api/comments', apiRateLimit, async (req, res) => {
     const sanitizedAuthor = sanitize(removeDangerousContent(author)).replace(/&amp;/g, '&');
     const sanitizedContent = sanitize(removeDangerousContent(content)).replace(/&amp;/g, '&');
 
-    if (sanitizedAuthor.length < MIN_NAME_LENGTH || sanitizedAuthor.length > MAX_NAME_LENGTH) {
-      return res.status(400).json({ error: 'Nome deve essere tra 2 e 30 caratteri' });
-    }
-    if (!/^[a-zA-Z0-9àèéìòùÀÈÉÌÒÙ\s'-]+$/.test(sanitizedAuthor)) {
-      return res.status(400).json({ error: 'Nome contiene caratteri non validi' });
-    }
-    if (sanitizedContent.length < MIN_CONTENT_LENGTH || sanitizedContent.length > MAX_CONTENT_LENGTH) {
-      return res.status(400).json({ error: `Testo deve essere tra ${MIN_CONTENT_LENGTH} e ${MAX_CONTENT_LENGTH} caratteri` });
-    }
-    if (containsBannedWords(sanitizedAuthor) || containsBannedWords(sanitizedContent)) {
-      return res.status(400).json({ error: 'Contenuto non consentito' });
-    }
+    if (sanitizedAuthor.length < MIN_NAME_LENGTH || sanitizedAuthor.length > MAX_NAME_LENGTH) return res.status(400).json({ error: 'Nome non valido' });
+    if (sanitizedContent.length < MIN_CONTENT_LENGTH || sanitizedContent.length > MAX_CONTENT_LENGTH) return res.status(400).json({ error: 'Testo non valido' });
+    if (containsBannedWords(sanitizedAuthor) || containsBannedWords(sanitizedContent)) return res.status(400).json({ error: 'Contenuto non consentito' });
 
     const existingComments = await safeReadJSON(COMMENTS_PATH, []);
-    if (isDuplicateComment(existingComments, sanitizedAuthor, sanitizedContent)) {
-      return res.status(400).json({ error: 'Commento duplicato' });
-    }
-
     const rateLimit = checkRateLimit(clientIp);
-    if (!rateLimit.allowed) {
-      const waitMsg = rateLimit.reason === 'rate_5min'
-        ? `Troppo veloce. Riprova tra ${rateLimit.waitSeconds} secondi`
-        : `Limite orario raggiunto. Riprova tra ${rateLimit.waitSeconds} secondi`;
-      return res.status(429).json({ error: waitMsg, retryAfter: rateLimit.waitSeconds });
-    }
-
-    let maxCommentId = 0;
-    for (const c of existingComments) { if (c.id > maxCommentId) maxCommentId = c.id; }
+    if (!rateLimit.allowed) return res.status(429).json({ error: `Troppe richieste. Riprova tra ${rateLimit.waitSeconds} secondi`, retryAfter: rateLimit.waitSeconds });
 
     const newComment = {
-      id: maxCommentId + 1,
-      postId,
-      author: sanitizedAuthor,
-      content: sanitizedContent,
-      createdAt: new Date().toISOString(),
-      approved: false,
+      id: (existingComments.length > 0 ? Math.max(...existingComments.map(c => c.id)) : 0) + 1,
+      postId, author: sanitizedAuthor, content: sanitizedContent,
+      createdAt: new Date().toISOString(), approved: false,
       type: (typeof proposedPrice === 'number' && proposedPrice > 0 && proposedPrice <= 100) ? 'price_proposal' : 'review',
     };
 
@@ -1047,28 +563,19 @@ app.post('/api/comments', apiRateLimit, async (req, res) => {
     await safeWriteJSON(COMMENTS_PATH, existingComments);
     recordComment(clientIp);
 
-    if (typeof proposedPrice === 'number' && proposedPrice > 0 && proposedPrice <= 100) {
+    if (newComment.type === 'price_proposal') {
       const proposals = await safeReadJSON(PROPOSALS_PATH, []);
       const priceEntry = (await safeReadJSON(PRICES_PATH, [])).find(p => p.pizzeriaId === postId);
-      const currentPrice = priceEntry ? priceEntry.margheritaPrice : null;
-
-      let maxPropId = 0;
-      for (const p of proposals) { if (p.id > maxPropId) maxPropId = p.id; }
-
       proposals.push({
-        id: maxPropId + 1,
-        postId,
-        pizzeriaId: postId,
-        author: sanitizedAuthor,
-        proposedPrice,
-        currentPrice,
-        createdAt: new Date().toISOString(),
-        reviewed: false,
+        id: (proposals.length > 0 ? Math.max(...proposals.map(p => p.id)) : 0) + 1,
+        postId, pizzeriaId: postId, author: sanitizedAuthor, proposedPrice,
+        currentPrice: priceEntry ? priceEntry.margheritaPrice : null,
+        createdAt: new Date().toISOString(), reviewed: false,
       });
       await safeWriteJSON(PROPOSALS_PATH, proposals);
     }
 
-    logger.info('Commento creato', { postId, author: sanitizedAuthor, ip: clientIp });
+    logger.info('Commento creato', { postId, author: sanitizedAuthor });
     res.status(201).json(newComment);
   } catch (err) {
     logger.error('Errore creazione commento', { error: err.message });
@@ -1087,76 +594,38 @@ app.get('/api/comments/captcha', (_req, res) => {
     if (a < b) { answer = b - a; question = `${b} - ${a} = ?`; }
     else { answer = a - b; question = `${a} - ${b} = ?`; }
   }
-  // Answer is signed server-side — never exposed to the client
-  const captchaToken = createCaptchaToken(answer);
-  res.json({ question, captchaToken });
+  res.json({ question, captchaToken: createCaptchaToken(answer) });
 });
 
 app.get('/api/admin/dashboard-stats', apiRateLimit, requireRole('admin'), async (_req, res) => {
   try {
     const [proposals, comments, feedPosts, venues] = await Promise.all([
-      safeReadJSON(PROPOSALS_PATH, []),
-      safeReadJSON(COMMENTS_PATH, []),
-      safeReadJSON(FEED_POSTS_PATH, []),
-      safeReadJSON(VENUES_PATH, [])
+      safeReadJSON(PROPOSALS_PATH, []), safeReadJSON(COMMENTS_PATH, []),
+      safeReadJSON(FEED_POSTS_PATH, []), safeReadJSON(VENUES_PATH, [])
     ]);
-
-    const pendingComments = comments.filter(c => !c.approved);
-    const pendingFeedPosts = feedPosts.filter(p => !p.approved);
-
-    res.json({
-      proposals,
-      pendingComments,
-      pendingFeedPosts,
-      venues
-    });
+    res.json({ proposals, pendingComments: comments.filter(c => !c.approved), pendingFeedPosts: feedPosts.filter(p => !p.approved), venues });
   } catch (err) {
     logger.error('Errore dashboard stats', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
   }
 });
 
-app.get('/api/admin/proposals', apiRateLimit, requireRole('admin'), async (_req, res) => {
-  try {
-    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
-    const comments = await safeReadJSON(COMMENTS_PATH, []);
-    const pendingComments = comments.filter(c => !c.approved);
-    res.json({ proposals, pendingComments });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
 app.post('/api/admin/approve-price', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { pizzeriaId, proposedPrice, author } = req.body;
-    if (!pizzeriaId || proposedPrice == null) return res.status(400).json({ error: 'Dati mancanti' });
-
     const price = Number(proposedPrice);
-    if (isNaN(price) || price < 0 || price > 100) return res.status(400).json({ error: 'Prezzo non valido' });
+    if (!pizzeriaId || isNaN(price)) return res.status(400).json({ error: 'Dati non validi' });
 
     const prices = await safeReadJSON(PRICES_PATH, []);
     const idx = prices.findIndex(p => p.pizzeriaId === pizzeriaId);
-    if (idx !== -1) {
-      prices[idx].margheritaPrice = price;
-      prices[idx].lastUpdated = new Date().toISOString();
-    } else {
-      prices.push({
-        id: `pr-new-${pizzeriaId}`,
-        pizzeriaId,
-        margheritaPrice: price,
-        currency: 'EUR',
-        lastUpdated: new Date().toISOString(),
-        source: 'user-proposal',
-      });
-    }
+    if (idx !== -1) { prices[idx].margheritaPrice = price; prices[idx].lastUpdated = new Date().toISOString(); }
+    else prices.push({ id: `pr-new-${pizzeriaId}`, pizzeriaId, margheritaPrice: price, currency: 'EUR', lastUpdated: new Date().toISOString(), source: 'user-proposal' });
     await safeWriteJSON(PRICES_PATH, prices);
 
     const proposals = await safeReadJSON(PROPOSALS_PATH, []);
-    const filtered = proposals.filter(p => !(p.pizzeriaId === pizzeriaId && p.author === author));
-    await safeWriteJSON(PROPOSALS_PATH, filtered);
+    await safeWriteJSON(PROPOSALS_PATH, proposals.filter(p => !(p.pizzeriaId === pizzeriaId && p.author === author)));
 
-    auditLog(req.user.userId, 'approve_price', 'price', { pizzeriaId, price, ip: req.ip });
-    logger.info('Prezzo approvato', { userId: req.user.userId, pizzeriaId, price });
-
+    auditLog(req.user.userId, 'approve_price', 'price', { pizzeriaId, price });
     res.json({ success: true, message: 'Prezzo aggiornato' });
   } catch (err) {
     logger.error('Errore approvazione prezzo', { error: err.message });
@@ -1166,168 +635,22 @@ app.post('/api/admin/approve-price', apiRateLimit, requireRole('admin'), async (
 
 app.post('/api/admin/approve-comment/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const { id } = req.params;
     const comments = await safeReadJSON(COMMENTS_PATH, []);
-    const idx = comments.findIndex(c => String(c.id) === String(id));
+    const idx = comments.findIndex(c => String(c.id) === String(req.params.id));
     if (idx === -1) return res.status(404).json({ error: 'Commento non trovato' });
-
     comments[idx].approved = true;
     await safeWriteJSON(COMMENTS_PATH, comments);
-
-    auditLog(req.user.userId, 'approve_comment', 'comment', { commentId: id, ip: req.ip });
+    auditLog(req.user.userId, 'approve_comment', 'comment', { commentId: req.params.id });
     res.json({ success: true, message: 'Commento approvato' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.delete('/api/admin/reject-proposal/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
-    const filtered = proposals.filter(p => String(p.id) !== String(id));
-    await safeWriteJSON(PROPOSALS_PATH, filtered);
-
-    auditLog(req.user.userId, 'reject_proposal', 'proposal', { proposalId: id, ip: req.ip });
-    res.json({ success: true, message: 'Proposta rifiutata' });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.delete('/api/admin/reject-comment/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const comments = await safeReadJSON(COMMENTS_PATH, []);
-    const filtered = comments.filter(c => String(c.id) !== String(id));
-    await safeWriteJSON(COMMENTS_PATH, filtered);
-
-    auditLog(req.user.userId, 'reject_comment', 'comment', { commentId: id, ip: req.ip });
-    res.json({ success: true, message: 'Commento rifiutato' });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.get('/api/feed', apiRateLimit, async (req, res) => {
-  try {
-    const comments = (await safeReadJSON(COMMENTS_PATH, [])).filter(c => c.approved);
-    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
-
-    const venues = await safeReadJSON(VENUES_PATH, []);
-    const auditRaw = getAuditLog(200);
-    const towns = await safeReadJSON(TOWNS_PATH, []);
-
-    const venueMap = {};
-    venues.forEach(v => { venueMap[v.id] = v; });
-    const townMap = {};
-    towns.forEach(t => { townMap[t.id] = t; });
-
-    const feedItems = [];
-
-    comments.forEach(c => {
-      const venue = venueMap[c.postId] || venueMap[c.pizzeriaId];
-      const town = venue ? townMap[venue.cityId] : null;
-      feedItems.push({
-        id: `cmt-${c.id}`,
-        type: 'review',
-        author: c.author,
-        rating: c.rating || null,
-        text: c.content,
-        proposedPrice: c.proposedPrice || null,
-        pizzeriaName: venue?.name || '—',
-        city: town?.name || '—',
-        time: c.createdAt || c.timestamp || new Date().toISOString(),
-      });
-    });
-
-    proposals.forEach(p => {
-      const venue = venueMap[p.pizzeriaId];
-      const town = venue ? townMap[venue.cityId] : null;
-      feedItems.push({
-        id: `prop-${p.id}`,
-        type: 'proposal',
-        author: p.author,
-        text: `Proposta prezzo: €${p.proposedPrice} per ${venue?.name || p.pizzeriaId}`,
-        proposedPrice: p.proposedPrice,
-        pizzeriaName: venue?.name || '—',
-        city: town?.name || '—',
-        time: p.timestamp || new Date().toISOString(),
-      });
-    });
-
-    auditRaw.forEach(entry => {
-      if (['approve_price', 'approve_comment', 'approve_feed_post', 'edit_feed_post', 'login', '2fa_enabled', 'update_pizzeria', 'create_pizzeria'].includes(entry.action)) {
-        feedItems.push({
-          id: `audit-${entry.id}`,
-          type: 'activity',
-          action: entry.action,
-          userId: entry.userId,
-          details: entry.details,
-          time: entry.timestamp,
-        });
-      }
-    });
-
-    feedItems.sort((a, b) => new Date(b.time) - new Date(a.time));
-    res.json(feedItems.slice(0, 50));
-  } catch (err) {
-    logger.error('Errore feed', { error: err.message });
-    res.status(500).json({ error: prodError('Errore interno del server') });
-  }
-});
-
-app.get('/api/feed/export', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const comments = (await safeReadJSON(COMMENTS_PATH, [])).filter(c => c.approved && c.type === 'review');
-    const venues = await safeReadJSON(VENUES_PATH, []);
-    const towns = await safeReadJSON(TOWNS_PATH, []);
-    const venueMap = {};
-    venues.forEach(v => { venueMap[v.id] = v; });
-    const townMap = {};
-    towns.forEach(t => { townMap[t.id] = t; });
-
-    const mapped = comments.map((c, idx) => {
-      const venue = venueMap[c.postId] || {};
-      const imgNum = (idx % 4) + 1;
-      return {
-        id: `#${String(idx + 1).padStart(3, '0')}`,
-        title_it: venue.name || c.postId,
-        title_en: venue.name || c.postId,
-        author: c.author,
-        time: (() => {
-          const diff = Date.now() - new Date(c.createdAt || Date.now()).getTime();
-          const hrs = Math.floor(diff / 3600000);
-          if (hrs < 24) return `${hrs}H`;
-          return `${Math.floor(hrs / 24)}D`;
-        })(),
-        rating: c.rating ? `${c.rating}/10` : '—',
-        description_it: c.content || '',
-        description_en: c.content || '',
-        fires: '0',
-        img: `/images/pizzerias/pizza-${imgNum}.jpg`,
-      };
-    });
-
-    const sorted = mapped.sort((a, b) => {
-      const ra = parseFloat(a.rating) || 0;
-      const rb = parseFloat(b.rating) || 0;
-      return rb - ra;
-    });
-
-    const PUBLIC_DIR = join(__dirname, '..', 'public');
-    const FEED_PATH = join(PUBLIC_DIR, 'feed-data.json');
-    writeFileSync(FEED_PATH, JSON.stringify(sorted, null, 2), 'utf-8');
-
-    res.json({ success: true, count: sorted.length, path: '/feed-data.json' });
-  } catch (err) {
-    logger.error('Errore export feed', { error: err.message });
-    res.status(500).json({ error: prodError('Errore interno del server') });
-  }
 });
 
 app.get('/api/feed/posts', apiRateLimit, async (req, res) => {
   try {
     const posts = await safeReadJSON(FEED_POSTS_PATH, []);
-    const approved = posts.filter(p => p.approved);
-    const formatted = approved.map(p => ({
+    res.json(posts.filter(p => p.approved).map(p => ({
       id: `#USR-${String(p.id).padStart(3, '0')}`,
-      title_it: p.title,
-      title_en: p.title,
+      title_it: p.title, title_en: p.title,
       author: p.author.startsWith('@') ? p.author : `@${p.author.replace(/\s+/g, '')}`,
       time: (() => {
         const diff = Date.now() - new Date(p.createdAt).getTime();
@@ -1336,21 +659,17 @@ app.get('/api/feed/posts', apiRateLimit, async (req, res) => {
         if (hrs < 24) return `${hrs}H`;
         return `${Math.floor(hrs / 24)}D`;
       })(),
-      rating: null,
-      description_it: p.description,
-      description_en: p.description,
-      fires: String(p.fires || 0),
-      img: `/images/pizzerias/pizza-${((p.id - 1) % 4) + 1}.png`,
+      rating: null, description_it: p.description, description_en: p.description,
+      fires: String(p.fires || 0), img: `/images/pizzerias/pizza-${((p.id - 1) % 4) + 1}.png`,
       _isUserPost: true,
-    }));
-    res.json(formatted);
+    })));
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
 app.post('/api/feed/posts', apiRateLimit, async (req, res) => {
   try {
     const parsed = FeedPostSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: 'Campi mancanti o non validi' });
+    if (!parsed.success) return res.status(400).json({ error: 'Dati non validi' });
     const { author, title, description, honeypot, mathAnswer, captchaToken } = parsed.data;
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
 
@@ -1359,114 +678,28 @@ app.post('/api/feed/posts', apiRateLimit, async (req, res) => {
 
     const sanitizedAuthor = sanitize(removeDangerousContent(author)).replace(/&amp;/g, '&');
     const sanitizedTitle = sanitize(removeDangerousContent(title)).replace(/&amp;/g, '&');
-    const sanitizedDescription = description
-      ? sanitize(removeDangerousContent(description)).replace(/&amp;/g, '&')
-      : '';
+    const sanitizedDesc = description ? sanitize(removeDangerousContent(description)).replace(/&amp;/g, '&') : '';
 
-    if (sanitizedAuthor.length < 2 || sanitizedAuthor.length > 30) {
-      return res.status(400).json({ error: 'Nome deve essere tra 2 e 30 caratteri' });
-    }
-    if (!/^[a-zA-Z0-9àèéìòùÀÈÉÌÒÙ\s'-]+$/.test(sanitizedAuthor)) {
-      return res.status(400).json({ error: 'Nome contiene caratteri non validi' });
-    }
-    if (sanitizedTitle.length < 3 || sanitizedTitle.length > 100) {
-      return res.status(400).json({ error: 'Titolo deve essere tra 3 e 100 caratteri' });
-    }
-    if (sanitizedDescription.length > 500) {
-      return res.status(400).json({ error: 'Descrizione troppo lunga (max 500 caratteri)' });
-    }
-    if (containsBannedWords(sanitizedAuthor) || containsBannedWords(sanitizedTitle) || containsBannedWords(sanitizedDescription)) {
-      return res.status(400).json({ error: 'Contenuto non consentito' });
-    }
-
-    const existingPosts = await safeReadJSON(FEED_POSTS_PATH, []);
-    if (existingPosts.some(p =>
-      p.author.toLowerCase() === sanitizedAuthor.toLowerCase() &&
-      p.title.toLowerCase() === sanitizedTitle.toLowerCase()
-    )) {
-      return res.status(400).json({ error: 'Post duplicato' });
-    }
+    if (containsBannedWords(sanitizedAuthor) || containsBannedWords(sanitizedTitle)) return res.status(400).json({ error: 'Contenuto non consentito' });
 
     const rateLimit = checkRateLimit(clientIp);
-    if (!rateLimit.allowed) {
-      const waitMsg = rateLimit.reason === 'rate_5min'
-        ? `Troppo veloce. Riprova tra ${rateLimit.waitSeconds} secondi`
-        : `Limite orario raggiunto. Riprova tra ${rateLimit.waitSeconds} secondi`;
-      return res.status(429).json({ error: waitMsg, retryAfter: rateLimit.waitSeconds });
-    }
+    if (!rateLimit.allowed) return res.status(429).json({ error: `Troppe richieste. Riprova tra ${rateLimit.waitSeconds} secondi` });
 
+    const existing = await safeReadJSON(FEED_POSTS_PATH, []);
     const newPost = {
-      id: existingPosts.length > 0 ? Math.max(...existingPosts.map(p => p.id)) + 1 : 1,
-      author: sanitizedAuthor,
-      title: sanitizedTitle,
-      description: sanitizedDescription,
-      createdAt: new Date().toISOString(),
-      approved: false,
-      fires: 0,
+      id: (existing.length > 0 ? Math.max(...existing.map(p => p.id)) : 0) + 1,
+      author: sanitizedAuthor, title: sanitizedTitle, description: sanitizedDesc,
+      createdAt: new Date().toISOString(), approved: false, fires: 0,
     };
 
-    existingPosts.push(newPost);
-    await safeWriteJSON(FEED_POSTS_PATH, existingPosts);
+    existing.push(newPost);
+    await safeWriteJSON(FEED_POSTS_PATH, existing);
     recordComment(clientIp);
-
-    logger.info('Feed post creato', { postId: newPost.id, author: sanitizedAuthor, ip: clientIp });
-    res.status(201).json({ success: true, message: 'Scoperta condivisa! In attesa di approvazione.' });
+    res.status(201).json({ success: true, message: 'In attesa di approvazione.' });
   } catch (err) {
-    logger.error('Errore creazione feed post', { error: err.message });
+    logger.error('Errore creazione post', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
   }
-});
-
-app.get('/api/admin/feed-posts', apiRateLimit, requireRole('admin'), async (_req, res) => {
-  try {
-    res.json(await safeReadJSON(FEED_POSTS_PATH, []));
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.post('/api/admin/approve-feed-post/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
-    const idx = posts.findIndex(p => String(p.id) === String(id));
-    if (idx === -1) return res.status(404).json({ error: 'Post non trovato' });
-
-    posts[idx].approved = true;
-    await safeWriteJSON(FEED_POSTS_PATH, posts);
-
-    auditLog(req.user.userId, 'approve_feed_post', 'feed', { postId: id, ip: req.ip });
-    res.json({ success: true, message: 'Post approvato' });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.put('/api/admin/feed-posts/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, description } = req.body;
-    if (!title) return res.status(400).json({ error: 'Titolo obbligatorio' });
-
-    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
-    const idx = posts.findIndex(p => String(p.id) === String(id));
-    if (idx === -1) return res.status(404).json({ error: 'Post non trovato' });
-
-    posts[idx].title = sanitize(removeDangerousContent(title));
-    posts[idx].description = description ? sanitize(removeDangerousContent(description)) : '';
-    await safeWriteJSON(FEED_POSTS_PATH, posts);
-
-    auditLog(req.user.userId, 'edit_feed_post', 'feed', { postId: id, ip: req.ip });
-    res.json({ success: true, message: 'Post aggiornato' });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.delete('/api/admin/reject-feed-post/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
-    const filtered = posts.filter(p => String(p.id) !== String(id));
-    await safeWriteJSON(FEED_POSTS_PATH, filtered);
-
-    auditLog(req.user.userId, 'reject_feed_post', 'feed', { postId: id, ip: req.ip });
-    res.json({ success: true, message: 'Post rifiutato' });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
 app.get('/api/activity', apiRateLimit, async (req, res) => {
@@ -1474,28 +707,19 @@ app.get('/api/activity', apiRateLimit, async (req, res) => {
     const auditRaw = getAuditLog(30);
     const venues = await safeReadJSON(VENUES_PATH, []);
     const towns = await safeReadJSON(TOWNS_PATH, []);
-    const venueMap = {};
-    venues.forEach(v => { venueMap[v.id] = v; });
-    const townMap = {};
-    towns.forEach(t => { townMap[t.id] = t; });
+    const venueMap = Object.fromEntries(venues.map(v => [v.id, v]));
+    const townMap = Object.fromEntries(towns.map(t => [t.id, t]));
 
-    const activities = auditRaw.map(entry => {
-      let description = entry.action;
+    res.json(auditRaw.map(entry => {
+      let desc = entry.action;
       const vId = entry.details?.venueId || entry.details?.pizzeriaId;
       if (vId && venueMap[vId]) {
         const v = venueMap[vId];
         const t = townMap[v.cityId];
-        description = `${entry.action} - ${v.name}${t ? ` (${t.name})` : ''}`;
+        desc = `${entry.action} - ${v.name}${t ? ` (${t.name})` : ''}`;
       }
-      return {
-        id: entry.id,
-        action: entry.action,
-        description,
-        userId: entry.userId,
-        timestamp: entry.timestamp,
-      };
-    });
-    res.json(activities);
+      return { id: entry.id, action: entry.action, description: desc, userId: entry.userId, timestamp: entry.timestamp };
+    }));
   } catch (err) {
     logger.error('Errore activity', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
@@ -1504,160 +728,77 @@ app.get('/api/activity', apiRateLimit, async (req, res) => {
 
 app.put('/api/pizzerias/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, cityId, address, phone, category, rating, description, descriptionIt, status, frazione, imageUrl, tripadvisor, maps_url } = req.body;
+    const { name, cityId, rating } = req.body;
     if (!name || !cityId) return res.status(400).json({ error: 'Campi mancanti' });
 
-    const sanitized = sanitizeObject({
-      name, cityId, address: address || '', phone: phone || '',
-      category: category || 'traditional', description: description || '',
-      descriptionIt: descriptionIt || '', status: status || 'open',
-      frazione: frazione || null, imageUrl: imageUrl || null,
-      tripadvisor: tripadvisor || null, maps_url: maps_url || null,
-    });
+    const sanitized = sanitizeObject(req.body);
     const venues = await safeReadJSON(VENUES_PATH, []);
-    const idx = venues.findIndex(v => v.id === id);
+    const idx = venues.findIndex(v => v.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'Pizzeria non trovata' });
 
-    venues[idx] = {
-      ...venues[idx],
-      name: sanitized.name,
-      address: sanitized.address,
-      cityId: sanitized.cityId,
-      phone: sanitized.phone,
-      category: sanitized.category,
-      rating: Number(rating) || 0,
-      description: sanitized.description,
-      descriptionIt: sanitized.descriptionIt,
-      status: sanitized.status,
-      frazione: sanitized.frazione,
-      imageUrl: sanitized.imageUrl,
-      tripadvisor: sanitized.tripadvisor,
-      maps_url: sanitized.maps_url,
-    };
-
+    venues[idx] = { ...venues[idx], ...sanitized, rating: Number(rating) || 0 };
     await safeWriteJSON(VENUES_PATH, venues);
-
-    auditLog(req.user.userId, 'update_pizzeria', 'venue', { venueId: id, name: sanitized.name, ip: req.ip });
+    auditLog(req.user.userId, 'update_pizzeria', 'venue', { venueId: req.params.id, name: sanitized.name });
     res.json({ success: true, message: 'Pizzeria aggiornata' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
 app.post('/api/pizzerias/single', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const { name, cityId, address, phone, category, rating, description, descriptionIt, status, frazione, imageUrl, tripadvisor, maps_url } = req.body;
+    const { name, cityId, rating } = req.body;
     if (!name || !cityId) return res.status(400).json({ error: 'Campi mancanti' });
 
-    const sanitized = sanitizeObject({
-      name, cityId, address: address || '', phone: phone || '',
-      category: category || 'traditional', description: description || '',
-      descriptionIt: descriptionIt || '', status: status || 'open',
-      frazione: frazione || null, imageUrl: imageUrl || null,
-      tripadvisor: tripadvisor || null, maps_url: maps_url || null,
-    });
+    const sanitized = sanitizeObject(req.body);
     const venues = await safeReadJSON(VENUES_PATH, []);
     const newId = `pz-${String(venues.length + 1).padStart(3, '0')}`;
-
-    const newVenue = {
-      id: newId, name: sanitized.name, address: sanitized.address,
-      cityId: sanitized.cityId, phone: sanitized.phone, category: sanitized.category,
-      rating: Number(rating) || 0, description: sanitized.description,
-      descriptionIt: sanitized.descriptionIt, status: sanitized.status,
-      frazione: sanitized.frazione, imageUrl: sanitized.imageUrl,
-      tripadvisor: sanitized.tripadvisor, maps_url: sanitized.maps_url,
-    };
+    const newVenue = { ...sanitized, id: newId, rating: Number(rating) || 0 };
 
     venues.push(newVenue);
     await safeWriteJSON(VENUES_PATH, venues);
-
-    auditLog(req.user.userId, 'create_pizzeria', 'venue', { venueId: newId, name: sanitized.name, ip: req.ip });
+    auditLog(req.user.userId, 'create_pizzeria', 'venue', { venueId: newId, name: sanitized.name });
     res.status(201).json(newVenue);
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
 app.put('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
-    const { pizzeriaId } = req.params;
     const { margheritaPrice, source } = req.body;
-    if (margheritaPrice == null) return res.status(400).json({ error: 'Prezzo mancante' });
-
     const price = Number(margheritaPrice);
-    if (isNaN(price) || price < 0 || price > 100) return res.status(400).json({ error: 'Prezzo non valido' });
+    if (isNaN(price)) return res.status(400).json({ error: 'Prezzo non valido' });
 
     const prices = await safeReadJSON(PRICES_PATH, []);
-    const idx = prices.findIndex(p => p.pizzeriaId === pizzeriaId);
-
+    const idx = prices.findIndex(p => p.pizzeriaId === req.params.pizzeriaId);
     if (idx !== -1) {
       prices[idx].margheritaPrice = price;
       if (source) prices[idx].source = source;
       prices[idx].lastUpdated = new Date().toISOString();
     } else {
-      prices.push({
-        id: `pr-new-${pizzeriaId}`,
-        pizzeriaId,
-        margheritaPrice: price,
-        currency: 'EUR',
-        lastUpdated: new Date().toISOString(),
-        source: source || 'admin-manual',
-      });
+      prices.push({ id: `pr-new-${req.params.pizzeriaId}`, pizzeriaId: req.params.pizzeriaId, margheritaPrice: price, currency: 'EUR', lastUpdated: new Date().toISOString(), source: source || 'admin-manual' });
     }
 
     await safeWriteJSON(PRICES_PATH, prices);
-    auditLog(req.user.userId, 'update_price_direct', 'price', { pizzeriaId, price, ip: req.ip });
+    auditLog(req.user.userId, 'update_price_direct', 'price', { pizzeriaId: req.params.pizzeriaId, price });
     res.json({ success: true, message: 'Prezzo salvato' });
-  } catch (err) {
-    logger.error('Errore salvataggio prezzo', { error: err.message });
-    res.status(500).json({ error: prodError('Errore interno del server') });
-  }
-});
-
-app.delete('/api/prices/:pizzeriaId', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const { pizzeriaId } = req.params;
-    const prices = await safeReadJSON(PRICES_PATH, []);
-    const filtered = prices.filter(p => p.pizzeriaId !== pizzeriaId);
-    await safeWriteJSON(PRICES_PATH, filtered);
-
-    auditLog(req.user.userId, 'delete_price_direct', 'price', { pizzeriaId, ip: req.ip });
-    res.json({ success: true, message: 'Prezzo eliminato' });
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
-});
-
-app.delete('/api/pizzerias/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const venues = await safeReadJSON(VENUES_PATH, []);
-    const filtered = venues.filter(v => v.id !== id);
-    await safeWriteJSON(VENUES_PATH, filtered);
-
-    const prices = await safeReadJSON(PRICES_PATH, []);
-    const filteredPrices = prices.filter(p => p.pizzeriaId !== id);
-    await safeWriteJSON(PRICES_PATH, filteredPrices);
-
-    auditLog(req.user.userId, 'delete_pizzeria', 'venue', { venueId: id, ip: req.ip });
-    res.json({ success: true, message: 'Pizzeria eliminata' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
 app.get('/api/admin/audit-log', apiRateLimit, requireRole('admin'), (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit) || 100;
-    res.json(getAuditLog(limit));
-  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+  try { res.json(getAuditLog(parseInt(req.query.limit) || 100)); }
+  catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
 app.get('/api/admin/me', apiRateLimit, async (req, res) => {
   if (!req.user) return res.json({ user: null });
   const admins = await safeReadJSON(ADMINS_PATH, []);
   const admin = admins.find(a => a.id === req.user.userId);
-  res.json({ user: { id: req.user.userId, username: admin?.username || req.user.username, role: req.user.role, email: admin?.email || '', displayName: admin?.displayName || admin?.username || req.user.username } });
+  res.json({ user: { id: req.user.userId, username: admin?.username || req.user.username, role: req.user.role, email: admin?.email || '', displayName: admin?.displayName || admin?.username || req.user.username, mustChangePassword: !!admin?.mustChangePassword } });
 });
 
 app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), async (req, res) => {
   try {
     const { displayName, email } = req.body;
-    if (!displayName) return res.status(400).json({ error: 'Nome visualizzato obbligatorio' });
-    const sanitized = sanitizeObject({ displayName: displayName, email: email || '' });
+    if (!displayName) return res.status(400).json({ error: 'Nome richiesto' });
+    const sanitized = sanitizeObject({ displayName, email: email || '' });
     const admins = await safeReadJSON(ADMINS_PATH, []);
     const idx = admins.findIndex(a => a.id === req.user.userId);
     if (idx === -1) return res.status(404).json({ error: 'Utente non trovato' });
@@ -1665,57 +806,31 @@ app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), async (req, re
     admins[idx].displayName = sanitized.displayName;
     admins[idx].email = sanitized.email;
     await safeWriteJSON(ADMINS_PATH, admins);
-
-    auditLog(req.user.userId, 'update_profile', 'admin', { displayName: sanitized.displayName, email: sanitized.email, ip: req.ip });
+    auditLog(req.user.userId, 'update_profile', 'admin', sanitized);
     res.json({ success: true, message: 'Profilo aggiornato' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
-// Global error handler — log full stack for any uncaught error
+// Global error handler
 app.use((err, req, res, _next) => {
-  logger.error('Unhandled error', {
-    method: req.method,
-    path: req.path,
-    error: err.message,
-    stack: err.stack,
-  });
-  if (!res.headersSent) {
-    res.status(500).type('text/plain').send('Internal Server Error');
-  }
+  logger.error('Unhandled error', { method: req.method, path: req.path, error: err.message, stack: err.stack });
+  if (!res.headersSent) res.status(500).type('text/plain').send('Internal Server Error');
 });
 
-
-
 let server;
-
-if (process.env.NODE_ENV !== 'test') {
-  seedAdmin()
-    .then(() => {
-      const HOST = process.env.HOST || '0.0.0.0';
-      server = app.listen(PORT, HOST, () => {
-        logger.info(`Server attivo su http://${HOST}:${PORT}`);
-        logger.info(`API: http://${HOST}:${PORT}/api/data/stitched`);
-      });
-    })
-    .catch(err => {
-      console.error('ERRORE FATALE ALL\'AVVIO:', err);
-      process.exit(1);
+if (NODE_ENV !== 'test') {
+  seedAdmin().then(() => {
+    const HOST = process.env.HOST || '127.0.0.1';
+    server = app.listen(PORT, HOST, () => {
+      logger.info(`Server attivo su http://${HOST}:${PORT}`);
     });
+  }).catch(err => { console.error('FATAL STARTUP ERROR:', err); process.exit(1); });
 
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-}
-
-function gracefulShutdown(signal) {
-  logger.info(`${signal} ricevuto, shutdown in corso...`);
-  if (server) {
-    server.close(() => {
-      logger.info('Server chiuso');
-      process.exit(0);
-    });
-    setTimeout(() => {
-      logger.error('Forced shutdown');
-      process.exit(1);
-    }, 10000);
-  }
+  const shutdown = (sig) => {
+    logger.info(`${sig} ricevuto, chiusura...`);
+    if (server) server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 10000);
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }

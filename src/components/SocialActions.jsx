@@ -45,7 +45,7 @@ export default function SocialActions({ fires, onCommentClick, t }) {
           className="group flex items-center gap-1.5 px-3 py-1.5 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150 border-r border-outline-variant"
         >
           <span className="material-symbols-outlined text-lg">chat_bubble</span>
-          <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.comments') || 'Comments'}</span>
+          <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.comments')}</span>
         </button>
 
         <button 
@@ -53,7 +53,7 @@ export default function SocialActions({ fires, onCommentClick, t }) {
           className="group flex items-center gap-1.5 px-3 py-1.5 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150"
         >
           <span className="material-symbols-outlined text-lg">share</span>
-          <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.share') || 'Share'}</span>
+          <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.share')}</span>
         </button>
       </div>
 

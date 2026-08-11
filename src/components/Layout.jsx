@@ -13,7 +13,7 @@ export default function Layout() {
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <TopBar onMenuToggle={() => setDrawerOpen(true)} />
       <Sidebar />
-      <main className="flex-1 md:ml-64 flex flex-col min-h-screen">
+      <main className="flex-1 md:ml-72 flex flex-col min-h-screen">
         <div className="flex-1">
           <Outlet />
         </div>

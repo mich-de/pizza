@@ -27,15 +27,20 @@ export default function Sidebar() {
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#009246] via-primary to-[#CE2B37]" />
 
         <div className="px-6 pt-8 pb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden ring-2 ring-primary/30 shadow-[4px_4px_0px_0px_rgba(26,26,26,0.15)] flex-shrink-0">
-              <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-full h-full object-cover" />
+          <div className="flex items-center gap-5">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-primary rotate-3 group-hover:rotate-6 transition-transform shadow-[4px_4px_0px_0px_rgba(26,26,26,0.1)]" />
+              <div className="relative w-16 h-16 bg-surface border-4 border-primary flex items-center justify-center overflow-hidden shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] group-hover:-translate-x-1 group-hover:-translate-y-1 transition-all">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-multiply" />
+                <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-12 h-12 object-contain relative z-10 group-hover:scale-110 transition-transform" />
+              </div>
             </div>
-            <div>
-              <h2 className="font-display font-black text-xl tracking-tight text-primary leading-tight">
+            <div className="relative z-10">
+              <h2 className="font-display font-black text-2xl tracking-tighter text-primary leading-[0.9] uppercase">
                 {t('app.title')}
               </h2>
-              <p className="font-headline font-bold text-xs text-on-surface-variant/50 tracking-wider mt-1 uppercase">
+              <p className="font-headline font-bold text-[10px] text-on-surface-variant/40 tracking-[0.2em] mt-1.5 uppercase border-l-2 border-primary/30 pl-2">
                 {t('app.subtitle')}
               </p>
             </div>

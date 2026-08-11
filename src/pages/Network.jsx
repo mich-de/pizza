@@ -31,7 +31,7 @@ export default function Network() {
   if (loading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="p-6 md:p-12">
+    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
       <PageHeader
         title={t('network.title')}
         subtitle={t('network.subtitle')}

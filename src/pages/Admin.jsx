@@ -264,7 +264,7 @@ export default function Admin() {
   if (loading || !initialized) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="max-w-7xl mx-auto w-full p-6 md:p-12">
+    <div className="w-full">
       {toast && (
         <div key={toast.id} className="fixed top-4 right-4 z-[100]">
           <div className={`font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center gap-3 ${
@@ -292,7 +292,7 @@ export default function Admin() {
               {t('admin.title')}
             </h1>
             <p className="text-lg md:text-xl font-body text-on-surface-variant mt-4 max-w-3xl leading-relaxed">
-              {rows.length} {t('admin.venuesCount')}
+              {rows.length} {t('admin.pizzeriaPlural')}
             </p>
           </div>
         </div>
@@ -300,24 +300,24 @@ export default function Admin() {
 
       {/* Stats banner */}
       <div className="flex flex-wrap gap-4 mb-8">
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-primary">{stats.total}</div>
+          <div className="font-headline font-black text-4xl md:text-5xl text-primary stat-hover">{stats.total}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.totalVenues')}</div>
         </div>
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
           <div className="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-tertiary">{stats.open}</div>
+          <div className="font-headline font-black text-4xl md:text-5xl text-tertiary stat-hover">{stats.open}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.openVenues')}</div>
         </div>
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-primary">{stats.withPrice}</div>
+          <div className="font-headline font-black text-4xl md:text-5xl text-primary stat-hover">{stats.withPrice}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.withPrice')}</div>
         </div>
-        <div className="flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden">
+        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
           <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-secondary">&euro;{stats.avgPrice.toFixed(1)}</div>
+          <div className="font-headline font-black text-4xl md:text-5xl text-secondary stat-hover">&euro;{stats.avgPrice.toFixed(1)}</div>
           <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.avgPrice')}</div>
         </div>
       </div>

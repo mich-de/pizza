@@ -21,8 +21,8 @@ export default function CommentList({ comments }) {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (mins < 1) return t('comments.justNow');
-    if (mins < 60) return `${mins} ${t('common.hrsAgo').replace('ore', 'min')}`;
+    if (mins < 1) return t('common.justNow');
+    if (mins < 60) return `${mins} ${t('common.minsAgo')}`;
     if (hours < 24) return `${hours} ${t('common.hrsAgo')}`;
     return `${days} ${t('common.daysAgo')}`;
   };

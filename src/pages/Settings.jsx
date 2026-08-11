@@ -509,7 +509,7 @@ export default function Settings({ user }) {
   };
 
   return (
-    <div className="p-6 md:p-12 max-w-5xl mx-auto">
+    <div className="w-full">
       <header className="mb-12 border-b-4 border-primary pb-6">
         <h1 className="text-5xl md:text-7xl font-black font-headline tracking-tighter uppercase mb-4 text-primary">
           {t('settings.title')}

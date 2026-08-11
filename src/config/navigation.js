@@ -1,9 +1,9 @@
 export const navItems = [
-  { to: '/', icon: 'analytics', labelKey: 'nav.analytics' },
-  { to: '/events', icon: 'event', labelKey: 'nav.events' },
-  { to: '/feed', icon: 'map', labelKey: 'nav.feed' },
-  { to: '/explore', icon: 'storefront', labelKey: 'nav.directory' },
+  { to: '/', icon: 'dashboard', labelKey: 'nav.analytics' },
   { to: '/prices', icon: 'payments', labelKey: 'nav.prices' },
+  { to: '/events', icon: 'local_activity', labelKey: 'nav.events' },
+  { to: '/feed', icon: 'forum', labelKey: 'nav.feed' },
+  { to: '/explore', icon: 'map', labelKey: 'nav.directory' },
   { to: '/admin', icon: 'admin_panel_settings', labelKey: 'nav.admin' },
 ];
 

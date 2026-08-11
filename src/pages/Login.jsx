@@ -12,6 +12,10 @@ export default function Login() {
   const [tempToken, setTempToken] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPwd, setChangingPwd] = useState(false);
   const navigate = useNavigate();
 
   const handlePasswordSubmit = async (e) => {
@@ -41,6 +45,11 @@ export default function Login() {
 
       if (data.requires2FA) {
         setTempToken(data.tempToken);
+        return;
+      }
+
+      if (data.mustChangePassword) {
+        setMustChangePassword(true);
         return;
       }
 
@@ -93,6 +102,144 @@ export default function Login() {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (newPassword.length < 6) {
+      setError(t('login.newPasswordTooShort'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError(t('login.passwordsMismatch'));
+      return;
+    }
+    if (newPassword === password) {
+      setError(t('login.passwordSameAsOld'));
+      return;
+    }
+
+    setChangingPwd(true);
+
+    try {
+      const csrfRes = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
+      const { csrfToken } = await csrfRes.json();
+
+      const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword: password, newPassword }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || t('login.passwordChangeError'));
+        return;
+      }
+
+      localStorage.setItem('pizza_session_hint', 'true');
+      navigate('/admin');
+      window.location.reload();
+    } catch {
+      setError(t('login.connectionError'));
+    } finally {
+      setChangingPwd(false);
+    }
+  };
+
+  // Force password change screen
+  if (mustChangePassword) {
+    return (
+      <div className="min-h-screen flex items-start justify-center pt-[12vh] bg-background p-6">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-secondary flex items-center justify-center mx-auto mb-4 border-4 border-primary shadow-[5px_5px_0px_0px_rgba(26,26,26,1)]">
+              <span className="material-symbols-outlined text-primary text-3xl">lock_reset</span>
+            </div>
+            <h1 className="font-headline font-black text-3xl md:text-4xl uppercase text-primary tracking-tight">{t('login.changeRequired')}</h1>
+            <p className="font-label font-bold text-xs uppercase tracking-wider text-on-surface-variant mt-2">{t('login.changeRequiredDesc')}</p>
+          </div>
+
+          <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)]">
+            <div className="bg-secondary p-5">
+              <h2 className="font-headline font-black text-base uppercase tracking-wider flex items-center gap-2 text-primary">
+                <span className="material-symbols-outlined">password</span>
+                {t('login.newPasswordTitle')}
+              </h2>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="p-5 space-y-4">
+              {error && (
+                <div className="bg-error-container text-on-error-container border-2 border-error p-3 font-headline font-bold uppercase text-xs flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
+                  <span className="material-symbols-outlined text-sm">error</span>
+                  {error}
+                </div>
+              )}
+
+              <div className="bg-primary/5 border-2 border-primary/20 p-3">
+                <p className="font-body text-sm text-on-surface-variant flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-sm">info</span>
+                  {t('login.changePasswordHint')}
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-headline font-black text-xs uppercase tracking-widest mb-1.5 text-primary">
+                  {t('login.newPassword')}
+                </label>
+                <input
+                  className="w-full bg-background border-4 border-primary p-3 font-body font-bold text-primary focus:outline-none focus:border-secondary placeholder:text-on-surface-variant/40 shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block font-headline font-black text-xs uppercase tracking-widest mb-1.5 text-primary">
+                  {t('login.confirmPassword')}
+                </label>
+                <input
+                  className="w-full bg-background border-4 border-primary p-3 font-body font-bold text-primary focus:outline-none focus:border-secondary placeholder:text-on-surface-variant/40 shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              {newPassword && confirmPassword && newPassword === confirmPassword && (
+                <div className="flex items-center gap-2 text-tertiary font-label font-bold text-xs uppercase">
+                  <span className="material-symbols-outlined text-sm">check_circle</span>
+                  {t('login.passwordsMatch')}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={changingPwd || !newPassword || !confirmPassword || newPassword.length < 6}
+                className="w-full bg-primary text-on-primary font-headline font-bold uppercase py-3.5 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {changingPwd ? t('login.saving') : t('login.saveAndContinue')}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2FA verification screen
   if (tempToken) {
     return (
       <div className="min-h-screen flex items-start justify-center pt-[15vh] bg-background p-6">
@@ -150,6 +297,7 @@ export default function Login() {
     );
   }
 
+  // Normal login screen
   return (
     <div className="min-h-screen flex items-start justify-center pt-[12vh] bg-background p-6">
       <div className="w-full max-w-sm">

@@ -70,7 +70,12 @@
     "daysRemaining": "{days} days away",
     "multiDay": "{start} — {end} {month}",
     "noEvents": "No upcoming events",
-    "discoverMore": "Discover all peninsula events"
+    "discoverMore": "Discover all peninsula events",
+    "totalEvents": "Total Events",
+    "upcomingTitle": "Upcoming Events",
+    "activeNow": "Ongoing Now",
+    "searchPlaceholder": "Search by name or description...",
+    "closeDetails": "Close Details"
   },
   "months": {
     "10": "Oct",
@@ -116,7 +121,11 @@
     "edit": "Edit",
     "delete": "Delete",
     "adminLabel": "Admin:",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "totalPosts": "Total Experiences",
+    "topRatedTitle": "Excellence (9+)",
+    "userContributions": "From Community",
+    "searchPlaceholder": "Search by author, title or description..."
   },
   "explore": {
     "title": "Explore",
@@ -540,7 +549,20 @@
     "loginFailed": "Login failed",
     "connectionError": "Connection error",
     "invalidCode": "Invalid code",
-    "sessionExpired": "Session expired"
+    "sessionExpired": "Session expired",
+    "changeRequired": "Password Change Required",
+    "changeRequiredDesc": "You must change the default password before continuing",
+    "newPasswordTitle": "New Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "changePasswordHint": "For security, change the default password. Minimum 6 characters.",
+    "newPasswordTooShort": "New password must be at least 6 characters",
+    "passwordsMismatch": "Passwords do not match",
+    "passwordSameAsOld": "New password must be different from the current one",
+    "passwordsMatch": "Passwords match",
+    "passwordChangeError": "Password change error",
+    "saving": "Saving…",
+    "saveAndContinue": "Save and Continue"
   },
   "priceProposal": {
     "errorFetchCaptcha": "Unable to load captcha. Try again.",
@@ -599,6 +621,11 @@
     "margherita": "Margherita",
     "error": "Error",
     "networkError": "Network error",
-    "saveError": "Save error"
+    "saveError": "Save error",
+    "all": "All",
+    "events": "Events",
+    "posts": "Posts",
+    "votes": "votes",
+    "sortBy": "Sort By"
   }
 }

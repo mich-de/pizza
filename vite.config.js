@@ -14,11 +14,8 @@ export default defineConfig(({ command }) => ({
       '/api': {
         target: `http://127.0.0.1:${process.env.PORT || 3000}`,
         changeOrigin: true,
-        timeout: 30000,
-        proxyTimeout: 30000,
-        onError: (err) => {
-          console.error('[VITE PROXY ERROR]', err.code, err.message);
-        },
+        secure: false,
+        ws: true,
       },
     },
   },
@@ -26,5 +23,8 @@ export default defineConfig(({ command }) => ({
     outDir: 'dist',
     sourcemap: false,
     minify: 'esbuild',
+  },
+  test: {
+    pool: 'forks',
   },
 }))

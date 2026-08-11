@@ -38,7 +38,7 @@ export default function PizzeriaRow({ row, isEditing, editForm, setEditForm, onS
 
   return (
     <div
-      className={`relative border-l-8 ${catStyle} border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-all duration-300 overflow-hidden ${
+      className={`relative border-l-8 ${catStyle} border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-all duration-300 overflow-hidden card-glow ${
         isEditing ? 'ring-2 ring-primary-fixed-dim scale-[1.01]' : 'hover:shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-0.5'
       }`}
     >

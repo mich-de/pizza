@@ -34,7 +34,7 @@ export default function ExploreCards({ filtered, stats, t, lang, onSelect, onRep
           <article
             key={pz.id}
             onClick={() => !pz.closed && handleCardClick(pz)}
-            className={`bg-surface border-4 border-primary shadow-[5px_5px_0px_0px_rgba(26,26,26,1)] flex flex-col group relative overflow-hidden hover:-translate-y-1 hover:shadow-[7px_7px_0px_0px_rgba(26,26,26,1)] transition-all cursor-pointer border-l-8 ${borderColor} ${pz.status === 'closed' ? 'opacity-70' : ''}`}
+            className={`bg-surface border-4 border-primary shadow-[5px_5px_0px_0px_rgba(26,26,26,1)] flex flex-col group relative overflow-hidden hover:-translate-y-1 hover:shadow-[7px_7px_0px_0px_rgba(26,26,26,1)] transition-all cursor-pointer border-l-8 ${borderColor} ${pz.status === 'closed' ? 'opacity-70' : ''} card-glow`}
           >
             {pz.status === 'closed' && (
               <div className="absolute top-0 left-0 right-0 bg-error text-on-error font-headline font-black text-xs uppercase tracking-widest text-center py-1.5 z-10">

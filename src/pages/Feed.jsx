@@ -145,7 +145,7 @@ function FeedPost({ post, lang, t, isAdmin, onModAction, onEdit }) {
   const postId = post._originalId || post.id;
 
   return (
-    <article className="group relative bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] overflow-hidden cursor-default hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
+    <article className="group relative bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] overflow-hidden cursor-default hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all card-glow">
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
       <div className="flex flex-col md:flex-row">
@@ -193,7 +193,7 @@ function FeedPost({ post, lang, t, isAdmin, onModAction, onEdit }) {
                 {post.rating?.split('/')[0] || '--'}
               </div>
               <div className="font-headline font-bold text-xs text-on-surface-variant/50 mt-1">
-                voto
+                {t('common.votes')}
               </div>
             </div>
 
@@ -540,62 +540,116 @@ export default function Feed() {
     })
     : filtered;
 
+  if (loading) return <LoadingSpinner fullScreen />;
+
   return (
-    <div className="max-w-7xl mx-auto w-full">
-      <header className="mb-14 border-b-4 border-primary pb-8">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="w-3 h-3 rounded-full bg-primary animate-pulse-soft" />
-              <span className="font-headline font-bold text-sm uppercase tracking-widest text-primary">
-                Feed
+    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
+      {/* Hero Section - Matching Prices/Events Style */}
+      <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] mb-8">
+        <div className="bg-primary text-on-primary p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="font-headline font-black uppercase text-sm md:text-base tracking-[0.2em] text-on-primary/80">
+                  {t('feed.subtitle')}
+                </span>
+                <span className="w-8 h-[2px] bg-on-primary/40" />
+                <span className="font-label font-bold uppercase text-xs tracking-wider text-on-primary/60">
+                  {allPosts.length} {t('common.posts')}
+                </span>
+              </div>
+              <h1 className="font-headline font-black text-5xl md:text-7xl lg:text-8xl uppercase tracking-tight leading-none">
+                {t('feed.title')}
+              </h1>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 md:p-8">
+          <div className="flex flex-wrap gap-4 md:gap-6">
+            <div className="bg-surface-variant border-2 border-primary px-5 py-3 shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
+              <span className="font-label font-bold text-xs uppercase text-on-surface-variant block mb-1">
+                {t('feed.totalPosts')}
+              </span>
+              <span className="font-headline font-black text-3xl text-primary">{allPosts.length}</span>
+            </div>
+            <div className="bg-primary-container border-2 border-primary px-5 py-3 shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
+              <span className="font-label font-bold text-xs uppercase text-primary block mb-1">
+                {t('feed.topRatedTitle')}
+              </span>
+              <span className="font-headline font-black text-3xl text-primary">
+                {allPosts.filter(p => parseFloat(p.rating) >= 9).length}
               </span>
             </div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tight leading-[1.05] text-primary">
-              {t('feed.title')}
-            </h1>
-            <p className="text-lg md:text-xl font-body text-on-surface-variant mt-4 max-w-3xl leading-relaxed">
-              {t('feed.subtitle')}
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40">search</span>
-              <input type="text" placeholder={t('common.search')} value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-surface border-2 border-primary/10 py-3 pl-10 pr-4 font-label font-bold focus:border-secondary transition-all shadow-sm" />
+            <div className="bg-tertiary-container border-2 border-tertiary px-5 py-3 shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
+              <span className="font-label font-bold text-xs uppercase text-tertiary block mb-1">
+                {t('feed.userContributions')}
+              </span>
+              <span className="font-headline font-black text-3xl text-tertiary">
+                {userPosts.length}
+              </span>
             </div>
-            <div className="flex bg-primary-container p-1 border-2 border-primary/5">
-              <button onClick={() => setFilter('latest')}
-                className={`font-label font-bold px-6 py-2 transition-all duration-300 ${filter === 'latest' ? 'bg-primary text-on-primary shadow-lg' : 'text-primary/60 hover:text-primary'}`}>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Bar - Matching Prices/Events Style */}
+      <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-4 md:p-6 mb-12">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">
+              <span className="material-symbols-outlined text-sm align-text-bottom mr-1">search</span>
+              {t('common.search')}
+            </label>
+            <div className="relative">
+              <input
+                className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:outline-none focus:border-secondary pl-10"
+                placeholder={t('feed.searchPlaceholder')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40">search</span>
+            </div>
+          </div>
+          <div className="w-full md:w-auto">
+            <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">
+              {t('common.sortBy')}
+            </label>
+            <div className="flex bg-primary-container p-1 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] h-[52px]">
+              <button 
+                onClick={() => setFilter('latest')}
+                className={`font-label font-bold px-6 h-full transition-all uppercase text-xs tracking-widest ${filter === 'latest' ? 'bg-primary text-on-primary' : 'text-primary/60 hover:text-primary'}`}
+              >
                 {t('feed.latest')}
               </button>
-              <button onClick={() => setFilter('top')}
-                className={`font-label font-bold px-6 py-2 transition-all duration-300 ${filter === 'top' ? 'bg-primary text-on-primary shadow-lg' : 'text-primary/60 hover:text-primary'}`}>
+              <button 
+                onClick={() => setFilter('top')}
+                className={`font-label font-bold px-6 h-full transition-all uppercase text-xs tracking-widest ${filter === 'top' ? 'bg-primary text-on-primary' : 'text-primary/60 hover:text-primary'}`}
+              >
                 {t('feed.topRated')}
               </button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
+      <div className="max-w-4xl mx-auto w-full">
         <CreatePost t={t} onCreated={fetchUserPosts} />
 
-        {loading ? (
-          <LoadingSpinner fullScreen />
-        ) : sorted.length === 0 ? (
+        {sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <span className="material-symbols-outlined text-7xl text-primary/20" style={{ fontVariationSettings: "'FILL' 1" }}>rss_feed</span>
             <p className="font-headline font-bold text-xl text-on-surface-variant/50 mt-5">{t('common.noResults')}</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-6 stagger-children">
+          <div className="flex flex-col gap-8 stagger-children">
             {sorted.map((post) => (
               <FeedPost key={post.id} post={post} lang={lang} t={t} isAdmin={isAdmin}
                 onModAction={handleModAction} onEdit={setEditPost} />
             ))}
           </div>
         )}
+      </div>
 
       <EditPostModal post={editPost} open={!!editPost} onClose={() => setEditPost(null)} t={t} onSaved={fetchUserPosts} />
     </div>

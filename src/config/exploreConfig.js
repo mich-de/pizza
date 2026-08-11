@@ -21,7 +21,7 @@ export function priceTier(price, min, range) {
   return 'expensive';
 }
 
-export function tierLabel(tier, t) {
+export function tierLabel(tier) {
   switch (tier) {
     case 'cheap': return '€';
     case 'mid': return '€€';

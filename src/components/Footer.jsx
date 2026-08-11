@@ -12,9 +12,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
           {/* Brand column */}
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary flex items-center justify-center border-2 border-primary shadow-[3px_3px_0px_0px_rgba(26,26,26,1)] flex-shrink-0">
-                <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="" className="w-full h-full object-cover" />
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-tr from-secondary to-primary opacity-40 blur-sm group-hover:opacity-100 transition-opacity" />
+                <div className="relative w-14 h-14 bg-surface border-4 border-primary flex items-center justify-center shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all overflow-hidden">
+                  <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+                  <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="" className="w-10 h-10 object-contain relative z-10" />
+                </div>
               </div>
               <div>
                 <h3 className="font-headline font-black text-lg uppercase tracking-tight text-primary leading-tight">

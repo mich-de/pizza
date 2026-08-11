@@ -25,8 +25,8 @@ export default function PricesTable({ sorted, stats, page, setPage, t, editingId
       {sorted.length === 0 ? (
         <div className="bg-surface border-4 border-primary p-12 text-center shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] mb-6">
           <span className="material-symbols-outlined text-6xl text-primary mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>local_pizza</span>
-          <p className="font-headline font-black text-3xl uppercase text-primary">{t('prices.noResults') || 'Nessuna pizzeria trovata'}</p>
-          <p className="font-body text-lg text-on-surface-variant mt-2">{t('prices.adjustFilters') || 'Prova a modificare i filtri di ricerca'}</p>
+          <p className="font-headline font-black text-3xl uppercase text-primary">{t('prices.noResults')}</p>
+          <p className="font-body text-lg text-on-surface-variant mt-2">{t('prices.noResultsDesc')}</p>
         </div>
       ) : (
         <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] overflow-hidden mb-6">
@@ -198,7 +198,7 @@ export default function PricesTable({ sorted, stats, page, setPage, t, editingId
               &rarr;
             </button>
           </div>
-          <span className="font-label text-sm text-on-surface-variant order-3">{sorted.length} {sorted.length === 1 ? 'pizzeria' : 'pizzerie'}</span>
+          <span className="font-label text-sm text-on-surface-variant order-3">{sorted.length} {sorted.length === 1 ? t('prices.pizzeriaSingular') : t('prices.pizzeriaPlural')}</span>
         </div>
       )}
     </div>

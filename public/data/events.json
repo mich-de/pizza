@@ -1,19 +1,5 @@
 [
   {
-    "id": "pizza-damare-2026",
-    "title": "Pizza d'aMare",
-    "titleIt": "Pizza d'aMare",
-    "dateStart": "2026-05-19",
-    "dateEnd": "2026-05-21",
-    "cityId": "meta",
-    "venue": "Marina di Meta",
-    "description": "The 5th edition of the most anticipated pizza festival on the Sorrento Coast. 18 pizzerias with live cooking stations, special guest Errico Porzio, kids workshops, sunset aperitivo and the best Margherita by the sea.",
-    "descriptionIt": "La V edizione del festival della pizza più atteso della Costiera Sorrentina. 18 pizzerie con postazioni di cottura dal vivo, special guest Errico Porzio, laboratori per bambini, aperitivo al tramonto e la miglior Margherita sul mare.",
-    "type": "festival",
-    "imageUrl": null,
-    "highlights": ["18 pizzerie", "Errico Porzio", "Live music", "Kids workshop"]
-  },
-  {
     "id": "pizza-a-vico-2026",
     "title": "Pizza a Vico",
     "titleIt": "Pizza a Vico",
@@ -21,25 +7,73 @@
     "dateEnd": "2026-09-25",
     "cityId": "vico-equense",
     "venue": "Centro Storico, Vico Equense",
-    "description": "The 7th edition of the event celebrating Vico Equense's iconic De.Co. pizza. 30 local pizzerias in the historic center streets, wine cellars from across Campania, and the annual Pizza a Vico competition.",
-    "descriptionIt": "La VII edizione dell'evento che celebra la pizza De.Co. di Vico Equense. 30 pizzerie locali per le vie del centro storico, cantine da tutta la Campania e la gara annuale Pizza a Vico.",
+    "description": "The major event celebrating Vico Equense's unique De.Co. pizza tradition (Pizza a Metro). Over 30 local pizzerias set up ovens in the streets of the historic center. Includes wine tastings from Campania's best cellars, a competition for the best local pizzaiolo, and cultural tours of the town's monuments.",
+    "descriptionIt": "L'evento principale che celebra la tradizione della pizza De.Co. di Vico Equense (Pizza a Metro). Oltre 30 pizzerie locali allestiscono forni tra le vie del centro storico. Include degustazioni di vini campani, una gara per il miglior pizzaiolo locale e visite culturali.",
     "type": "festival",
     "imageUrl": null,
-    "highlights": ["30 pizzerie", "Wine tasting", "De.Co. pizza", "Street food"]
+    "highlights": [
+      "30+ Pizzerias",
+      "Pizza by the Meter",
+      "Campania Wine Route",
+      "Pizza Competition"
+    ]
   },
   {
-    "id": "intrecci-seiano-2026",
-    "title": "Intrecci di Gusto",
-    "titleIt": "Intrecci di Gusto",
-    "dateStart": "2026-06-05",
-    "dateEnd": "2026-06-05",
-    "cityId": "vico-equense",
-    "venue": "Saporì Pizza e Qualcos'altro, Seiano",
-    "description": "An exclusive pizza evening with Maestro Enzo Coccia (Pizzeria La Notizia, MICHELIN guide) at Saporì Pizza e Qualcos'altro in Seiano. A unique 'Intrecci' event celebrating high pizza art in the Sorrento Peninsula.",
-    "descriptionIt": "Una serata esclusiva con il Maestro Enzo Coccia (Pizzeria La Notizia, Guida MICHELIN) da Saporì Pizza e Qualcos'altro a Seiano. Un evento 'Intrecci' unico che celebra l'alta pizza in Penisola Sorrentina.",
-    "type": "event",
+    "id": "sagra-pizza-sant-agnello-2026",
+    "title": "Sagra della Pizza",
+    "titleIt": "Sagra della Pizza",
+    "dateStart": "2026-08-28",
+    "dateEnd": "2026-08-30",
+    "cityId": "sant-agnello",
+    "venue": "Rione Maiano, Sant'Agnello",
+    "description": "A traditional summer festival in the heart of Maiano. Local master pizzaioli prepare dozens of variations of Neapolitan pizza using wood-fired ovens. The event includes popular music, dancing in the square, and a charity lottery. Known for its genuine and welcoming atmosphere.",
+    "descriptionIt": "Una tradizionale festa estiva nel cuore di Maiano. Maestri pizzaioli locali preparano decine di varianti di pizza napoletana in forni a legna. L'evento include musica popolare, balli in piazza e una lotteria di beneficenza. Nota per la sua atmosfera genuina e accogliente.",
+    "type": "sagra",
     "imageUrl": null,
-    "highlights": ["Enzo Coccia", "Pizza gourmet", "Wine pairing", "MICHELIN chef"]
+    "highlights": [
+      "Wood-fired ovens",
+      "Popular music",
+      "Community vibe",
+      "Maiano district"
+    ]
+  },
+  {
+    "id": "sagra-riavulillo-2026",
+    "title": "Sagra del Riavulillo",
+    "titleIt": "Sagra del Riavulillo",
+    "dateStart": "2026-08-03",
+    "dateEnd": "2026-08-05",
+    "cityId": "vico-equense",
+    "venue": "Borgata di Arola, Vico Equense",
+    "description": "A must-visit local festival in the hills of Vico Equense. The 'Riavulillo' is a small smoked cheese with a spicy chili heart. It is traditionally served melted on grilled pizza crusts (crostoni) or inside freshly baked pizzas. One of the most authentic and lively village festivals in the area.",
+    "descriptionIt": "Una sagra imperdibile nelle colline di Vico Equense. Il 'Riavulillo' è un piccolo formaggio affumicato con un cuore di peperoncino. Viene servito fuso su basi di pizza alla brace o all'interno di pizze appena sfornate. Una delle feste di borgata più autentiche e vivaci.",
+    "type": "sagra",
+    "imageUrl": null,
+    "highlights": [
+      "Spicy Riavulillo cheese",
+      "Authentic Village vibe",
+      "Grilled specialties",
+      "Live Folk shows"
+    ]
+  },
+  {
+    "id": "sagra-fiordilatte-2026",
+    "title": "Fiordilatte Fiordifesta",
+    "titleIt": "Fiordilatte Fiordifesta",
+    "dateStart": "2026-08-02",
+    "dateEnd": "2026-08-04",
+    "cityId": "vico-equense",
+    "venue": "Piazza Paolo Capasso, Agerola",
+    "description": "Just a short drive from the coast, Agerola celebrates its world-famous Fiordilatte cheese. The event features 'Gran Pizza Agerolese' made with fresh cheese produced just hours before. A journey through the flavors of the Lattari Mountains with cheese-making demonstrations and concerts.",
+    "descriptionIt": "A breve distanza dalla costa, Agerola celebra il suo celebre Fiordilatte. L'evento presenta la 'Gran Pizza Agerolese' fatta con formaggio freschissimo prodotto poche ore prima. Un viaggio tra i sapori dei Monti Lattari con dimostrazioni di caseificazione e concerti.",
+    "type": "sagra",
+    "imageUrl": null,
+    "highlights": [
+      "Ultra-fresh Fiordilatte",
+      "Lattari Mountains views",
+      "Live cheese making",
+      "Gran Pizza Agerolese"
+    ]
   },
   {
     "id": "limoni-in-festa-2026",
@@ -49,10 +83,91 @@
     "dateEnd": "2026-07-12",
     "cityId": "massa-lubrense",
     "venue": "Centro Storico, Massa Lubrense",
-    "description": "The 50th edition of the lemon festival celebrating Massa Lubrense's iconic oval lemon. Food tastings, pizza with lemon-infused toppings, artisan markets, live folk music, and guided tours of historic palaces.",
-    "descriptionIt": "La 50ª edizione della sagra del limone che celebra il limone ovale di Massa Lubrense. Degustazioni, pizza con condimenti al limone, mercatini artigianali, musica folk dal vivo e visite guidate ai palazzi storici.",
+    "description": "The 50th edition of the lemon festival celebrating the 'Ovale di Sorrento'. The town center becomes a food market with a special focus on 'Pizza al Limone' - a local delicacy with lemon zest, smoked provolone, and fresh mint. Live folk music and artisan stalls throughout the weekend.",
+    "descriptionIt": "La 50ª edizione della sagra del limone che celebra l''Ovale di Sorrento'. Il centro diventa un mercato gastronomico con un focus speciale sulla 'Pizza al Limone' - una prelibatezza locale con scorza di limone, provolone affumicato e menta fresca. Musica folk e stand artigianali tutto il weekend.",
     "type": "food festival",
     "imageUrl": null,
-    "highlights": ["50th edition", "Lemon pizza", "Folk music", "Artisan market"]
+    "highlights": [
+      "50th Anniversary",
+      "Pizza al Limone",
+      "Folk Music",
+      "Artisan Market"
+    ]
+  },
+  {
+    "id": "festa-a-vico-pizza-2026",
+    "title": "Festa a Vico: Spicchi di Genio",
+    "titleIt": "Festa a Vico: Spicchi di Genio",
+    "dateStart": "2026-06-14",
+    "dateEnd": "2026-06-14",
+    "cityId": "vico-equense",
+    "venue": "Lido La Torretta, Marina di Vico",
+    "description": "The most creative night of the 'Festa a Vico' charity event by 3-star Michelin chef Gennaro Esposito. Top pizzaioli from all over Italy gather at the beach to push the boundaries of traditional pizza. Every slice tells a story of innovation and top-quality ingredients.",
+    "descriptionIt": "La serata più creativa dell'evento benefico 'Festa a Vico' dello chef 3 stelle Michelin Gennaro Esposito. I migliori pizzaioli d'Italia si riuniscono in spiaggia per superare i confini della pizza tradizionale. Ogni spicchio racconta una storia di innovazione e ingredienti d'eccellenza.",
+    "type": "gourmet",
+    "imageUrl": null,
+    "highlights": [
+      "Gennaro Esposito",
+      "Creative Pizza",
+      "Charity event",
+      "Beach party"
+    ]
+  },
+  {
+    "id": "intrecci-seiano-2026",
+    "title": "Intrecci di Gusto",
+    "titleIt": "Intrecci di Gusto",
+    "dateStart": "2026-06-05",
+    "dateEnd": "2026-06-05",
+    "cityId": "vico-equense",
+    "venue": "Saporì Pizza e Qualcos'altro, Seiano",
+    "description": "An exclusive pizza evening with Maestro Enzo Coccia (Pizzeria La Notizia, MICHELIN guide) at Saporì Pizza e Qualcos'altro in Seiano. A unique 'Intrecci' event celebrating high pizza art in the Sorrento Peninsula with gourmet pairings and technical demonstrations.",
+    "descriptionIt": "Una serata esclusiva con il Maestro Enzo Coccia (Pizzeria La Notizia, Guida MICHELIN) da Saporì Pizza e Qualcos'altro a Seiano. Un evento 'Intrecci' unico che celebra l'alta pizza in Penisola Sorrentina con abbinamenti gourmet e dimostrazioni tecniche.",
+    "type": "event",
+    "imageUrl": null,
+    "highlights": [
+      "Enzo Coccia",
+      "Gourmet Pizza pairing",
+      "MICHELIN experience",
+      "Technical workshop"
+    ]
+  },
+  {
+    "id": "pizza-damare-2026",
+    "title": "Pizza d'aMare",
+    "titleIt": "Pizza d'aMare",
+    "dateStart": "2026-05-19",
+    "dateEnd": "2026-05-21",
+    "cityId": "meta",
+    "venue": "Marina di Meta",
+    "description": "The 5th edition of the most anticipated pizza festival on the Sorrento Coast. 18 local pizzerias set up live cooking stations on the beach. Special guest Errico Porzio will host a main event. Includes 'Pizza Junior' workshops for kids, sunset aperitivo sessions, live music by Radio Ibiza, and a spectacular firework display over the sea on the final night.",
+    "descriptionIt": "La V edizione del festival della pizza più atteso della Costiera Sorrentina. 18 pizzerie locali allestiscono postazioni di cottura dal vivo sulla spiaggia. Lo special guest Errico Porzio terrà l'evento principale. Include laboratori 'Pizza Junior' per bambini, aperitivi al tramonto, musica dal vivo di Radio Ibiza e uno spettacolo pirotecnico sul mare l'ultima sera.",
+    "type": "festival",
+    "imageUrl": null,
+    "highlights": [
+      "18 pizzerias on the beach",
+      "Errico Porzio",
+      "Pizza Junior Workshop",
+      "Fireworks on the sea"
+    ]
+  },
+  {
+    "id": "sorrento-food-film-2026",
+    "title": "Sorrento Film & Food Festival",
+    "titleIt": "Sorrento Film & Food Festival",
+    "dateStart": "2026-01-01",
+    "dateEnd": "2026-01-05",
+    "cityId": "sorrento",
+    "venue": "Teatro Tasso & Piazza Lauro, Sorrento",
+    "description": "A winter celebration of cinema and Neapolitan flavors. The festival features daily pizza masterclasses by world-renowned pizzaioli, exclusive tastings of local DOP products, and the 'Golden Slice' awards for culinary excellence. Perfect for those who want to see movie stars and master chefs in the same frame.",
+    "descriptionIt": "Una celebrazione invernale del cinema e dei sapori napoletani. Il festival offre masterclass giornaliere di pizza con pizzaioli di fama mondiale, degustazioni esclusive di prodotti DOP locali e i premi 'Spicchio d'Oro'. Ideale per chi vuole vedere stelle del cinema e grandi chef nello stesso evento.",
+    "type": "festival",
+    "imageUrl": null,
+    "highlights": [
+      "Cinema & Stars",
+      "Pizza Masterclasses",
+      "Michelin Chefs",
+      "DOP Tastings"
+    ]
   }
 ]

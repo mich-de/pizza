@@ -10,7 +10,7 @@ function timeAgo(timestamp, t) {
   if (!timestamp) return '';
   const diff = Date.now() - new Date(timestamp).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return t('common.justNow') || 'adesso';
+  if (mins < 1) return t('common.justNow');
   if (mins < 60) return `${mins} ${t('common.minsAgo')}`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs} ${t('common.hrsAgo')}`;
@@ -75,134 +75,93 @@ export default function Dashboard() {
   const globalAvg = data.length > 0 ? data.reduce((s, p) => s + (p.margheritaPrice || 0), 0) / data.length : 0;
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
-      <header className="relative mb-28 w-full">
-        <div className="relative w-full aspect-[21/9] md:max-h-[560px] bg-cover bg-center overflow-hidden" style={{ backgroundImage: "url('/images/marina-bg.png')" }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-[#009246]/30 via-white/5 to-[#CE2B37]/25" />
-
-        <div className="absolute top-0 left-0 right-0 h-2 z-30 flex">
-          <div className="flex-1 bg-[#009246]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#CE2B37]" />
+    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
+      <header className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] mb-12 overflow-hidden relative group">
+        {/* Background Accent */}
+        <div className="absolute inset-0 bg-cover bg-center opacity-20 grayscale mix-blend-overlay group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" style={{ backgroundImage: "url('/images/marina-bg.png')" }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/5" />
+        
+        <div className="bg-primary text-on-primary p-8 md:p-12 relative z-10 border-b-4 border-primary">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="animate-slide-up">
+              <div className="inline-flex items-center gap-3 bg-white/20 text-white font-headline font-bold text-xs md:text-sm tracking-[0.2em] uppercase px-4 py-2 mb-6 border border-white/30 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
+                <span className="material-symbols-outlined text-sm">radar</span>
+                Penisola Sorrentina
+                <span className="w-1.5 h-1.5 rounded-full bg-[#009246] animate-ping ml-1" />
+              </div>
+              <h1 className="font-display font-black text-6xl md:text-8xl lg:text-9xl uppercase tracking-tighter leading-[0.85]">
+                Radar<br />Pizza
+              </h1>
+              <p className="font-display font-black italic text-4xl md:text-6xl text-secondary mt-2">Sorrento</p>
+            </div>
+            
+            <div className="flex-shrink-0 animate-scale-in hidden md:block">
+              <div className="relative group">
+                <div className="absolute -inset-2 bg-secondary rotate-3 opacity-20 group-hover:rotate-6 transition-transform" />
+                <div className="relative w-40 h-40 lg:w-48 lg:h-48 bg-surface border-4 border-white flex items-center justify-center shadow-[10px_10px_0px_0px_rgba(0,0,0,0.3)]">
+                  <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-32 h-32 lg:w-40 lg:h-40 object-contain group-hover:scale-110 transition-transform duration-500" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="absolute inset-0 p-8 md:p-14 lg:p-16 flex flex-col md:flex-row justify-between">
-          <div className="animate-slide-up flex flex-col justify-center max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm text-white font-headline font-bold text-xs md:text-sm tracking-[0.2em] uppercase px-4 py-2 mb-5 w-fit border border-white/20">
-              <span className="material-symbols-outlined text-sm">location_on</span>
-              Penisola Sorrentina
+        <div className="p-8 bg-surface/50 backdrop-blur-sm relative z-10">
+          <div className="flex flex-wrap gap-8 items-center">
+            <div className="flex flex-col">
+              <span className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant/60 mb-1">{t('dashboard.pizzerie')}</span>
+              <span className="font-display font-black text-4xl text-primary">{data.length}</span>
             </div>
-            <h1 className="font-display font-black text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white leading-[1.05] tracking-tight">
-              Radar Pizza
-            </h1>
-            <div className="flex items-baseline gap-4 mt-1">
-              <span className="font-display font-black italic text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white/90 leading-none">
-                Sorrento
-              </span>
-              <span className="hidden sm:inline-block w-16 h-[2px] bg-white/40 -translate-y-3" />
+            <div className="w-px h-12 bg-primary/20 hidden sm:block" />
+            <div className="flex flex-col">
+              <span className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant/60 mb-1">{t('dashboard.citta')}</span>
+              <span className="font-display font-black text-4xl text-primary">{Object.keys(grouped).length}</span>
             </div>
-            <div className="mt-6 bg-gradient-to-r from-black/40 via-black/30 to-transparent backdrop-blur-md border-l-4 border-white/40 pl-5 pr-8 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] max-w-2xl">
-              <p className="text-xl md:text-2xl lg:text-3xl text-white font-headline font-bold leading-tight tracking-tight drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
-                {t('dashboard.subtitle') || 'Monitoraggio dei prezzi della pizza Margherita nelle 6 città della Penisola Sorrentina'}
+            <div className="w-px h-12 bg-primary/20 hidden sm:block" />
+            <div className="flex flex-col">
+              <span className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant/60 mb-1">{t('dashboard.media')}</span>
+              <span className="font-display font-black text-4xl text-secondary">€{globalAvg.toFixed(2)}</span>
+            </div>
+            <div className="ml-auto hidden lg:block max-w-sm border-l-4 border-secondary pl-6">
+              <p className="font-headline font-bold text-lg text-primary leading-tight">
+                {t('dashboard.subtitle')}
               </p>
-            </div>
-            <div className="inline-flex items-center gap-5 mt-6 bg-black/25 backdrop-blur-sm border border-white/15 px-5 py-3 rounded-sm">
-              <div className="flex items-center gap-2.5 text-white font-headline font-bold text-sm md:text-base tracking-wider">
-                <span className="w-3 h-3 rounded-full bg-[#009246] shadow-[0_0_12px_rgba(0,146,70,0.8)] flex-shrink-0" />
-                <span>{data.length}</span>
-                <span className="font-body font-normal text-white/80">{t('dashboard.pizzerie')}</span>
-              </div>
-              <span className="w-px h-5 bg-white/20" />
-              <div className="flex items-center gap-2.5 text-white font-headline font-bold text-sm md:text-base tracking-wider">
-                <span className="w-3 h-3 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.5)] flex-shrink-0" />
-                <span>{Object.keys(grouped).length}</span>
-                <span className="font-body font-normal text-white/80">{t('dashboard.citta')}</span>
-              </div>
-              <span className="w-px h-5 bg-white/20" />
-              <div className="flex items-center gap-2.5 text-white font-headline font-bold text-sm md:text-base tracking-wider">
-                <span className="w-3 h-3 rounded-full bg-[#CE2B37] shadow-[0_0_12px_rgba(206,43,55,0.8)] flex-shrink-0" />
-                <span>€{globalAvg.toFixed(2)}</span>
-                <span className="font-body font-normal text-white/80">{t('dashboard.media')}</span>
-              </div>
-            </div>
-          </div>
-          <div className="hidden md:flex flex-col items-end justify-between pt-2">
-            <div className="w-36 lg:w-48 animate-scale-in">
-              <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-full h-auto drop-shadow-[0_8px_24px_rgba(0,0,0,0.4)]" />
-            </div>
-            <div className="flex gap-2">
-              <span className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 backdrop-blur-sm text-white/80">
-                <span className="text-sm material-symbols-outlined">local_pizza</span>
-              </span>
-              <span className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 backdrop-blur-sm text-white/80">
-                <span className="text-sm material-symbols-outlined">search</span>
-              </span>
-              <span className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white/30 flex items-center justify-center bg-white/10 backdrop-blur-sm text-white/80">
-                <span className="text-sm material-symbols-outlined">bar_chart</span>
-              </span>
-            </div>
-          </div>
-        </div>
-        </div>
-
-        <div className="relative -mt-14 mx-4 md:mx-auto max-w-5xl bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 z-20 animate-slide-up overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0">
-            <div className="flex flex-col items-center justify-center py-2 md:py-3 px-3 md:border-r-4 md:border-primary">
-              <span className="w-3 h-3 rounded-full bg-[#009246] mb-2 shadow-[0_0_6px_rgba(0,146,70,0.4)]" />
-              <p className="font-display font-bold text-3xl md:text-4xl text-primary">{data.length}</p>
-              <p className="font-headline text-xs md:text-sm text-on-surface-variant uppercase tracking-widest font-bold mt-1">{t('dashboard.pizzerie')}</p>
-            </div>
-            <div className="flex flex-col items-center justify-center py-2 md:py-3 px-3">
-              <span className="w-3 h-3 rounded-full bg-surface border-2 border-primary mb-2" />
-              <p className="font-display font-bold text-3xl md:text-4xl text-primary">{Object.keys(grouped).length}</p>
-              <p className="font-headline text-xs md:text-sm text-on-surface-variant uppercase tracking-widest font-bold mt-1">{t('dashboard.citta')}</p>
-            </div>
-            <div className="flex flex-col items-center justify-center py-2 md:py-3 px-3 md:border-r-4 md:border-primary">
-              <span className="w-3 h-3 rounded-full bg-[#CE2B37] mb-2 shadow-[0_0_6px_rgba(206,43,55,0.4)]" />
-              <p className="font-display font-bold text-2xl md:text-3xl text-primary leading-tight text-center">{t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}</p>
-              <p className="font-headline text-xs md:text-sm text-on-surface-variant uppercase tracking-widest font-bold mt-1">{t('dashboard.fasciaPrezzo')}</p>
-            </div>
-            <div className="flex flex-col items-center justify-center py-2 md:py-3 px-3 relative">
-              <span className="w-3 h-3 rounded-full bg-gradient-to-br from-[#009246] via-white to-[#CE2B37] mb-2 shadow-[0_0_6px_rgba(0,0,0,0.2)]" />
-              <p className="font-display font-bold text-3xl md:text-4xl text-primary">{t('common.euro')}{globalAvg.toFixed(2)}</p>
-              <p className="font-headline text-xs md:text-sm text-on-surface-variant uppercase tracking-widest font-bold mt-1">{t('dashboard.prezzoMedio')}</p>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="p-6 md:p-12 pt-0">
+      <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
-          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
+          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all card-glow">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] to-[#00B050]" />
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#009246]/10 rounded-bl-full" />
-            <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-[#009246] mb-2">{t('dashboard.totalPizzerias') || 'Pizzerie Totali'}</div>
-            <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight">{data.length}</div>
+            <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-[#009246] mb-2">{t('dashboard.totalPizzerias')}</div>
+            <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight stat-hover">{data.length}</div>
             <span className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-[#009246]/20 text-3xl md:text-4xl material-symbols-outlined group-hover:text-[#009246]/40 group-hover:scale-110 transition-all" style={{ fontVariationSettings: "'FILL' 1" }}>local_pizza</span>
           </div>
 
-          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
+          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all card-glow">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-secondary" />
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
             <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-primary mb-2">{t('dashboard.citiesCount')}</div>
-            <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight">{Object.keys(grouped).length}</div>
+            <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight stat-hover">{Object.keys(grouped).length}</div>
             <span className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-primary/20 text-3xl md:text-4xl material-symbols-outlined group-hover:text-primary/40 group-hover:scale-110 transition-all">location_city</span>
           </div>
 
-          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
+          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all card-glow">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#CE2B37] to-[#E85050]" />
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#CE2B37]/10 rounded-bl-full" />
-            <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-[#CE2B37] mb-2">{t('dashboard.avgPrice') || 'Prezzo Medio'}</div>
-            <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight">{t('common.euro')}{globalAvg.toFixed(2)}</div>
+            <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-[#CE2B37] mb-2">{t('dashboard.avgPrice')}</div>
+            <div className="font-display font-black text-4xl md:text-5xl text-primary leading-tight stat-hover">{t('common.euro')}{globalAvg.toFixed(2)}</div>
             <span className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-[#CE2B37]/20 text-3xl md:text-4xl material-symbols-outlined group-hover:text-[#CE2B37]/40 group-hover:scale-110 transition-all">trending_up</span>
           </div>
 
-          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all">
+          <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-6 md:p-8 relative overflow-hidden group hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] transition-all card-glow">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#009246] via-primary to-[#CE2B37]" />
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
-            <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-primary mb-2">{t('dashboard.priceRange') || 'Fascia'}</div>
-            <div className="font-display font-black text-2xl md:text-3xl text-primary leading-tight mb-1">
+            <div className="font-headline text-xs md:text-sm font-bold uppercase tracking-widest text-primary mb-2">{t('dashboard.priceRange')}</div>
+            <div className="font-display font-black text-2xl md:text-3xl text-primary leading-tight mb-1 stat-hover">
               {t('common.euro')}{globalMin.toFixed(2)} – {t('common.euro')}{globalMax.toFixed(2)}
             </div>
             <div className="font-body font-semibold text-sm md:text-base text-on-surface-variant truncate max-w-[80%]">

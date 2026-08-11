@@ -279,7 +279,7 @@ function MarketMovers({ cheapest, priciest, stats, t }) {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       {cheapest && (
-        <div className="bg-tertiary-container border-4 border-tertiary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden">
+        <div className="group bg-tertiary-container border-4 border-tertiary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden card-glow">
           <div className="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-bl-full" />
           <div className="flex items-center gap-3 mb-3">
             <span className="material-symbols-outlined text-tertiary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
@@ -291,14 +291,14 @@ function MarketMovers({ cheapest, priciest, stats, t }) {
               <p className="font-label font-bold text-sm text-tertiary/70 uppercase mt-1">{cheapest.cityName}</p>
             </div>
             <div className="text-right">
-              <p className="font-headline font-black text-3xl md:text-4xl text-tertiary leading-none">&euro;{cheapest.margheritaPrice?.toFixed(2)}</p>
+              <p className="font-headline font-black text-3xl md:text-4xl text-tertiary leading-none stat-hover">&euro;{cheapest.margheritaPrice?.toFixed(2)}</p>
               <p className="text-xs font-label font-bold text-tertiary/60 mt-1">{((cheapest.margheritaPrice / stats.avg - 1) * 100).toFixed(1)}% vs media</p>
             </div>
           </div>
         </div>
       )}
       {priciest && (
-        <div className="bg-secondary-container border-4 border-secondary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden">
+        <div className="group bg-secondary-container border-4 border-secondary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden card-glow">
           <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-bl-full" />
           <div className="flex items-center gap-3 mb-3">
             <span className="material-symbols-outlined text-secondary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
@@ -310,7 +310,7 @@ function MarketMovers({ cheapest, priciest, stats, t }) {
               <p className="font-label font-bold text-sm text-secondary/70 uppercase mt-1">{priciest.cityName}</p>
             </div>
             <div className="text-right">
-              <p className="font-headline font-black text-3xl md:text-4xl text-secondary leading-none">&euro;{priciest.margheritaPrice?.toFixed(2)}</p>
+              <p className="font-headline font-black text-3xl md:text-4xl text-secondary leading-none stat-hover">&euro;{priciest.margheritaPrice?.toFixed(2)}</p>
               <p className="text-xs font-label font-bold text-secondary/60 mt-1">+{((priciest.margheritaPrice / stats.avg - 1) * 100).toFixed(1)}% vs media</p>
             </div>
           </div>

@@ -1,12 +1,13 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import { app } from './index.js';
+
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'test-secret';
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
+
+const { app } = await import('./index.js');
 
 describe('API Integration', () => {
-  beforeAll(() => {
-    process.env.NODE_ENV = 'test';
-    process.env.JWT_SECRET = 'test-secret';
-  });
 
   it('GET /health should return 200 and status ok', async () => {
     const response = await request(app).get('/health');

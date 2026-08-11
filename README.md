@@ -395,6 +395,8 @@ No global state library (Redux, Zustand) — all component state is local via `u
 | **Data Separation** | `server/private/` not served by Express, no public access to unapproved data |
 | **Headers** | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: restricted` |
 | **Docker Hardening** | Non-root user, read-only rootfs, tmpfs for `/tmp` and logs, `no-new-privileges`, resource limits |
+| **Reverse Proxy** | Express `trust proxy` enabled via `TRUST_PROXY=1` env variable, facilitating cookie-based authentication behind SSL-terminating proxies |
+| **Credential Sync** | Startup credential sync from env variables (`ADMIN_USERNAME` / `ADMIN_PASSWORD`), automatically triggering `mustChangePassword` flow on update |
 
 ### Session Management Rules
 

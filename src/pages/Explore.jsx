@@ -315,7 +315,7 @@ export default function Explore() {
   if (loading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="p-6 md:p-12">
+    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
       <ExploreHero
         t={t}
         search={search}
@@ -353,22 +353,22 @@ export default function Explore() {
       {view === 'cards' && (
         <div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <div className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-1">{t('explore.total')}</div>
-              <div className="font-headline font-black text-4xl text-primary">{data.length}</div>
+              <div className="font-headline font-black text-4xl text-primary stat-hover">{data.length}</div>
               {activeFiltersCount > 0 && (
                 <div className="font-label text-xs text-on-surface-variant/60 mt-1">{t('explore.withFilters', { count: filtered.length })}</div>
               )}
             </div>
-            <div className="bg-primary-container border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-primary-container border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <div className="font-label font-bold text-xs uppercase tracking-widest text-primary/70 mb-1">{t('prices.avgPrice')}</div>
-              <div className="font-headline font-black text-4xl text-primary">&euro;{stats.avg.toFixed(2)}</div>
+              <div className="font-headline font-black text-4xl text-primary stat-hover">&euro;{stats.avg.toFixed(2)}</div>
             </div>
-            <div className="bg-surface-variant border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-surface-variant border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <div className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-1">{t('prices.medianTitle')}</div>
-              <div className="font-headline font-black text-4xl text-primary">&euro;{stats.median.toFixed(2)}</div>
+              <div className="font-headline font-black text-4xl text-primary stat-hover">&euro;{stats.median.toFixed(2)}</div>
             </div>
-            <div className="bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <div className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-1">{t('prices.sortBy')}</div>
               <select
                 className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:outline-none focus:border-secondary cursor-pointer"
@@ -424,7 +424,7 @@ export default function Explore() {
       {view === 'table' && (
         <div>
           <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <label className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-2 block">{t('prices.zoneFilter')}</label>
               <select
                 className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:outline-none focus:border-secondary cursor-pointer"
@@ -436,15 +436,15 @@ export default function Explore() {
                 ))}
               </select>
             </div>
-            <div className="bg-primary-container border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-primary-container border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <div className="font-label font-bold text-xs uppercase tracking-widest text-primary/70 mb-1">{t('prices.avgPrice')}</div>
-              <div className="font-headline font-black text-3xl md:text-4xl text-primary">&euro;{stats.avg.toFixed(2)}</div>
+              <div className="font-headline font-black text-3xl md:text-4xl text-primary stat-hover">&euro;{stats.avg.toFixed(2)}</div>
             </div>
-            <div className="bg-surface-variant border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-surface-variant border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <div className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-1">{t('prices.medianTitle')}</div>
-              <div className="font-headline font-black text-3xl md:text-4xl text-primary">&euro;{stats.median.toFixed(2)}</div>
+              <div className="font-headline font-black text-3xl md:text-4xl text-primary stat-hover">&euro;{stats.median.toFixed(2)}</div>
             </div>
-            <div className="bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <label className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-2 block">{t('prices.sortBy')}</label>
               <select
                 className="w-full bg-background border-2 border-primary p-2 font-body font-bold text-primary focus:outline-none focus:border-secondary cursor-pointer"
@@ -461,32 +461,32 @@ export default function Explore() {
 
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {cheapest && (
-              <div className="bg-tertiary-container border-4 border-tertiary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+              <div className="group bg-tertiary-container border-4 border-tertiary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
                   <span className="text-xs font-black font-headline uppercase tracking-widest text-tertiary">{t('prices.cheapestTitle')}</span>
                 </div>
                 <p className="font-headline font-black text-lg md:text-xl text-tertiary">{cheapest.name}</p>
-                <p className="font-headline font-bold text-2xl md:text-3xl text-tertiary mt-1">&euro;{cheapest.margheritaPrice?.toFixed(2)}</p>
+                <p className="font-headline font-bold text-2xl md:text-3xl text-tertiary mt-1 stat-hover">&euro;{cheapest.margheritaPrice?.toFixed(2)}</p>
                 <p className="font-label text-xs text-tertiary/70 uppercase mt-0.5">{cheapest.cityName}</p>
               </div>
             )}
-            <div className="bg-primary-container border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="group bg-primary-container border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
               <div className="flex items-center gap-2 mb-2">
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>balance</span>
                 <span className="text-xs font-black font-headline uppercase tracking-widest text-primary">{t('prices.rangeTitle')}</span>
               </div>
-              <p className="font-headline font-bold text-2xl md:text-3xl text-primary">&euro;{stats.min.toFixed(2)} &ndash; &euro;{stats.max.toFixed(2)}</p>
+              <p className="font-headline font-bold text-2xl md:text-3xl text-primary stat-hover">&euro;{stats.min.toFixed(2)} &ndash; &euro;{stats.max.toFixed(2)}</p>
               <p className="font-label text-xs text-primary/70 mt-0.5">{t('prices.minPrice')}: &euro;{stats.min.toFixed(2)} &middot; {t('prices.maxPrice')}: &euro;{stats.max.toFixed(2)}</p>
             </div>
             {priciest && (
-              <div className="bg-secondary-container border-4 border-secondary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+              <div className="group bg-secondary-container border-4 border-secondary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] card-glow">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
                   <span className="text-xs font-black font-headline uppercase tracking-widest text-secondary">{t('prices.priciestTitle')}</span>
                 </div>
                 <p className="font-headline font-black text-lg md:text-xl text-secondary">{priciest.name}</p>
-                <p className="font-headline font-bold text-2xl md:text-3xl text-secondary mt-1">&euro;{priciest.margheritaPrice?.toFixed(2)}</p>
+                <p className="font-headline font-bold text-2xl md:text-3xl text-secondary mt-1 stat-hover">&euro;{priciest.margheritaPrice?.toFixed(2)}</p>
                 <p className="font-label text-xs text-secondary/70 uppercase mt-0.5">{priciest.cityName}</p>
               </div>
             )}
@@ -542,7 +542,7 @@ export default function Explore() {
               )}
               <div className="bg-surface-variant border-2 border-primary p-4">
                 <div className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-1">{t('prices.address')}</div>
-                <div className="font-body font-bold text-primary">{selected.address || '—'}</div>
+                <div className="font-body font-bold text-primary">{selected.address}</div>
               </div>
               <div className="bg-primary-container border-4 border-primary p-5 shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
                 <div className="font-label font-bold text-xs uppercase tracking-widest text-primary/70 mb-1">{t('prices.margherita')}</div>

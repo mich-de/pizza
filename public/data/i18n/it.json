@@ -70,7 +70,12 @@
     "daysRemaining": "Tra {days} giorni",
     "multiDay": "{start} — {end} {month}",
     "noEvents": "Nessun evento imminente",
-    "discoverMore": "Scopri tutti gli eventi della penisola"
+    "discoverMore": "Scopri tutti gli eventi della penisola",
+    "totalEvents": "Totale Eventi",
+    "upcomingTitle": "Prossimi Eventi",
+    "activeNow": "In Corso",
+    "searchPlaceholder": "Cerca per nome o descrizione...",
+    "closeDetails": "Chiudi Dettagli"
   },
   "months": {
     "10": "Ott",
@@ -116,7 +121,11 @@
     "edit": "Modifica",
     "delete": "Elimina",
     "adminLabel": "Admin:",
-    "noResults": "Nessun risultato trovato"
+    "noResults": "Nessun risultato trovato",
+    "totalPosts": "Totale Esperienze",
+    "topRatedTitle": "Eccellenze (9+)",
+    "userContributions": "Dalla Community",
+    "searchPlaceholder": "Cerca per autore, titolo o descrizione..."
   },
   "explore": {
     "title": "Esplora",
@@ -520,7 +529,20 @@
     "loginFailed": "Login fallito",
     "connectionError": "Errore di connessione",
     "invalidCode": "Codice non valido",
-    "sessionExpired": "Sessione scaduta"
+    "sessionExpired": "Sessione scaduta",
+    "changeRequired": "Cambio Password Obbligatorio",
+    "changeRequiredDesc": "Devi cambiare la password predefinita prima di continuare",
+    "newPasswordTitle": "Nuova Password",
+    "newPassword": "Nuova Password",
+    "confirmPassword": "Conferma Password",
+    "changePasswordHint": "Per sicurezza, cambia la password predefinita. Minimo 6 caratteri.",
+    "newPasswordTooShort": "La nuova password deve avere almeno 6 caratteri",
+    "passwordsMismatch": "Le password non corrispondono",
+    "passwordSameAsOld": "La nuova password deve essere diversa dalla precedente",
+    "passwordsMatch": "Le password corrispondono",
+    "passwordChangeError": "Errore nel cambio password",
+    "saving": "Salvataggio…",
+    "saveAndContinue": "Salva e Continua"
   },
   "priceProposal": {
     "errorFetchCaptcha": "Impossibile caricare la verifica. Riprova.",
@@ -579,6 +601,11 @@
     "margherita": "Margherita",
     "error": "Errore",
     "networkError": "Errore di rete",
-    "saveError": "Errore salvataggio"
+    "saveError": "Errore salvataggio",
+    "all": "Tutti",
+    "events": "Eventi",
+    "posts": "Post",
+    "votes": "voto",
+    "sortBy": "Ordina Per"
   }
 }

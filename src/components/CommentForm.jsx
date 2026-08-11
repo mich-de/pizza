@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 
 const AUTHOR_REGEX = /^[a-zA-Z0-9àèéìòùÀÈÉÌÒÙ\s'-]+$/;

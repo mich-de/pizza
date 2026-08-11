@@ -195,7 +195,7 @@ export default function AdminProposals({ onDataChange }) {
   if (loading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="p-6 md:p-12">
+    <div className="w-full">
       {toast && (
         <div className={`fixed top-4 right-4 z-[100] font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] ${toast.isError ? 'bg-secondary text-on-tertiary' : 'bg-primary text-on-primary'}`}>
           {toast.msg}

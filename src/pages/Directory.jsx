@@ -3,7 +3,6 @@ import { useI18n } from '../i18n/I18nContext';
 import { useStitchedData } from '../hooks/useDataFetch';
 import { checkAuth } from '../services/authService';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PageHeader } from '../components/ui';
 import VenueEditModal from '../components/explore/VenueEditModal';
 
 const CATEGORY_COLORS = {
@@ -101,65 +100,74 @@ export default function Directory() {
   if (loading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="p-6 md:p-12">
-      <PageHeader
-        title={t('directory.title')}
-        subtitle={t('directory.subtitle')}
-      >
-        <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60">search</span>
-          <input
-            className="bg-surface border border-outline-variant rounded-sm py-2 pl-10 pr-4 font-label text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary w-64 placeholder:text-on-surface-variant/40"
-            placeholder={t('directory.search')}
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        {admin && (
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 bg-primary text-on-primary font-headline font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container hover:text-on-primary-container transition-colors text-sm"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            {t('admin.addNew')}
-          </button>
-        )}
-      </PageHeader>
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            onClick={() => setFilter(cat.key)}
-            className={`px-4 py-1.5 font-label font-medium text-sm tracking-wider rounded-sm transition-colors ${
-              filter === cat.key
-                ? 'bg-primary text-on-primary'
-                : 'bg-surface text-on-surface-variant border border-outline-variant hover:bg-surface-variant'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="mb-8 bg-primary text-on-primary border border-primary/30 rounded-sm p-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <span className="material-symbols-outlined text-3xl text-on-primary/60" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
+    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
+      {/* Hero Section */}
+      <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] mb-8">
+        <div className="bg-primary text-on-primary p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
-              <p className="font-label text-xs tracking-wider text-on-primary/60">{t('directory.total')}</p>
-              <p className="font-display text-3xl font-bold">{data.length}</p>
-              {activeFiltersCount > 0 && (
-                <p className="font-label text-xs text-on-primary/50">
-                  {filtered.length} {filtered.length === 1 ? t('directory.pizzeriaSingular') : t('directory.pizzeriaPlural')} {t('directory.withFilters')}
-                </p>
-              )}
+              <div className="flex items-center gap-3 mb-2">
+                <span className="font-headline font-black uppercase text-sm md:text-base tracking-[0.2em] text-on-primary/80">
+                  {t('directory.subtitle')}
+                </span>
+                <span className="w-8 h-[2px] bg-on-primary/40" />
+                <span className="font-label font-bold uppercase text-xs tracking-wider text-on-primary/60">
+                  {data.length} {t('directory.pizzeriaPlural')}
+                </span>
+              </div>
+              <h1 className="font-headline font-black text-5xl md:text-7xl lg:text-8xl uppercase tracking-tight leading-none">
+                {t('directory.title')}
+              </h1>
+            </div>
+            {admin && (
+              <button
+                onClick={() => setShowAdd(true)}
+                className="flex items-center gap-2 bg-on-primary text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-on-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:bg-on-primary/80 transition-colors"
+              >
+                <span className="material-symbols-outlined">add</span>
+                {t('admin.addNew')}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6 md:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-primary-container border-2 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-4xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
+                <div>
+                  <p className="font-label text-xs tracking-wider text-primary/70 uppercase font-black">{t('directory.total')}</p>
+                  <p className="font-display text-4xl font-black text-primary leading-none">{data.length}</p>
+                  {activeFiltersCount > 0 && (
+                    <p className="font-label text-xs text-primary/50 mt-1 uppercase font-bold">
+                      {filtered.length} {t('directory.withFilters')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="relative">
+              <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">
+                {t('directory.search')}
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40">search</span>
+                <input
+                  className="w-full bg-background border-2 border-primary py-3.5 pl-10 pr-4 font-body font-bold text-primary focus:outline-none focus:border-secondary shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]"
+                  placeholder={t('directory.search')}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
             </div>
           </div>
-          <div className="border-t md:border-t-0 md:border-l border-on-primary/20 pt-4 md:pt-0 md:pl-5">
-            <p className="font-label text-xs tracking-wider text-on-primary/60 mb-2">{t('directory.byTown')}</p>
-            <div className="flex flex-wrap gap-1.5">
+
+          <div className="mt-8 border-t-2 border-primary/10 pt-6">
+            <p className="font-label text-xs tracking-wider text-primary/60 mb-3 uppercase font-black">{t('directory.byTown')}</p>
+            <div className="flex flex-wrap gap-2">
               {cities.map((city) => {
                 if (city === 'all') {
                   const isActive = cityFilter === 'all';
@@ -167,10 +175,10 @@ export default function Directory() {
                     <button
                       key="all"
                       onClick={() => setCityFilter('all')}
-                      className={`px-2.5 py-1 font-label font-medium text-xs tracking-wider rounded-sm transition-colors ${
+                      className={`px-3 py-1.5 font-label font-bold text-xs tracking-wider border-2 transition-all ${
                         isActive
-                          ? 'bg-on-primary/15 text-on-primary'
-                          : 'text-on-primary/50 hover:text-on-primary hover:bg-on-primary/10'
+                          ? 'bg-primary text-on-primary border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]'
+                          : 'bg-surface text-primary border-primary hover:bg-primary-container shadow-[1px_1px_0px_0px_rgba(26,26,26,1)]'
                       }`}
                     >
                       {t('directory.all')} ({data.length})
@@ -184,15 +192,15 @@ export default function Directory() {
                   <button
                     key={city}
                     onClick={() => setCityFilter(cityFilter === city ? 'all' : city)}
-                    className={`px-2.5 py-1 font-label font-medium text-xs tracking-wider rounded-sm transition-colors ${
+                    className={`px-3 py-1.5 font-label font-bold text-xs tracking-wider border-2 transition-all ${
                       isActive
-                        ? 'bg-on-primary/15 text-on-primary'
-                        : 'text-on-primary/50 hover:text-on-primary hover:bg-on-primary/10'
+                        ? 'bg-primary text-on-primary border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]'
+                        : 'bg-surface text-primary border-primary hover:bg-primary-container shadow-[1px_1px_0px_0px_rgba(26,26,26,1)]'
                     }`}
                   >
-                    {city} <span className="font-semibold">{count}</span>
+                    {city} <span className="font-black ml-1">{count}</span>
                     {(cityFilter !== 'all' || search !== '') && filteredCount !== count && (
-                      <span className="text-on-primary/40">/{filteredCount}</span>
+                      <span className="opacity-40 ml-1">/{filteredCount}</span>
                     )}
                   </button>
                 );
@@ -200,6 +208,25 @@ export default function Directory() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mb-8 flex flex-wrap gap-2 items-center">
+        {CATEGORIES.map((cat) => {
+          const isActive = filter === cat.key;
+          return (
+            <button
+              key={cat.key}
+              onClick={() => setFilter(cat.key)}
+              className={`px-3 py-1.5 font-label font-bold text-xs uppercase tracking-wider border-2 transition-all ${
+                isActive
+                  ? 'bg-primary text-on-primary border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]'
+                  : 'bg-surface text-primary border-primary hover:bg-primary-container shadow-[1px_1px_0px_0px_rgba(26,26,26,1)]'
+              }`}
+            >
+              {cat.label}
+            </button>
+          );
+        })}
       </div>
 
       {cityFilter !== 'all' && availableFrazioni.length > 1 && (
