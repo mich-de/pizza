@@ -5,17 +5,22 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { existsSync, statSync } from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 
 import { 
   PORT, NODE_ENV, JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD_HASH,
   ALLOWED_ORIGINS, ADMINS_PATH, root, VENUES_PATH, TOWNS_PATH,
-  PRICES_PATH, COMMENTS_PATH, PROPOSALS_PATH, FEED_POSTS_PATH,
+  PRICES_PATH, EVENTS_PATH, COMMENTS_PATH, PROPOSALS_PATH, FEED_POSTS_PATH,
+  UPLOADS_DIR, UPLOADS_URL, MAX_UPLOAD_BYTES,
   MIN_NAME_LENGTH, MAX_NAME_LENGTH, MIN_CONTENT_LENGTH, MAX_CONTENT_LENGTH
 } from './config.js';
 
-import { LoginSchema, CommentSchema, FeedPostSchema } from './schemas.js';
+import {
+  LoginSchema, CommentSchema, FeedPostSchema, PriceProposalSchema, EventSchema,
+  TownsSchema, VenuesSchema, PricesSchema, EventsSchema, CommentsSchema, ProposalsSchema
+} from './schemas.js';
 import { logger } from './utils/logger.js';
 import { 
   checkLoginRateLimit, recordLoginAttempt, checkAccountLockout, 
@@ -186,6 +191,19 @@ app.use((req, res, next) => {
   res.removeHeader('X-Powered-By');
   next();
 });
+
+/* Le locandine si servono da `public/`, e prima di `dist/`: `dist/` ne tiene
+   una copia ferma al momento della compilazione, quindi una locandina caricata
+   adesso li' non c'e'. `express.static` perche' normalizza il percorso da solo
+   — con una concatenazione a mano, un `..` nell'indirizzo uscirebbe dalla
+   cartella. Se il file non c'e', si prosegue e decide `dist/`. */
+app.use(UPLOADS_URL, express.static(UPLOADS_DIR, {
+  fallthrough: true,
+  index: false,
+  dotfiles: 'deny',
+  maxAge: '1y',
+  setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+}));
 
 // Serve static files
 {
@@ -517,6 +535,124 @@ app.get('/api/data/prices', apiRateLimit, async (_req, res) => {
   catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
+/* Gli eventi passano da qui e non piu' dal file statico: chi li modifica dal
+   Pannello scrive su `public/data/events.json`, ma `dist/` ne conserva la
+   copia fatta al momento della compilazione. Leggendo il file dal disco a ogni
+   richiesta, una modifica si vede subito invece che alla prossima build. */
+app.get('/api/data/events', apiRateLimit, async (_req, res) => {
+  try { res.json(await safeReadJSON(EVENTS_PATH, [])); }
+  catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+/* Il caricamento di una locandina.
+   Arriva come byte grezzi, non come modulo a piu' parti: cosi' non serve una
+   libreria in piu' e non c'e' un nome di file che viaggia dal client. Il nome
+   lo decide il server, ed e' casuale — quello scelto da chi carica non tocca
+   mai il disco, quindi non c'e' modo di scrivere fuori dalla cartella ne' di
+   sovrascrivere una locandina altrui indovinandone il nome.
+
+   Il tipo si legge dai primi byte, non dall'intestazione `Content-Type`, che
+   la dichiara chi manda e quindi non prova niente. L'estensione salvata viene
+   da quella lettura: un eseguibile ribattezzato `.png` non passa, e comunque
+   la cartella si serve con `nosniff`. */
+const IMAGE_KINDS = [
+  { ext: 'png', test: b => b.length > 8 && b.readUInt32BE(0) === 0x89504e47 && b.readUInt32BE(4) === 0x0d0a1a0a },
+  { ext: 'jpg', test: b => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  { ext: 'webp', test: b => b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP' },
+  { ext: 'gif', test: b => b.length > 6 && b.toString('ascii', 0, 3) === 'GIF' },
+];
+
+app.post('/api/admin/events/poster',
+  apiRateLimit,
+  requireRole('admin'),
+  express.raw({ type: ['image/*', 'application/octet-stream'], limit: MAX_UPLOAD_BYTES }),
+  async (req, res) => {
+    try {
+      const buf = req.body;
+      if (!Buffer.isBuffer(buf) || buf.length === 0) {
+        return res.status(400).json({ error: 'Nessun file ricevuto' });
+      }
+      if (buf.length > MAX_UPLOAD_BYTES) {
+        return res.status(413).json({ error: 'Immagine troppo pesante' });
+      }
+      const kind = IMAGE_KINDS.find(k => k.test(buf));
+      if (!kind) {
+        return res.status(415).json({ error: 'Formato non riconosciuto: servono PNG, JPEG, WebP o GIF' });
+      }
+
+      await mkdir(UPLOADS_DIR, { recursive: true });
+      const fileName = `${randomUUID()}.${kind.ext}`;
+      await writeFile(join(UPLOADS_DIR, fileName), buf);
+
+      auditLog(req.user.userId, 'upload_poster', 'event', { fileName, bytes: buf.length });
+      res.status(201).json({ url: `${UPLOADS_URL}/${fileName}`, bytes: buf.length });
+    } catch (err) {
+      logger.error('Caricamento locandina fallito', { err: err.message });
+      res.status(500).json({ error: prodError('Errore interno del server') });
+    }
+  });
+
+app.post('/api/admin/events', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const parsed = EventSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dati non validi' });
+
+    const events = await safeReadJSON(EVENTS_PATH, []);
+    /* Identificativo leggibile ricavato dal titolo, come quelli gia' in
+       archivio (`pizza-a-vico-2026`). Se e' gia' preso si accoda un numero:
+       due edizioni con lo stesso nome nello stesso anno non devono
+       sovrascriversi a vicenda. */
+    const base = `${parsed.data.title}-${parsed.data.dateStart.slice(0, 4)}`
+      .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'evento';
+    let id = base, n = 2;
+    while (events.some(e => e.id === id)) id = `${base}-${n++}`;
+
+    const newEvent = { id, ...parsed.data };
+    events.push(newEvent);
+    await safeWriteJSON(EVENTS_PATH, events);
+    auditLog(req.user.userId, 'create_event', 'event', { eventId: id });
+    res.status(201).json(newEvent);
+  } catch (err) {
+    logger.error('Errore creazione evento', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+app.put('/api/admin/events/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const parsed = EventSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dati non validi' });
+
+    const events = await safeReadJSON(EVENTS_PATH, []);
+    const idx = events.findIndex(e => String(e.id) === String(req.params.id));
+    if (idx === -1) return res.status(404).json({ error: 'Evento non trovato' });
+
+    // L'identificativo non cambia: e' quello che tiene insieme i collegamenti.
+    events[idx] = { ...events[idx], ...parsed.data, id: events[idx].id };
+    await safeWriteJSON(EVENTS_PATH, events);
+    auditLog(req.user.userId, 'update_event', 'event', { eventId: req.params.id });
+    res.json(events[idx]);
+  } catch (err) {
+    logger.error('Errore modifica evento', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+app.delete('/api/admin/events/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const events = await safeReadJSON(EVENTS_PATH, []);
+    const rest = events.filter(e => String(e.id) !== String(req.params.id));
+    if (rest.length === events.length) return res.status(404).json({ error: 'Evento non trovato' });
+    await safeWriteJSON(EVENTS_PATH, rest);
+    auditLog(req.user.userId, 'delete_event', 'event', { eventId: req.params.id });
+    res.json({ success: true, message: 'Evento eliminato' });
+  } catch (err) {
+    logger.error('Errore eliminazione evento', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
 app.get('/api/comments', apiRateLimit, async (req, res) => {
   try {
     const comments = await safeReadJSON(COMMENTS_PATH, []);
@@ -535,7 +671,7 @@ app.post('/api/comments', apiRateLimit, async (req, res) => {
   try {
     const parsed = CommentSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Campi mancanti o non validi' });
-    const { postId, author, content, proposedPrice, honeypot, mathAnswer, captchaToken } = parsed.data;
+    const { postId, author, content, honeypot, mathAnswer, captchaToken } = parsed.data;
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
 
     if (honeypot && honeypot.trim() !== '') return res.status(400).json({ error: 'Richiesta non valida' });
@@ -556,29 +692,68 @@ app.post('/api/comments', apiRateLimit, async (req, res) => {
       id: (existingComments.length > 0 ? Math.max(...existingComments.map(c => c.id)) : 0) + 1,
       postId, author: sanitizedAuthor, content: sanitizedContent,
       createdAt: new Date().toISOString(), approved: false,
-      type: (typeof proposedPrice === 'number' && proposedPrice > 0 && proposedPrice <= 100) ? 'price_proposal' : 'review',
+      /* Un commento e' sempre e solo un commento. Le segnalazioni di prezzo
+         hanno la loro rotta, `POST /api/proposals`: prima passavano di qui e
+         lasciavano due righe — una proposta e un messaggio con dentro la nota,
+         che poi andava nascosto a mano al pubblico e ricompariva comunque fra
+         i commenti da approvare. */
+      type: 'review',
     };
 
     existingComments.push(newComment);
     await safeWriteJSON(COMMENTS_PATH, existingComments);
     recordComment(clientIp);
 
-    if (newComment.type === 'price_proposal') {
-      const proposals = await safeReadJSON(PROPOSALS_PATH, []);
-      const priceEntry = (await safeReadJSON(PRICES_PATH, [])).find(p => p.pizzeriaId === postId);
-      proposals.push({
-        id: (proposals.length > 0 ? Math.max(...proposals.map(p => p.id)) : 0) + 1,
-        postId, pizzeriaId: postId, author: sanitizedAuthor, proposedPrice,
-        currentPrice: priceEntry ? priceEntry.margheritaPrice : null,
-        createdAt: new Date().toISOString(), reviewed: false,
-      });
-      await safeWriteJSON(PROPOSALS_PATH, proposals);
-    }
-
     logger.info('Commento creato', { postId, author: sanitizedAuthor });
     res.status(201).json(newComment);
   } catch (err) {
     logger.error('Errore creazione commento', { error: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+/* Segnalare un prezzo sbagliato: una riga sola, nell'elenco delle proposte.
+   La nota facoltativa viaggia dentro la proposta, accanto al prezzo che
+   spiega, e non diventa un messaggio da nessuna parte. Stessa catena
+   anti-abuso dei commenti — trappola, captcha, parole vietate, freno per
+   indirizzo — perche' e' lo stesso modulo pubblico e senza autenticazione. */
+app.post('/api/proposals', apiRateLimit, async (req, res) => {
+  try {
+    const parsed = PriceProposalSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Campi mancanti o non validi' });
+    const { postId, author, proposedPrice, note, honeypot, mathAnswer, captchaToken } = parsed.data;
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+
+    if (honeypot && honeypot.trim() !== '') return res.status(400).json({ error: 'Richiesta non valida' });
+    if (!verifyCaptchaToken(captchaToken, mathAnswer)) return res.status(400).json({ error: 'Verifica captcha fallita' });
+
+    const sanitizedAuthor = sanitize(removeDangerousContent(author)).replace(/&amp;/g, '&');
+    const sanitizedNote = note ? sanitize(removeDangerousContent(note)).replace(/&amp;/g, '&') : '';
+
+    if (sanitizedAuthor.length < MIN_NAME_LENGTH || sanitizedAuthor.length > MAX_NAME_LENGTH) return res.status(400).json({ error: 'Nome non valido' });
+    if (containsBannedWords(sanitizedAuthor) || containsBannedWords(sanitizedNote)) return res.status(400).json({ error: 'Contenuto non consentito' });
+
+    const rateLimit = checkRateLimit(clientIp);
+    if (!rateLimit.allowed) return res.status(429).json({ error: `Troppe richieste. Riprova tra ${rateLimit.waitSeconds} secondi`, retryAfter: rateLimit.waitSeconds });
+
+    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
+    const priceEntry = (await safeReadJSON(PRICES_PATH, [])).find(p => p.pizzeriaId === postId);
+    const newProposal = {
+      id: (proposals.length > 0 ? Math.max(...proposals.map(p => p.id)) : 0) + 1,
+      postId, pizzeriaId: postId, author: sanitizedAuthor, proposedPrice,
+      note: sanitizedNote,
+      currentPrice: priceEntry ? priceEntry.margheritaPrice : null,
+      createdAt: new Date().toISOString(), reviewed: false,
+    };
+
+    proposals.push(newProposal);
+    await safeWriteJSON(PROPOSALS_PATH, proposals);
+    recordComment(clientIp);
+
+    logger.info('Proposta prezzo creata', { postId, author: sanitizedAuthor, proposedPrice });
+    res.status(201).json(newProposal);
+  } catch (err) {
+    logger.error('Errore creazione proposta', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
   }
 });
@@ -603,7 +778,16 @@ app.get('/api/admin/dashboard-stats', apiRateLimit, requireRole('admin'), async 
       safeReadJSON(PROPOSALS_PATH, []), safeReadJSON(COMMENTS_PATH, []),
       safeReadJSON(FEED_POSTS_PATH, []), safeReadJSON(VENUES_PATH, [])
     ]);
-    res.json({ proposals, pendingComments: comments.filter(c => !c.approved), pendingFeedPosts: feedPosts.filter(p => !p.approved), venues });
+    /* `type !== 'price_proposal'` tiene fuori le vecchie righe scritte quando
+       una segnalazione di prezzo lasciava anche un messaggio: comparivano fra
+       i commenti da approvare come «Prezzo Margherita proposto a…», cioe' la
+       stessa cosa gia' in elenco due riquadri piu' sotto. */
+    res.json({
+      proposals,
+      pendingComments: comments.filter(c => !c.approved && c.type !== 'price_proposal'),
+      pendingFeedPosts: feedPosts.filter(p => !p.approved),
+      venues
+    });
   } catch (err) {
     logger.error('Errore dashboard stats', { error: err.message });
     res.status(500).json({ error: prodError('Errore interno del server') });
@@ -642,6 +826,58 @@ app.post('/api/admin/approve-comment/:id', apiRateLimit, requireRole('admin'), a
     await safeWriteJSON(COMMENTS_PATH, comments);
     auditLog(req.user.userId, 'approve_comment', 'comment', { commentId: req.params.id });
     res.json({ success: true, message: 'Commento approvato' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+/* Il pannello Approvazioni chiamava queste quattro rotte da sempre, e da
+   sempre rispondevano 404: il client leggeva `!res.ok` e mostrava «Errore
+   rifiuto commento» qualunque cosa si premesse. Approvare un prezzo e
+   approvare un commento erano le uniche due azioni della scheda che
+   funzionassero davvero. Rifiutare vuol dire togliere dall'elenco: il pezzo
+   non e' stato pubblicato, quindi non resta niente da conservare. */
+
+app.delete('/api/admin/reject-comment/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const comments = await safeReadJSON(COMMENTS_PATH, []);
+    const rest = comments.filter(c => String(c.id) !== String(req.params.id));
+    if (rest.length === comments.length) return res.status(404).json({ error: 'Commento non trovato' });
+    await safeWriteJSON(COMMENTS_PATH, rest);
+    auditLog(req.user.userId, 'reject_comment', 'comment', { commentId: req.params.id });
+    res.json({ success: true, message: 'Commento rifiutato' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.delete('/api/admin/reject-proposal/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const proposals = await safeReadJSON(PROPOSALS_PATH, []);
+    const rest = proposals.filter(p => String(p.id) !== String(req.params.id));
+    if (rest.length === proposals.length) return res.status(404).json({ error: 'Proposta non trovata' });
+    await safeWriteJSON(PROPOSALS_PATH, rest);
+    auditLog(req.user.userId, 'reject_proposal', 'proposal', { proposalId: req.params.id });
+    res.json({ success: true, message: 'Proposta rifiutata' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.post('/api/admin/approve-feed-post/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
+    const idx = posts.findIndex(p => String(p.id) === String(req.params.id));
+    if (idx === -1) return res.status(404).json({ error: 'Post non trovato' });
+    posts[idx].approved = true;
+    await safeWriteJSON(FEED_POSTS_PATH, posts);
+    auditLog(req.user.userId, 'approve_feed_post', 'feed_post', { postId: req.params.id });
+    res.json({ success: true, message: 'Post approvato' });
+  } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+app.delete('/api/admin/reject-feed-post/:id', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const posts = await safeReadJSON(FEED_POSTS_PATH, []);
+    const rest = posts.filter(p => String(p.id) !== String(req.params.id));
+    if (rest.length === posts.length) return res.status(404).json({ error: 'Post non trovato' });
+    await safeWriteJSON(FEED_POSTS_PATH, rest);
+    auditLog(req.user.userId, 'reject_feed_post', 'feed_post', { postId: req.params.id });
+    res.json({ success: true, message: 'Post rifiutato' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
 });
 
@@ -809,6 +1045,81 @@ app.put('/api/admin/profile', apiRateLimit, requireRole('admin'), async (req, re
     auditLog(req.user.userId, 'update_profile', 'admin', sanitized);
     res.json({ success: true, message: 'Profilo aggiornato' });
   } catch { res.status(500).json({ error: prodError('Errore interno del server') }); }
+});
+
+/* Gli archivi su disco e lo schema che ciascuno deve rispettare. L'ordine e'
+   quello con cui compaiono gli errori: prima i dati pubblici, poi quelli
+   privati. */
+const DATASETS = [
+  { name: 'towns.json', path: TOWNS_PATH, schema: TownsSchema },
+  { name: 'venues.json', path: VENUES_PATH, schema: VenuesSchema },
+  { name: 'prices.json', path: PRICES_PATH, schema: PricesSchema },
+  { name: 'events.json', path: EVENTS_PATH, schema: EventsSchema },
+  { name: 'comments.json', path: COMMENTS_PATH, schema: CommentsSchema },
+  { name: 'price-proposals.json', path: PROPOSALS_PATH, schema: ProposalsSchema },
+];
+
+/* Il controllo di validita' degli archivi.
+   Legge, non scrive: e' una diagnosi da fare prima di una distribuzione, e una
+   diagnosi che corregge da sola non e' piu' una diagnosi. Ogni scostamento
+   esce come «file → percorso → cosa non torna», che e' quanto serve per
+   andare a mettere le mani nel punto giusto. */
+app.post('/api/admin/validate-json', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const errors = [];
+    for (const { name, path, schema } of DATASETS) {
+      const data = await safeReadJSON(path, null);
+      if (data === null) {
+        errors.push(`${name}: archivio mancante o illeggibile`);
+        continue;
+      }
+      const parsed = schema.safeParse(data);
+      if (parsed.success) continue;
+      for (const issue of parsed.error.issues) {
+        const where = issue.path.length ? ` → ${issue.path.join('.')}` : '';
+        errors.push(`${name}${where}: ${issue.message}`);
+      }
+    }
+
+    auditLog(req.user.userId, 'validate_json', 'data', { errors: errors.length });
+    res.json({ valid: errors.length === 0, errors, checked: DATASETS.length });
+  } catch (err) {
+    logger.error('Validazione archivi fallita', { err: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+/* L'esportazione: gli stessi archivi in un file solo, da tenere da parte prima
+   di una modifica grossa. `attachment` col nome gia' dentro, altrimenti il
+   browser lo apre invece di salvarlo e un JSON da centomila righe a schermo
+   non serve a nessuno. */
+app.get('/api/admin/export-data', apiRateLimit, requireRole('admin'), async (req, res) => {
+  try {
+    const datasets = {};
+    for (const { name, path } of DATASETS) {
+      datasets[name.replace(/\.json$/, '')] = await safeReadJSON(path, []);
+    }
+
+    const stamp = new Date().toISOString();
+    auditLog(req.user.userId, 'export_data', 'data', { datasets: Object.keys(datasets).length });
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition',
+      `attachment; filename="pizza-data-${stamp.slice(0, 10)}.json"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(JSON.stringify({ exportedAt: stamp, ...datasets }, null, 2));
+  } catch (err) {
+    logger.error('Esportazione fallita', { err: err.message });
+    res.status(500).json({ error: prodError('Errore interno del server') });
+  }
+});
+
+/* Un indirizzo sotto `/api` che non corrisponde a niente.
+   Senza questo cade nel 404 predefinito di Express, che risponde in HTML: il
+   Pannello ci chiama sopra `res.json()` e l'errore che arriva a chi guarda e'
+   «Unexpected token '<'», che della rotta sbagliata non dice niente. Deve
+   stare in fondo, dopo tutte le rotte, e prima del gestore d'errore. */
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Rotta non trovata: ${req.method} /api${req.path}` });
 });
 
 // Global error handler

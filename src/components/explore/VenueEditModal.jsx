@@ -94,217 +94,149 @@ export default function VenueEditModal({ venue, towns, onClose, onSaved, onDelet
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-2xl max-h-[90vh] overflow-y-auto my-8" onClick={e => e.stopPropagation()}>
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-headline font-black uppercase text-primary">
-              {isEdit ? t('admin.editVenue') : t('admin.addVenue')}
-            </h2>
-            <button onClick={onClose} className="text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-2xl">close</span>
-            </button>
+    <div className="fixed inset-0 bg-black/55 z-[200] flex items-center justify-center p-4 overflow-y-auto no-print" onClick={onClose}>
+      {/* Unica superficie a schermo, quindi unica barra ambra (regola 2). */}
+      <div className="card card-accent w-full max-w-2xl max-h-[90vh] overflow-y-auto my-8" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <span className="eyebrow">{t('admin.details')}</span>
+            <h2 className="mt-1 mb-0">{isEdit ? t('admin.editVenue') : t('admin.addVenue')}</h2>
           </div>
+          <button onClick={onClose} className="btn btn-ghost btn-icon shrink-0">
+            <span className="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
 
-          {error && (
-            <div className="mb-4 bg-error-container text-on-error-container border-2 border-on-error-container p-3 font-headline font-bold uppercase text-sm">
-              {error}
-            </div>
-          )}
+        {error && (
+          <div className="alert alert-error mb-4">
+            <span className="material-symbols-outlined text-base leading-none">error</span>
+            <span>{error}</span>
+          </div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.name')} *
-              </label>
-              <input
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
-                value={form.name} onChange={e => set('name', e.target.value)}
-              />
-            </div>
+        <div className="panel">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+            <label className="field md:col-span-2">
+              <span>{t('admin.name')} *</span>
+              <input className="w-full" value={form.name} onChange={e => set('name', e.target.value)} />
+            </label>
 
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.address')}
-              </label>
-              <input
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
-                value={form.address} onChange={e => set('address', e.target.value)}
-              />
-            </div>
+            <label className="field">
+              <span>{t('admin.address')}</span>
+              <input className="w-full" value={form.address} onChange={e => set('address', e.target.value)} />
+            </label>
 
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.frazione')}
-              </label>
-              <input
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
-                value={form.frazione} onChange={e => set('frazione', e.target.value)}
-              />
-            </div>
+            <label className="field">
+              <span>{t('admin.frazione')}</span>
+              <input className="w-full" value={form.frazione} onChange={e => set('frazione', e.target.value)} />
+            </label>
 
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.city')}
-              </label>
-              <select
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary cursor-pointer"
-                value={form.cityId} onChange={e => set('cityId', e.target.value)}
-              >
+            <label className="field">
+              <span>{t('admin.city')}</span>
+              <select className="w-full" value={form.cityId} onChange={e => set('cityId', e.target.value)}>
                 {CITY_IDS.map(id => (
-                  <option key={id} value={id}>{towns?.find(t => t.id === id)?.name || id}</option>
+                  <option key={id} value={id}>{towns?.find(town => town.id === id)?.name || id}</option>
                 ))}
               </select>
-            </div>
+            </label>
 
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.phone')}
-              </label>
-              <input
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
-                value={form.phone} onChange={e => set('phone', e.target.value)}
-              />
-            </div>
+            <label className="field">
+              <span>{t('admin.phone')}</span>
+              <input className="w-full" value={form.phone} onChange={e => set('phone', e.target.value)} />
+            </label>
 
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.category')}
-              </label>
-              <select
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary cursor-pointer"
-                value={form.category} onChange={e => set('category', e.target.value)}
-              >
+            <label className="field">
+              <span>{t('admin.category')}</span>
+              <select className="w-full" value={form.category} onChange={e => set('category', e.target.value)}>
                 {CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{t(`common.${cat === 'wood-fired' ? 'woodFired' : cat}`)}</option>
                 ))}
               </select>
-            </div>
+            </label>
 
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.rating')}
-              </label>
+            <label className="field">
+              <span>{t('admin.rating')}</span>
               <input
                 type="number" step="0.1" min="0" max="5"
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
+                className="w-full font-mono tabular-nums"
                 value={form.rating} onChange={e => set('rating', e.target.value)}
               />
-            </div>
+            </label>
 
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.status')}
-              </label>
-              <select
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary cursor-pointer"
-                value={form.status} onChange={e => set('status', e.target.value)}
-              >
+            <label className="field md:col-span-2">
+              <span>{t('admin.status')}</span>
+              <select className="w-full" value={form.status} onChange={e => set('status', e.target.value)}>
                 <option value="open">{t('admin.statusOpen')}</option>
                 <option value="closed">{t('admin.statusClosed')}</option>
                 <option value="pending">{t('admin.statusPending')}</option>
               </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.descriptionEn')}
-              </label>
-              <textarea
-                rows={3}
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-body text-sm focus:outline-none focus:border-secondary resize-y"
-                value={form.description} onChange={e => set('description', e.target.value)}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.descriptionIt')} (IT)
-              </label>
-              <textarea
-                rows={3}
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-body text-sm focus:outline-none focus:border-secondary resize-y"
-                value={form.descriptionIt} onChange={e => set('descriptionIt', e.target.value)}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.imageUrl')}
-              </label>
-              <input
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
-                value={form.imageUrl} onChange={e => set('imageUrl', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.tripadvisor')}
-              </label>
-              <input
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
-                value={form.tripadvisor} onChange={e => set('tripadvisor', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div>
-              <label className="block font-label text-xs tracking-wider text-on-surface-variant mb-1 uppercase">
-                {t('admin.mapsUrl')}
-              </label>
-              <input
-                className="w-full bg-surface border-2 border-primary py-2 px-3 font-label uppercase focus:outline-none focus:border-secondary"
-                value={form.maps_url} onChange={e => set('maps_url', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
+            </label>
           </div>
+        </div>
 
-          <div className="flex items-center justify-between mt-6 pt-4 border-t-2 border-outline-variant">
-            <div>
-              {isEdit && !confirmDelete ? (
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-sm"
-                >
-                  {t('common.delete')}
+        <div className="section-title mt-5">
+          <h2 className="text-base">{t('admin.descriptions')}</h2>
+        </div>
+        <label className="field">
+          <span>{t('admin.descriptionEn')}</span>
+          <textarea rows={3} className="w-full resize-y"
+            value={form.description} onChange={e => set('description', e.target.value)} />
+        </label>
+        <label className="field">
+          <span>{t('admin.descriptionIt')} (IT)</span>
+          <textarea rows={3} className="w-full resize-y"
+            value={form.descriptionIt} onChange={e => set('descriptionIt', e.target.value)} />
+        </label>
+
+        <div className="section-title mt-5">
+          <h2 className="text-base">{t('admin.extras')}</h2>
+        </div>
+        <label className="field">
+          <span>{t('admin.imageUrl')}</span>
+          <input className="w-full font-mono text-sm" value={form.imageUrl}
+            onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
+        </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+          <label className="field">
+            <span>{t('admin.tripadvisor')}</span>
+            <input className="w-full font-mono text-sm" value={form.tripadvisor}
+              onChange={e => set('tripadvisor', e.target.value)} placeholder="https://..." />
+          </label>
+          <label className="field">
+            <span>{t('admin.mapsUrl')}</span>
+            <input className="w-full font-mono text-sm" value={form.maps_url}
+              onChange={e => set('maps_url', e.target.value)} placeholder="https://..." />
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 flex-wrap mt-6 pt-5 border-t border-outline-variant">
+          <div>
+            {/* Il rosso solo dove si agisce, e qui l'azione non si annulla. */}
+            {isEdit && !confirmDelete ? (
+              <button onClick={() => setConfirmDelete(true)} className="btn btn-secondary btn-sm">
+                <span className="material-symbols-outlined text-sm">delete</span>
+                {t('common.delete')}
+              </button>
+            ) : isEdit && confirmDelete ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display text-sm uppercase tracking-[0.06em] text-on-surface-variant">
+                  {t('admin.confirmDelete')}
+                </span>
+                <button onClick={handleDelete} disabled={deleting} className="btn btn-secondary btn-sm">
+                  {deleting ? t('admin.deleting') : t('admin.confirm')}
                 </button>
-              ) : isEdit && confirmDelete ? (
-                <div className="flex items-center gap-2">
-                  <span className="font-headline font-bold uppercase text-sm text-on-surface-variant">{t('admin.confirmDelete')}</span>
-                  <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-2 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
-                  >
-                    {deleting ? t('admin.deleting') : t('admin.confirm')}
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(false)}
-                    className="bg-surface text-primary font-headline font-bold uppercase py-2 px-3 border-2 border-primary text-xs"
-                  >
-                    {t('admin.cancel')}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors"
-              >
-                {t('admin.cancel')}
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-primary text-on-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container hover:text-on-primary-container transition-colors disabled:opacity-50"
-              >
-                {saving ? t('admin.saving') : t('admin.save')}
-              </button>
-            </div>
+                <button onClick={() => setConfirmDelete(false)} className="btn btn-ghost btn-sm">
+                  {t('admin.cancel')}
+                </button>
+              </div>
+            ) : null}
+          </div>
+          <div className="flex gap-2 ml-auto">
+            <button onClick={onClose} className="btn btn-ghost">{t('admin.cancel')}</button>
+            <button onClick={handleSave} disabled={saving} className="btn btn-primary">
+              <span className="material-symbols-outlined text-base">check</span>
+              {saving ? t('admin.saving') : t('admin.save')}
+            </button>
           </div>
         </div>
       </div>

@@ -22,25 +22,20 @@ export default class ErrorBoundary extends Component {
 
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-6">
-          <div className="bg-surface border border-outline-variant rounded-sm w-full max-w-md animate-scale-in">
-            <div className="p-6 border-b border-outline-variant">
-              <div className="w-12 h-12 bg-error rounded-sm flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-on-error text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
-              </div>
-              <h1 className="text-2xl font-display font-bold text-primary">{t('errorBoundary.unexpected')}</h1>
+        /* Schermata di guasto: non si stampa, e non porta il rosso addosso —
+           il rosso e' del pulsante che agisce, qui l'azione e' ricaricare. */
+        <div className="min-h-screen flex items-center justify-center p-6 no-print">
+          <div className="card card-accent w-full max-w-md">
+            <span className="eyebrow">{t('common.error')}</span>
+            <h1 className="mt-1">{t('errorBoundary.unexpected')}</h1>
+            <div className="alert alert-error mb-5">
+              <span className="material-symbols-outlined text-base leading-none">error</span>
+              <span>{t('errorBoundary.unexpectedDesc')}</span>
             </div>
-            <div className="p-6">
-              <p className="font-body text-sm text-on-surface-variant mb-6 leading-relaxed">
-                {t('errorBoundary.unexpectedDesc')}
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-primary text-on-primary font-label font-semibold tracking-wider px-6 py-3 rounded-sm hover:opacity-90 transition-opacity"
-              >
-                {t('errorBoundary.reloadPage')}
-              </button>
-            </div>
+            <button onClick={() => window.location.reload()} className="btn btn-primary btn-block">
+              <span className="material-symbols-outlined text-base">refresh</span>
+              {t('errorBoundary.reloadPage')}
+            </button>
           </div>
         </div>
       );

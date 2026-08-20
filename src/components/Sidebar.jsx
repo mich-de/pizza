@@ -1,13 +1,18 @@
 import { NavLink } from 'react-router-dom';
+import LangToggle from './ui/LangToggle';
 import { useI18n } from '../i18n/I18nContext';
 import { navItems } from '../config/navigation';
 import { useStitchedData, usePendingCounts } from '../hooks/useDataFetch';
+import BrandPlate from './BrandPlate';
 
-const activeLinkClass = 'text-primary bg-primary/10 border-r-4 border-primary px-4 py-3 my-0.5 flex items-center gap-3 font-headline font-bold text-sm tracking-wide transition-all';
-const inactiveLinkClass = 'text-on-surface-variant/60 hover:text-primary hover:bg-primary/5 border-r-4 border-transparent hover:border-primary/30 px-4 py-3 my-0.5 flex items-center gap-3 font-headline font-bold text-sm tracking-wide transition-all duration-200';
+/* Le voci sono righe di tabellone: maiuscoletto spaziato, nessuna pastiglia.
+   L'attiva si accende in ambra col quadratino, come la riga in partenza. */
+const linkBase = 'group flex items-center gap-3 px-5 py-2.5 font-label text-[0.82rem] font-medium uppercase tracking-[0.075em] transition-colors duration-150 border-l-2';
+const activeLinkClass = `${linkBase} text-accent border-accent bg-white/[0.05]`;
+const inactiveLinkClass = `${linkBase} text-on-ink/60 border-transparent hover:text-on-ink hover:bg-white/[0.05]`;
 
 export default function Sidebar() {
-  const { t, lang, setLang } = useI18n();
+  const { t, money } = useI18n();
   const { data } = useStitchedData();
   const { total: pendingTotal, isAdmin } = usePendingCounts();
   const year = new Date().getFullYear();
@@ -21,150 +26,93 @@ export default function Sidebar() {
     : null;
 
   return (
-    <nav className="hidden md:flex flex-col h-screen fixed left-0 top-0 z-40 bg-surface border-r-4 border-primary shadow-[4px_0_20px_rgba(0,0,0,0.06)] w-72 flex-shrink-0">
-      {/* Brand zone */}
-      <div className="relative">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#009246] via-primary to-[#CE2B37]" />
-
-        <div className="px-6 pt-8 pb-6">
-          <div className="flex items-center gap-5">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-primary rotate-3 group-hover:rotate-6 transition-transform shadow-[4px_4px_0px_0px_rgba(26,26,26,0.1)]" />
-              <div className="relative w-16 h-16 bg-surface border-4 border-primary flex items-center justify-center overflow-hidden shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] group-hover:-translate-x-1 group-hover:-translate-y-1 transition-all">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-multiply" />
-                <img src={lang === 'it' ? '/images/logo_ita_transparent.png' : '/images/logo_eng_transparent.png'} alt="Logo" className="w-12 h-12 object-contain relative z-10 group-hover:scale-110 transition-transform" />
-              </div>
-            </div>
-            <div className="relative z-10">
-              <h2 className="font-display font-black text-2xl tracking-tighter text-primary leading-[0.9] uppercase">
-                {t('app.title')}
-              </h2>
-              <p className="font-headline font-bold text-[10px] text-on-surface-variant/40 tracking-[0.2em] mt-1.5 uppercase border-l-2 border-primary/30 pl-2">
-                {t('app.subtitle')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Price hero */}
-        {globalAvg !== null && (
-          <div className="relative mx-5 mb-6 bg-gradient-to-br from-primary via-primary-fixed-dim to-primary border-2 border-primary/20 shadow-[4px_4px_0px_0px_rgba(26,26,26,0.2)]">
-            <div className="absolute inset-0 pointer-events-none" style={{
-              backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(255,255,255,0.05) 12px, rgba(255,255,255,0.05) 13px)`,
-            }} />
-            <div className="absolute top-0 right-0 w-28 h-28 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
-            <div className="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full translate-y-1/3 -translate-x-1/4" />
-            <div className="relative px-5 py-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="w-2 h-2 rounded-full bg-white/80 animate-pulse-soft flex-shrink-0 shadow-[0_0_6px_rgba(255,255,255,0.4)]" />
-                <span className="font-headline font-bold text-xs uppercase tracking-widest text-white/70">
-                  {t('sidebar.mediaMargherita')}
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-display font-black text-3xl tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">
-                  €{globalAvg.toFixed(2)}
-                </span>
-                <span className="font-headline font-bold text-xs text-white/50">
-                  {t('sidebar.generalAvg')}
-                </span>
-              </div>
-              {cheapest && (
-                <div className="mt-2 pt-2 border-t border-white/15 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-white/50 text-base">trending_down</span>
-                  <span className="font-headline font-bold text-xs text-white/60">{t('sidebar.fromPrice', { price: cheapest.margheritaPrice?.toFixed(2) })}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="border-b-4 border-primary mx-5" />
+    <nav className="hidden md:flex flex-col h-screen fixed left-0 top-0 z-40 w-72 flex-shrink-0 bg-ink text-on-ink border-r border-white/10">
+      {/* Il marchio e' una targa, non un bottone: lettere condensate e spaziate,
+          come su un cartello di scalo. Il segno ambra della fascia e' il filetto
+          qui sotto, e resta l'unico. */}
+      <div className="px-5 pt-5 pb-4 relative">
+        <BrandPlate />
+        {/* Filetto ambra: unico segno di colore della fascia, dice dove finisce
+            la targa e comincia il tabellone. */}
+        <div className="absolute left-0 right-0 bottom-0 h-px bg-gradient-to-r from-accent to-transparent opacity-55" />
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 py-5 overflow-y-auto space-y-0.5">
+      {/* IL FLAP. Il prezzo medio composto come una paletta girata: e' il dato
+          che si cerca aprendo l'app, e l'unico flap della schermata. Due flap
+          accanto competono e non si legge piu' nessuno dei due. */}
+      {globalAvg !== null && (
+        <div className="px-5 py-4 border-b border-white/10">
+          <span className="block font-label text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-on-ink/45 mb-2">
+            {t('sidebar.mediaMargherita')}
+          </span>
+          {/* Cifre nella paletta, valuta accanto in `.unit`: e' la forma del
+              riferimento. L'etichetta sopra dice gia' che media e'. */}
+          <div className="flex items-baseline">
+            <span className="flap flap-lg">{money(globalAvg)}</span>
+            <span className="unit">EUR</span>
+          </div>
+          {cheapest && (
+            <div className="flex items-center gap-1.5 mt-2.5 text-on-ink/55">
+              <span className="material-symbols-outlined text-sm">trending_down</span>
+              <span className="font-label text-[0.7rem] tracking-wide">
+                {t('sidebar.fromPrice', { price: money(cheapest.margheritaPrice) })}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex-1 py-3 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === '/'}
-            className={({ isActive }) =>
-              isActive ? activeLinkClass : inactiveLinkClass
-            }
+            className={({ isActive }) => (isActive ? activeLinkClass : inactiveLinkClass)}
           >
             {({ isActive }) => (
               <>
-                <span className={`material-symbols-outlined !text-xl transition-all duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}
-                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+                <span
+                  className="material-symbols-outlined !text-lg flex-shrink-0"
+                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                >
                   {item.icon}
                 </span>
-                <span className="flex-1 text-base">{t(item.labelKey)}</span>
+                <span className="flex-1">{t(item.labelKey)}</span>
                 {item.to === '/admin' && isAdmin && pendingTotal > 0 && (
-                  <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-error text-on-error text-xs font-headline font-bold rounded-sm border-2 border-surface shadow-[2px_2px_0px_0px_rgba(26,26,26,0.2)]">
-                    {pendingTotal}
-                  </span>
+                  <span className="badge badge-secondary">{pendingTotal}</span>
                 )}
-                {isActive && (
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse-soft shadow-[0_0_6px_rgba(200,76,9,0.4)] flex-shrink-0" />
-                )}
+                {/* Il quadratino della riga in partenza. */}
+                {isActive && <span className="w-1.5 h-1.5 bg-accent flex-shrink-0" />}
               </>
             )}
           </NavLink>
         ))}
       </div>
 
-      {/* Footer */}
-      <div className="border-t-4 border-primary bg-surface/95">
-        <div className="px-5 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-on-surface-variant/40">
-              <span className="material-symbols-outlined text-sm">verified</span>
-              <span className="font-headline font-bold text-xs uppercase tracking-wider">
-                &copy; {year}
-              </span>
-            </div>
-            <div className="flex rounded-sm border-2 border-primary overflow-hidden">
-              <button
-                onClick={() => setLang('it')}
-                className={`px-3 py-1 font-headline font-bold text-xs uppercase tracking-wider transition-colors ${
-                  lang === 'it'
-                    ? 'bg-primary text-on-primary'
-                    : 'text-on-surface-variant/50 hover:text-primary hover:bg-primary/10'
-                }`}
-              >
-                IT
-              </button>
-              <button
-                onClick={() => setLang('en')}
-                className={`px-3 py-1 font-headline font-bold text-xs uppercase tracking-wider transition-colors ${
-                  lang === 'en'
-                    ? 'bg-primary text-on-primary'
-                    : 'text-on-surface-variant/50 hover:text-primary hover:bg-primary/10'
-                }`}
-              >
-                EN
-              </button>
-            </div>
-          </div>
-          {isAdmin && (
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t-2 border-primary/10">
-              <span className="w-2 h-2 rounded-full bg-primary animate-ping flex-shrink-0 shadow-[0_0_6px_rgba(200,76,9,0.4)]" />
-              <span className="font-headline font-bold text-xs uppercase tracking-wider text-primary">
-                Admin
-              </span>
-            </div>
-          )}
-          {data.length > 0 && (
-            <div className="flex items-center gap-2 mt-2 text-on-surface-variant/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse-soft" />
-              <span className="font-headline font-bold text-xs">
-                {t('sidebar.pizzeriasCount', { count: data.length })}
-              </span>
-            </div>
-          )}
+      <div className="border-t border-white/10 px-5 py-3.5">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <span className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-on-ink/45">
+            &copy; {year}
+          </span>
+          <LangToggle />
         </div>
+        {isAdmin && (
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-1.5 h-1.5 bg-accent flex-shrink-0" />
+            <span className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-accent">
+              Admin
+            </span>
+          </div>
+        )}
+        {data.length > 0 && (
+          <div className="flex items-center gap-2 text-on-ink/45">
+            <span className="w-1 h-1 rounded-full bg-on-ink/40 flex-shrink-0" />
+            <span className="font-label text-[0.68rem] tracking-wide">
+              {t('sidebar.pizzeriasCount', { count: data.length })}
+            </span>
+          </div>
+        )}
       </div>
     </nav>
   );

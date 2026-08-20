@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../../i18n/I18nContext';
 
 export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPrice, onSubmitted }) {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const [author, setAuthor] = useState('');
   const [proposedPrice, setProposedPrice] = useState('');
   const [content, setContent] = useState('');
@@ -57,19 +57,19 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
       const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
       const { csrfToken } = await csrfRes.json();
 
-      const noteText = content.trim().length >= 5
-        ? content.trim()
-        : `${t('priceProposal.priceLabel')} €${price.toFixed(2)}`;
-
-      const res = await fetch('/api/comments', {
+      /* Rotta dedicata: questa e' una proposta di prezzo, non un commento.
+         La nota parte com'e' — se vuota resta vuota. Prima, quando era corta,
+         veniva sostituita con «Prezzo Margherita €5.50», cioe' un messaggio
+         che ripeteva a parole il numero gia' scritto nel campo accanto. */
+      const res = await fetch('/api/proposals', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({
           postId: pizzeriaId,
           author: author.trim(),
-          content: noteText,
           proposedPrice: price,
+          note: content.trim(),
           honeypot,
           mathAnswer: parseInt(captchaAnswer),
           captchaToken: captcha?.captchaToken,
@@ -93,21 +93,18 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
 
   if (success) {
     return (
-      <div className="bg-tertiary-container border-4 border-tertiary p-6 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="material-symbols-outlined text-3xl text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>
-            task_alt
+      /* Due <span> affiancati: e' la forma «icona + testo» dell'avviso, l'unica
+         che puo' accendere il flex senza spezzare il testo in colonne. */
+      <div className="panel">
+        <div className="alert alert-success">
+          <span className="material-symbols-outlined text-base leading-none" style={{ fontVariationSettings: "'FILL' 1" }}>task_alt</span>
+          <span>
+            <strong>{t('priceProposal.successTitle')}</strong> {t('priceProposal.successDesc')}
           </span>
-          <h4 className="font-headline font-black uppercase text-lg text-tertiary">
-            {t('priceProposal.successTitle')}
-          </h4>
         </div>
-        <p className="font-body text-sm text-on-surface-variant">
-          {t('priceProposal.successDesc')}
-        </p>
         <button
           onClick={() => { setSuccess(false); setProposedPrice(''); setContent(''); setAuthor(''); fetchCaptcha(); }}
-          className="mt-4 font-label font-bold uppercase text-xs py-1 px-4 border-2 border-tertiary text-tertiary hover:bg-tertiary hover:text-on-tertiary transition-colors"
+          className="btn btn-ghost btn-sm mt-4"
         >
           {t('priceProposal.submitAnother')}
         </button>
@@ -116,108 +113,89 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
   }
 
   return (
+    /* Un modulo e' composizione della richiesta, non lettura del risultato:
+       su carta sparisce tutto (regola della stampa). */
     <form
       onSubmit={handleSubmit}
       onClick={(e) => e.stopPropagation()}
-      className="space-y-4"
+      className="no-print"
       noValidate
     >
-      {/* Header */}
-      <div className="bg-secondary-container border-2 border-primary p-3 flex items-center gap-3">
-        <span className="material-symbols-outlined text-secondary text-2xl flex-shrink-0">
-          local_pizza
-        </span>
-        <div>
-          <p className="font-headline font-black uppercase text-sm text-primary leading-tight">
-            {pizzeriaName}
-          </p>
-          {currentPrice > 0 && (
-            <p className="font-label text-xs text-on-surface-variant mt-0.5">
-              {t('priceProposal.currentPrice')} <span className="font-headline font-black text-secondary">€{currentPrice.toFixed(2)}</span>
-            </p>
-          )}
-        </div>
+      <div className="section-title">
+        <h2 className="text-base">{pizzeriaName}</h2>
+        {currentPrice > 0 && (
+          <span className="badge badge-ghost">
+            {t('priceProposal.currentPrice')} &euro;{money(currentPrice)}
+          </span>
+        )}
       </div>
 
-      {/* Price */}
-      <div>
-        <label className="block text-xs font-black font-headline uppercase tracking-widest text-primary mb-1.5">
-          {t('priceProposal.priceLabel')}
-        </label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-headline font-black text-primary text-sm">€</span>
-          <input
-            type="number"
-            min="0.10"
-            max="100"
-            step="0.50"
-            value={proposedPrice}
-            onChange={(e) => setProposedPrice(e.target.value)}
-            className="w-full bg-surface border-2 border-primary pl-8 pr-3 py-2.5 font-headline font-black text-lg text-primary focus:outline-none focus:border-secondary"
-            placeholder="0.00"
-            required
-          />
-        </div>
-      </div>
+      <label className="field">
+        <span>{t('priceProposal.priceLabel')} (&euro;)</span>
+        <input
+          type="number"
+          min="0.10"
+          max="100"
+          step="0.50"
+          value={proposedPrice}
+          onChange={(e) => setProposedPrice(e.target.value)}
+          className="w-full font-mono tabular-nums text-lg"
+          placeholder="0.00"
+          required
+        />
+      </label>
 
-      {/* Author */}
-      <div>
-        <label className="block text-xs font-black font-headline uppercase tracking-widest text-primary mb-1.5">
-          {t('priceProposal.authorLabel')}
-        </label>
+      <label className="field">
+        <span>{t('priceProposal.authorLabel')}</span>
         <input
           type="text"
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
           maxLength={30}
-          className="w-full bg-surface border-2 border-primary px-3 py-2.5 font-body font-bold text-sm text-primary focus:outline-none focus:border-secondary"
+          className="w-full"
           placeholder={t('priceProposal.authorPlaceholder')}
           required
         />
-        <p className="text-right text-[10px] text-on-surface-variant mt-0.5">{author.length}/30</p>
-      </div>
+        <span className="font-mono text-[0.68rem] text-on-surface-variant/70 text-right block mt-0.5">{author.length}/30</span>
+      </label>
 
-      {/* Notes */}
-      <div>
-        <label className="block text-xs font-black font-headline uppercase tracking-widest text-primary mb-1.5">
-          {t('priceProposal.notesLabel')}
-        </label>
+      <label className="field">
+        <span>{t('priceProposal.notesLabel')}</span>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           maxLength={200}
           rows={2}
-          className="w-full bg-surface border-2 border-primary px-3 py-2.5 font-body font-bold text-sm text-primary focus:outline-none focus:border-secondary resize-none"
+          className="w-full resize-none"
           placeholder={t('priceProposal.notesPlaceholder')}
         />
-        <p className="text-right text-[10px] text-on-surface-variant -mt-1">{content.length}/200</p>
-      </div>
+        <span className="font-mono text-[0.68rem] text-on-surface-variant/70 text-right block mt-0.5">{content.length}/200</span>
+      </label>
 
-      {/* Captcha */}
-      <div className="bg-surface-variant border-2 border-primary p-3">
-        <p className="text-xs font-black font-headline uppercase tracking-widest text-on-surface-variant mb-2">
+      {/* La verifica e' un dato da leggere, quindi e' composta come un flap:
+          e' anche la cosa piu' facile da trovare nel modulo. */}
+      <div className="panel">
+        <span className="block font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant mb-2">
           {t('priceProposal.captchaLabel')}
-        </p>
+        </span>
         <div className="flex items-center gap-3">
           {captcha ? (
-            <span className="font-headline text-xl font-black bg-primary text-on-primary px-4 py-2 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] min-w-[80px] text-center">
-              {captcha.question}
-            </span>
+            <span className="flap">{captcha.question}</span>
           ) : (
-            <span className="font-label text-sm text-on-surface-variant">{t('priceProposal.captchaLoading')}</span>
+            <span className="font-body text-sm text-on-surface-variant">{t('priceProposal.captchaLoading')}</span>
           )}
           <input
             type="number"
             value={captchaAnswer}
             onChange={(e) => setCaptchaAnswer(e.target.value)}
-            className="w-20 bg-surface border-2 border-primary px-3 py-2 font-headline font-black text-lg focus:outline-none focus:border-secondary text-center"
+            className="w-20 text-center font-mono tabular-nums text-lg"
             placeholder="?"
             required
           />
           <button
             type="button"
             onClick={fetchCaptcha}
-            className="text-on-surface-variant hover:text-primary transition-colors"
+            className="btn btn-ghost btn-sm btn-icon"
             title={t('priceProposal.newCalculation')}
             tabIndex={-1}
           >
@@ -226,11 +204,10 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
         </div>
       </div>
 
-      {/* Error */}
       {error && (
-        <div className="bg-error-container border-2 border-error p-3 flex items-start gap-2">
-          <span className="material-symbols-outlined text-error text-sm flex-shrink-0 mt-0.5">error</span>
-          <p className="font-label font-bold text-sm text-on-error-container">{error}</p>
+        <div className="alert alert-error mt-4">
+          <span className="material-symbols-outlined text-base leading-none">error</span>
+          <span>{error}</span>
         </div>
       )}
 
@@ -245,26 +222,22 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
         aria-hidden="true"
       />
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={submitting || !captcha}
-        className="w-full flex items-center justify-center gap-2 bg-secondary text-on-secondary font-headline font-black uppercase py-3 px-6 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
-      >
+      {/* Il rosso e' qui perche' qui si agisce: si invia la proposta. */}
+      <button type="submit" disabled={submitting || !captcha} className="btn btn-secondary btn-block mt-4">
         {submitting ? (
           <>
-            <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
+            <span className="spinner" />
             {t('priceProposal.submitting')}
           </>
         ) : (
           <>
-            <span className="material-symbols-outlined text-sm">send</span>
+            <span className="material-symbols-outlined text-base">send</span>
             {t('priceProposal.submitBtn')}
           </>
         )}
       </button>
 
-      <p className="text-[10px] font-label text-on-surface-variant text-center">
+      <p className="font-body text-[0.72rem] text-on-surface-variant text-center mt-2">
         {t('priceProposal.infoText')}
       </p>
     </form>

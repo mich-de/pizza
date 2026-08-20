@@ -6,8 +6,11 @@ const PUBLIC_ROUTES = [
   '/api/data/towns',
   '/api/data/venues',
   '/api/data/prices',
+  '/api/data/events',
   '/api/comments',
   '/api/comments/captcha',
+  // Segnalare un prezzo sbagliato e' un gesto pubblico, come commentare.
+  '/api/proposals',
   '/api/feed/posts',
   '/api/auth/login',
   '/api/auth/refresh',

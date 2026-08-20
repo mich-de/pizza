@@ -63,6 +63,7 @@
     "subtitle": "All pizza events, festivals and sagre across the Sorrento Peninsula",
     "when": "WHEN",
     "where": "WHERE",
+    "venue": "Venue",
     "highlights": "HIGHLIGHTS",
     "pastEvent": "PAST EVENT",
     "upcoming": "UPCOMING",
@@ -93,7 +94,7 @@
   },
   "feed": {
     "title": "Pizza Feed",
-    "subtitle": "Live Pizzeria Analytics & Intel",
+    "subtitle": "Community reviews and finds: the pizzas tried across the Sorrento Peninsula.",
     "whatsNew": "Share your pizza discovery...",
     "latest": "LATEST",
     "topRated": "TOP",
@@ -143,7 +144,8 @@
     "maps": "Maps",
     "currentLabel": "(current)",
     "tripAdvisor": "TripAdvisor",
-    "closedPermanently": "CLOSED PERMANENTLY"
+    "closedPermanently": "CLOSED PERMANENTLY",
+    "perPage": "Per page"
   },
   "directory": {
     "title": "Directory",
@@ -317,6 +319,9 @@
     "confirmApprove": "Approve",
     "confirmReject": "Reject",
     "confirmPrompt": "{action} this {item}?",
+    "itemProposal": "proposal",
+    "itemComment": "comment",
+    "itemPost": "post",
     "proposalsSummary": "{proposals} proposals + {comments} comments + {posts} discoveries pending",
     "open": "Open",
     "closed": "Closed",
@@ -331,6 +336,7 @@
     "loggedInAs": "Logged in as:",
     "logout": "Logout",
     "pageSize": "{n} / page",
+    "rowsPerPage": "Rows per page",
     "allPages": "All",
     "paginationOf": "{from}–{to} of {total}",
     "previous": "Previous",
@@ -390,7 +396,50 @@
     "descriptions": "DESCRIPTIONS",
     "extras": "EXTRAS",
     "addPrice": "Add price",
-    "margheritaPrice": "Margherita price (€)"
+    "margheritaPrice": "Margherita price (€)",
+    "panelSubtitle": "System management: pizzerias, approvals and users in one place.",
+    "proposalsSubtitle": "Proposals, comments and finds awaiting review. Approve or reject."
+  },
+  "adminEvents": {
+    "title": "Events",
+    "subtitle": "Add, edit and delete calendar events.",
+    "new": "New event",
+    "newTitle": "New event",
+    "editTitle": "Edit event",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving…",
+    "confirmDelete": "Delete this event? This cannot be undone.",
+    "empty": "No events scheduled",
+    "emptyDesc": "Press \"New event\" to add one.",
+    "created": "Event created",
+    "updated": "Event updated",
+    "deleted": "Event deleted",
+    "loadError": "Could not load events",
+    "saveError": "Save failed",
+    "deleteError": "Delete failed",
+    "errorRequired": "Title, dates and town are required",
+    "errorDateOrder": "The end date is before the start date",
+    "fieldTitle": "Title",
+    "fieldDateStart": "Start date",
+    "fieldDateEnd": "End date",
+    "fieldCity": "Town",
+    "chooseCity": "Choose a town",
+    "fieldType": "Type",
+    "fieldVenue": "Venue",
+    "fieldDescription": "Description",
+    "fieldHighlights": "Highlights",
+    "highlightsPlaceholder": "One per line",
+    "fieldImage": "Image",
+    "posterDrop": "Drop the poster here",
+    "posterHint": "or click to pick one — PNG, JPEG, WebP or GIF, up to 4 MB",
+    "posterUploading": "Uploading…",
+    "posterReplace": "Replace",
+    "posterRemove": "Remove",
+    "posterNotImage": "That file is not an image",
+    "posterTooBig": "Image too heavy: the limit is 4 MB",
+    "posterFailed": "Upload failed"
   },
   "settings": {
     "title": "Settings",
@@ -465,6 +514,7 @@
     "verifyCodeDesc": "Enter the 6-digit code from your authenticator app",
     "verifyCodePlaceholder": "000000",
     "verifyAndEnable": "Verify and Enable",
+    "verifying": "Verifying…",
     "disable2FA": "Disable 2FA",
     "disable2FADesc": "Enter your password to disable two-factor authentication",
     "disabling": "Disabling...",
@@ -480,7 +530,28 @@
     "regenerationError": "Regeneration error",
     "validationError": "Validation error",
     "exportError": "Export error",
-    "purgeError": "Cache purge error"
+    "purgeError": "Cache purge error",
+    "dateTime": "Date & Time",
+    "dateTimeSample": "How it reads now",
+    "dateTimeZoneNow": "Time zone in use: {zone}",
+    "dateTimeEventSample": "Event",
+    "dateTimeReset": "Reset to defaults",
+    "dateFormat": "Date format",
+    "dateFormat_auto": "Automatic (follows language)",
+    "dateFormat_dmy": "Day/Month/Year",
+    "dateFormat_mdy": "Month/Day/Year",
+    "dateFormat_iso": "ISO 8601",
+    "dateFormat_medium": "Short month",
+    "dateFormat_long": "Full month",
+    "timeFormat": "Time format",
+    "timeFormat_auto": "Automatic (follows language)",
+    "timeFormat_h24": "24-hour — 18:30",
+    "timeFormat_h12": "12-hour — 6:30 PM",
+    "timeZone": "Time zone",
+    "zoneDevice": "Device time zone",
+    "timeZoneSearch": "Search a time zone",
+    "timeZoneEmpty": "No zone matches",
+    "timeZoneNote": "Type to search across all zones"
   },
   "sidebar": {
     "mediaMargherita": "Margherita Average",
@@ -520,7 +591,8 @@
     "minLengthError": "Comment must be at least 5 characters.",
     "proposalLabel": "Proposal:",
     "fetchCaptchaError": "Unable to load captcha. Try again.",
-    "invalidRequest": "Invalid request."
+    "invalidRequest": "Invalid request.",
+    "leaveComment": "Leave a comment"
   },
   "loading": {
     "margherita": "Loading Margherita…"
@@ -537,8 +609,6 @@
     "verify": "Verify",
     "verifying": "Verifying…",
     "pizzaRadar": "PizzaRadar Sorrento",
-    "penisola": "Sorrento Peninsula",
-    "areaRiservata": "Restricted Area",
     "username": "Username",
     "usernamePlaceholder": "Username",
     "password": "Password",
@@ -562,7 +632,8 @@
     "passwordsMatch": "Passwords match",
     "passwordChangeError": "Password change error",
     "saving": "Saving…",
-    "saveAndContinue": "Save and Continue"
+    "saveAndContinue": "Save and Continue",
+    "loginDesc": "Editorial access only. Administrator credentials required."
   },
   "priceProposal": {
     "errorFetchCaptcha": "Unable to load captcha. Try again.",
@@ -626,6 +697,9 @@
     "events": "Events",
     "posts": "Posts",
     "votes": "votes",
-    "sortBy": "Sort By"
+    "sortBy": "Sort By",
+    "peninsula": "Sorrento Peninsula",
+    "restrictedArea": "Restricted Area",
+    "restaurant": "Restaurant"
   }
 }

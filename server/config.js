@@ -23,9 +23,18 @@ export const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost
 export const PRIVATE_DIR = join(__dirname, 'private');
 export const DATA_DIR = join(root, 'public', 'data');
 
+/* Le locandine caricate dal Pannello. Stanno sotto `public/` come tutto il
+   resto degli statici, cosi' una ricompilazione se le porta dentro `dist/`;
+   ma vengono anche servite direttamente da li', altrimenti una locandina
+   appena caricata non si vedrebbe fino alla build successiva. */
+export const UPLOADS_DIR = join(root, 'public', 'images', 'eventi');
+export const UPLOADS_URL = '/images/eventi';
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 export const TOWNS_PATH = join(DATA_DIR, 'towns.json');
 export const VENUES_PATH = join(DATA_DIR, 'venues.json');
 export const PRICES_PATH = join(DATA_DIR, 'prices.json');
+export const EVENTS_PATH = join(DATA_DIR, 'events.json');
 export const COMMENTS_PATH = join(PRIVATE_DIR, 'comments.json');
 export const PROPOSALS_PATH = join(PRIVATE_DIR, 'price-proposals.json');
 export const ADMINS_PATH = join(PRIVATE_DIR, 'admins.json');

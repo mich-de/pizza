@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CHIP_ACTIVE } from '../config/uiTokens';
 
 export default function SocialActions({ fires, onCommentClick, t }) {
   const [isLiked, setIsLiked] = useState(false);
@@ -29,10 +30,13 @@ export default function SocialActions({ fires, onCommentClick, t }) {
 
   return (
     <div className="flex items-center gap-2 border-t border-outline-variant pt-4 mt-5">
+      {/* Tre bersagli attaccati l'uno all'altro, senza spazio in mezzo: alti
+          36px col dito si sbaglia bottone. Su telefono salgono a 44; da tablet
+          in su tornano compatti, che col mouse la densita' e' un pregio. */}
       <div className="flex items-center bg-surface-variant border border-outline-variant rounded-sm overflow-hidden">
         <button 
           onClick={handleLike}
-          className={`group flex items-center gap-1.5 px-3 py-1.5 transition-colors duration-150 border-r border-outline-variant ${isLiked ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-surface hover:text-primary'}`}
+          className={`group flex items-center gap-1.5 px-3 py-1.5 min-h-11 md:min-h-0 transition-colors duration-150 border-r border-outline-variant ${isLiked ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-surface hover:text-primary'}`}
         >
           <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>
             local_fire_department
@@ -42,7 +46,7 @@ export default function SocialActions({ fires, onCommentClick, t }) {
 
         <button 
           onClick={onCommentClick}
-          className="group flex items-center gap-1.5 px-3 py-1.5 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150 border-r border-outline-variant"
+          className="group flex items-center gap-1.5 px-3 py-1.5 min-h-11 md:min-h-0 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150 border-r border-outline-variant"
         >
           <span className="material-symbols-outlined text-lg">chat_bubble</span>
           <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.comments')}</span>
@@ -50,7 +54,7 @@ export default function SocialActions({ fires, onCommentClick, t }) {
 
         <button 
           onClick={handleShare}
-          className="group flex items-center gap-1.5 px-3 py-1.5 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150"
+          className="group flex items-center gap-1.5 px-3 py-1.5 min-h-11 md:min-h-0 text-on-surface-variant hover:bg-surface hover:text-primary transition-colors duration-150"
         >
           <span className="material-symbols-outlined text-lg">share</span>
           <span className="font-label font-semibold text-xs uppercase hidden sm:inline">{t?.('common.share')}</span>
@@ -59,7 +63,8 @@ export default function SocialActions({ fires, onCommentClick, t }) {
 
       <button 
         onClick={() => setIsSaved(!isSaved)}
-        className={`ml-auto flex items-center justify-center w-9 h-9 border border-outline-variant rounded-sm transition-colors duration-150 ${isSaved ? 'bg-tertiary/10 text-tertiary border-tertiary/30' : 'bg-surface text-on-surface-variant hover:bg-surface-variant'}`}
+        aria-pressed={isSaved}
+        className={`btn btn-icon btn-sm ml-auto ${isSaved ? CHIP_ACTIVE : 'btn-ghost'}`}
       >
         <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}>
           bookmark

@@ -1,12 +1,8 @@
 export const PAGE_SIZE = 20;
 
-export function formatDate(iso, lang) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString(lang === 'it' ? 'it-IT' : 'en-US', {
-    year: 'numeric', month: 'short', day: 'numeric'
-  });
-}
+/* `formatDate` stava qui e ignorava il fuso scelto in Impostazioni. Ora la
+   formattazione e' una sola per tutto il sito: `useDateTime()` in
+   `src/prefs/DateTimeContext.jsx`. */
 
 export function priceTier(price, min, range) {
   if (range === 0) return 'mid';
