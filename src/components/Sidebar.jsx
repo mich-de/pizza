@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import LangToggle from './ui/LangToggle';
 import { useI18n } from '../i18n/I18nContext';
 import { navItems } from '../config/navigation';
 import { useStitchedData, usePendingCounts } from '../hooks/useDataFetch';
@@ -12,7 +13,7 @@ const activeLinkClass = `${linkBase} text-accent border-accent bg-white/[0.05]`;
 const inactiveLinkClass = `${linkBase} text-on-ink/60 border-transparent hover:text-on-ink hover:bg-white/[0.05]`;
 
 export default function Sidebar() {
-  const { t, lang, setLang } = useI18n();
+  const { t, lang } = useI18n();
   const { data } = useStitchedData();
   const { total: pendingTotal, isAdmin } = usePendingCounts();
   const year = new Date().getFullYear();
@@ -95,24 +96,7 @@ export default function Sidebar() {
           <span className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-on-ink/45">
             &copy; {year}
           </span>
-          <div className="flex border border-white/20" style={{ borderRadius: '2px' }}>
-            <button
-              onClick={() => setLang('it')}
-              className={`px-2.5 py-0.5 font-label text-[0.68rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-                lang === 'it' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-              }`}
-            >
-              IT
-            </button>
-            <button
-              onClick={() => setLang('en')}
-              className={`px-2.5 py-0.5 font-label text-[0.68rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-                lang === 'en' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-              }`}
-            >
-              EN
-            </button>
-          </div>
+          <LangToggle />
         </div>
         {isAdmin && (
           <div className="flex items-center gap-2 mb-1.5">

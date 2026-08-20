@@ -536,8 +536,14 @@ hr.divider {
 .eyebrow-primary { color: var(--primary); }
 .eyebrow-primary::before { background: var(--primary); }
 
-input[type="text"], input[type="search"], input[type="password"], input[type="email"],
-input[type="tel"], input[type="url"], input[type="date"], input[type="number"],
+/* Per esclusione, non per elenco.
+   Prima qui c'era la lista dei tipi da vestire — `text`, `search`, `password`…
+   — e un `<input>` scritto senza attributo `type` non ne faceva parte, pur
+   essendo un campo di testo a tutti gli effetti: restava nudo, alto 24px
+   contro i 38 degli altri, in mezzo a campi vestiti. Un elenco di cosa
+   includere dimentica; un elenco di cosa escludere no, perche' le caselle e i
+   pulsanti sono pochi e non cambiano. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not([type="submit"]):not([type="reset"]):not([type="button"]):not([type="image"]),
 select, textarea {
   /* ADATTAMENTO PIZZARADAR: niente width:100% d'ufficio. Il progetto dichiara
      le larghezze sui singoli campi (w-24 sul prezzo, w-full sui filtri) e una
@@ -969,7 +975,49 @@ tbody tr:hover { background: oklch(var(--bc) / .04); }
 .site-footer .container { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 
 /* ---------------------------------------------------------------------------
-   16. Stampa
+   16. Il dito
+   ---------------------------------------------------------------------------
+   Un tabellone e' denso apposta: col mouse si punta un bersaglio di sei pixel e
+   si prende. Col dito no. Il polpastrello copre circa un centimetro, cioe' una
+   quarantina di pixel, e sotto quella misura non e' piu' precisione, e' fortuna:
+   si tocca «Elimina» volendo «Modifica».
+
+   Quindi la densita' resta dov'e' utile e cede dove serve. La condizione e'
+   doppia apposta: la larghezza prende il telefono, `pointer: coarse` prende il
+   portatile touch e il tablet, che di larghezza sono schermi grandi ma di
+   puntatore sono dita. Basta una delle due.
+
+   Si allarga solo in altezza. Il carattere, la spaziatura e gli spigoli non si
+   toccano: e' lo stesso sistema, con piu' aria attorno ai bersagli. */
+
+@media (max-width: 767px), (pointer: coarse) {
+  /* 44px e' la soglia sotto cui gli errori di tocco diventano frequenti.
+     `min-height` e non `height`: un pulsante che va a capo deve poter crescere. */
+  .btn, .btn-sm { min-height: 44px; }
+  .btn-icon { width: 44px; height: 44px; }
+
+  /* I campi: 38 e 39px misurati, cioe' appena sotto. Stesso criterio per
+     esclusione della sezione 8, per la stessa ragione. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not([type="submit"]):not([type="reset"]):not([type="button"]):not([type="image"]),
+  select, textarea { min-height: 44px; }
+  /* La casella di spunta si tocca sul quadratino, che nessun `min-height`
+     ingrandisce: si ingrandisce il quadratino. */
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
+
+  /* Le righe del selettore ricercabile: 33px, ed e' l'elenco in cui si sbaglia
+     di piu' perche' le voci si somigliano — 418 fusi orari, uno sotto l'altro. */
+  .picker-row { min-height: 44px; }
+
+  /* Il chip e' un filtro che si accende e si spegne: si tocca spesso, e in
+     riga con altri chip uguali. Nessuno sconto sulla misura. */
+  .chip { min-height: 44px; }
+  /* La crocetta dentro il chip e' il bersaglio piu' piccolo del sistema e
+     l'unica azione del chip che non si annulla da sola. */
+  .chip button { min-width: 32px; min-height: 32px; }
+}
+
+/* ---------------------------------------------------------------------------
+   17. Stampa
    ---------------------------------------------------------------------------
    La stampa e' un formato di consegna, non un ripiego. Sul foglio il tabellone
    non serve: inchiostro pieno e fondi ambra sprecano toner e abbassano il

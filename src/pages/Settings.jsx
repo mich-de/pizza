@@ -16,7 +16,14 @@ const ZONES = [
 ];
 
 /* Interruttore squadrato: acceso e' una paletta girata (fondo d'inchiostro) con
-   la linguetta ambra — l'ambra segnala lo stato, non colora il fondo. */
+   la linguetta ambra — l'ambra segnala lo stato, non colora il fondo.
+
+   Il binario e' dentro il pulsante, non e' il pulsante. Prima erano la stessa
+   cosa, e allora l'area da toccare era alta quanto il disegno: 28px, sotto la
+   soglia, in una colonna di sette interruttori uno sotto l'altro — il posto
+   dove sbagliare bersaglio significa spegnere l'impostazione accanto. Ora il
+   pulsante e' una fascia trasparente alta 44px su telefono e il binario resta
+   56x28 in mezzo: si tocca piu' largo, si vede identico. */
 function Toggle({ value, onChange, label }) {
   return (
     <button
@@ -25,9 +32,13 @@ function Toggle({ value, onChange, label }) {
       aria-checked={value}
       aria-label={label}
       onClick={() => onChange(!value)}
-      className={`w-14 h-7 border shrink-0 flex items-center transition-colors ${value ? 'bg-ink border-ink justify-end' : 'bg-surface border-outline justify-start'}`}
+      className="shrink-0 flex items-center min-h-11 md:min-h-0"
     >
-      <span className={`w-5 h-5 mx-[3px] ${value ? 'bg-accent' : 'bg-outline'}`} />
+      <span
+        className={`w-14 h-7 border flex items-center transition-colors ${value ? 'bg-ink border-ink justify-end' : 'bg-surface border-outline justify-start'}`}
+      >
+        <span className={`w-5 h-5 mx-[3px] ${value ? 'bg-accent' : 'bg-outline'}`} />
+      </span>
     </button>
   );
 }

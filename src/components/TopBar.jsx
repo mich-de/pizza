@@ -5,48 +5,12 @@ import { useStitchedData, usePendingCounts } from '../hooks/useDataFetch';
 import { useState, useEffect } from 'react';
 import { checkAuth } from '../services/authService';
 import BrandPlate from './BrandPlate';
+import LangToggle from './ui/LangToggle';
 import { formatAmount } from '../utils/formatAmount';
 
 const drawerLinkBase = 'flex items-center gap-3 px-5 py-2.5 font-label text-[0.82rem] font-medium uppercase tracking-[0.075em] transition-colors duration-150 border-l-2';
 const activeLinkClassMobile = `${drawerLinkBase} text-accent border-accent bg-white/[0.05]`;
 const inactiveLinkClassMobile = `${drawerLinkBase} text-on-ink/60 border-transparent hover:text-on-ink hover:bg-white/[0.05]`;
-
-function LangToggle({ dense }) {
-  const { lang, setLang } = useI18n();
-  const toggle = () => setLang(lang === 'it' ? 'en' : 'it');
-
-  if (dense) {
-    return (
-      <button
-        onClick={toggle}
-        className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-on-ink/60 hover:text-accent transition-colors"
-      >
-        {lang === 'it' ? 'EN' : 'IT'}
-      </button>
-    );
-  }
-
-  return (
-    <div className="flex border border-white/20" style={{ borderRadius: '2px' }}>
-      <button
-        onClick={() => setLang('it')}
-        className={`px-2.5 py-0.5 font-label text-[0.68rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-          lang === 'it' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-        }`}
-      >
-        IT
-      </button>
-      <button
-        onClick={() => setLang('en')}
-        className={`px-2.5 py-0.5 font-label text-[0.68rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-          lang === 'en' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-        }`}
-      >
-        EN
-      </button>
-    </div>
-  );
-}
 
 export default function TopBar({ onMenuToggle }) {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -64,7 +28,8 @@ export default function TopBar({ onMenuToggle }) {
       <div className="flex items-center gap-2.5">
         <button
           onClick={onMenuToggle}
-          className="w-9 h-9 flex items-center justify-center text-on-ink/70 hover:text-on-ink hover:bg-white/[0.08] transition-colors"
+          aria-label="Menu"
+          className="w-11 h-11 flex items-center justify-center text-on-ink/70 hover:text-on-ink hover:bg-white/[0.08] transition-colors"
           style={{ borderRadius: '2px' }}
         >
           <span className="material-symbols-outlined text-2xl">menu</span>
@@ -72,7 +37,7 @@ export default function TopBar({ onMenuToggle }) {
         <BrandPlate size="sm" />
       </div>
       <div className="flex items-center gap-2">
-        <LangToggle dense />
+        <LangToggle variant="dense" />
         {isAdmin && (
           <span className="font-label text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-accent border border-accent/40 px-1.5 py-0.5" style={{ borderRadius: '2px' }}>
             Admin
@@ -84,7 +49,7 @@ export default function TopBar({ onMenuToggle }) {
 }
 
 export function MobileDrawer({ open, onClose }) {
-  const { t, lang, setLang } = useI18n();
+  const { t, lang } = useI18n();
   const { data } = useStitchedData();
   const { total: pendingTotal, isAdmin } = usePendingCounts();
   const year = new Date().getFullYear();
@@ -100,15 +65,28 @@ export function MobileDrawer({ open, onClose }) {
   if (!open) return null;
 
   return (
+    /* z-60, non z-50, e non e' un dettaglio: il cassetto e la barra alta
+       stavano sullo stesso piano, e in `Layout` il cassetto e' scritto per
+       primo — a parita' di z-index vince l'ultimo, quindi la barra copriva i
+       primi 61px del cassetto. Sotto ci finivano il marchio e la crocetta di
+       chiusura: invisibili, e il tocco sulla crocetta arrivava alla barra, non
+       al pulsante. Si chiudeva solo toccando fuori, che pero' e' una cosa che
+       bisogna sapere. */
     <>
-      <div className="fixed inset-0 z-50 bg-black/50 md:hidden animate-fade-in" onClick={onClose} />
-      <nav className="fixed top-0 left-0 z-50 h-full w-72 bg-ink text-on-ink border-r border-white/10 md:hidden flex flex-col animate-slide-in-right">
+      <div className="fixed inset-0 z-[60] bg-black/50 md:hidden animate-fade-in" onClick={onClose} />
+      <nav className="fixed top-0 left-0 z-[60] h-full w-72 bg-ink text-on-ink border-r border-white/10 md:hidden flex flex-col animate-slide-in-right">
         <div className="px-5 pt-5 pb-4 relative">
           <div className="flex items-start justify-between gap-3">
             <BrandPlate />
+            {/* Il cassetto esiste solo sul telefono, quindi questo pulsante si
+                tocca sempre col dito: 32px erano un bersaglio da mancare, e
+                mancarlo qui vuol dire toccare il marchio o un collegamento
+                dietro. Il margine negativo cresce con lui perche' la crocetta
+                resti allineata al bordo del pannello. */}
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center text-on-ink/50 hover:text-on-ink hover:bg-white/[0.08] transition-colors flex-shrink-0 -mr-1"
+              aria-label={t('common.close')}
+              className="w-11 h-11 flex items-center justify-center text-on-ink/50 hover:text-on-ink hover:bg-white/[0.08] transition-colors flex-shrink-0 -mr-2.5 -mt-1.5"
               style={{ borderRadius: '2px' }}
             >
               <span className="material-symbols-outlined text-lg">close</span>
@@ -170,24 +148,7 @@ export function MobileDrawer({ open, onClose }) {
             <span className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-on-ink/45">
               &copy; {year}
             </span>
-            <div className="flex border border-white/20" style={{ borderRadius: '2px' }}>
-              <button
-                onClick={() => setLang('it')}
-                className={`px-2.5 py-0.5 font-label text-[0.68rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-                  lang === 'it' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-                }`}
-              >
-                IT
-              </button>
-              <button
-                onClick={() => setLang('en')}
-                className={`px-2.5 py-0.5 font-label text-[0.68rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-                  lang === 'en' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-                }`}
-              >
-                EN
-              </button>
-            </div>
+            <LangToggle />
           </div>
           {isAdmin && (
             <div className="flex items-center gap-2 mb-1.5">

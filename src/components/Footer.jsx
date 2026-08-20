@@ -2,9 +2,10 @@ import { useI18n } from '../i18n/I18nContext';
 import { navItems } from '../config/navigation';
 import { NavLink } from 'react-router-dom';
 import BrandPlate from './BrandPlate';
+import LangToggle from './ui/LangToggle';
 
 export default function Footer() {
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const year = new Date().getFullYear();
 
   return (
@@ -31,14 +32,18 @@ export default function Footer() {
             <h4 className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-on-ink/45 pb-2 border-b border-white/10">
               {t('footer.quickLinks')}
             </h4>
-            <nav className="flex flex-col gap-1.5">
+            {/* Una riga di testo alta 19px, e sette una sotto l'altra a 6px di
+                distanza: col dito si prende quella sbagliata. Su telefono ogni
+                voce diventa una riga da toccare; da tablet in su torna un
+                elenco compatto, che li' col mouse funziona. */}
+            <nav className="flex flex-col md:gap-1.5">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.to === '/'}
                   className={({ isActive }) =>
-                    `font-label text-[0.78rem] font-medium uppercase tracking-[0.075em] transition-colors ${
+                    `flex items-center min-h-11 md:min-h-0 font-label text-[0.78rem] font-medium uppercase tracking-[0.075em] transition-colors ${
                       isActive ? 'text-accent' : 'text-on-ink/60 hover:text-on-ink'
                     }`
                   }
@@ -54,24 +59,7 @@ export default function Footer() {
               <h4 className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-on-ink/45 pb-2 border-b border-white/10">
                 {t('footer.language')}
               </h4>
-              <div className="flex border border-white/20 w-fit" style={{ borderRadius: '2px' }}>
-                <button
-                  onClick={() => setLang('it')}
-                  className={`px-4 py-1.5 font-label text-[0.72rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-                    lang === 'it' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-                  }`}
-                >
-                  IT
-                </button>
-                <button
-                  onClick={() => setLang('en')}
-                  className={`px-4 py-1.5 font-label text-[0.72rem] font-semibold uppercase tracking-[0.07em] transition-colors ${
-                    lang === 'en' ? 'bg-accent text-on-accent' : 'text-on-ink/55 hover:text-on-ink hover:bg-white/[0.08]'
-                  }`}
-                >
-                  EN
-                </button>
-              </div>
+              <LangToggle variant="wide" />
             </div>
 
             <div className="pt-4 border-t border-white/10">
