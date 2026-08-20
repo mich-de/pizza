@@ -4,7 +4,6 @@ import { useI18n } from '../i18n/I18nContext';
 import { navItems } from '../config/navigation';
 import { useStitchedData, usePendingCounts } from '../hooks/useDataFetch';
 import BrandPlate from './BrandPlate';
-import { formatAmount } from '../utils/formatAmount';
 
 /* Le voci sono righe di tabellone: maiuscoletto spaziato, nessuna pastiglia.
    L'attiva si accende in ambra col quadratino, come la riga in partenza. */
@@ -13,7 +12,7 @@ const activeLinkClass = `${linkBase} text-accent border-accent bg-white/[0.05]`;
 const inactiveLinkClass = `${linkBase} text-on-ink/60 border-transparent hover:text-on-ink hover:bg-white/[0.05]`;
 
 export default function Sidebar() {
-  const { t, lang } = useI18n();
+  const { t, money } = useI18n();
   const { data } = useStitchedData();
   const { total: pendingTotal, isAdmin } = usePendingCounts();
   const year = new Date().getFullYear();
@@ -49,14 +48,14 @@ export default function Sidebar() {
           {/* Cifre nella paletta, valuta accanto in `.unit`: e' la forma del
               riferimento. L'etichetta sopra dice gia' che media e'. */}
           <div className="flex items-baseline">
-            <span className="flap flap-lg">{formatAmount(globalAvg, lang)}</span>
+            <span className="flap flap-lg">{money(globalAvg)}</span>
             <span className="unit">EUR</span>
           </div>
           {cheapest && (
             <div className="flex items-center gap-1.5 mt-2.5 text-on-ink/55">
               <span className="material-symbols-outlined text-sm">trending_down</span>
               <span className="font-label text-[0.7rem] tracking-wide">
-                {t('sidebar.fromPrice', { price: cheapest.margheritaPrice?.toFixed(2) })}
+                {t('sidebar.fromPrice', { price: money(cheapest.margheritaPrice) })}
               </span>
             </div>
           )}

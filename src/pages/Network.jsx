@@ -9,7 +9,7 @@ import { groupByCity } from '../utils/groupByCity';
 export default function Network() {
   const { data, loading } = useStitchedData();
   const [selectedCity, setSelectedCity] = useState(null);
-  const { t } = useI18n();
+  const { t, money } = useI18n();
 
   const grouped = useMemo(() => groupByCity(data), [data]);
   const cityNames = useMemo(() => Object.keys(grouped), [grouped]);
@@ -45,7 +45,7 @@ export default function Network() {
         <StatTile icon="store" label={t('network.totalNodes')} value={stats.totalPizzerias} />
         <StatTile icon="hub" label={t('network.clusters')} value={stats.clusters} />
         <StatTile icon="star" label={t('network.avgRating')} value={stats.avgRating.toFixed(1)} />
-        <StatTile icon="euro" label={t('network.avgPrice')} value={`€${stats.avgPrice.toFixed(2)}`} />
+        <StatTile icon="euro" label={t('network.avgPrice')} value={`€${money(stats.avgPrice)}`} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -73,7 +73,7 @@ export default function Network() {
                       {t('network.pizzerias')}
                     </span>
                     <span className="font-mono tabular-nums text-sm">
-                      €{avgCityPrice.toFixed(2)} <span className="text-on-surface-variant">{t('network.avg')}</span>
+                      €{money(avgCityPrice)} <span className="text-on-surface-variant">{t('network.avg')}</span>
                     </span>
                   </div>
                 </button>
@@ -103,7 +103,7 @@ export default function Network() {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="font-mono tabular-nums text-base">€{pz.margheritaPrice?.toFixed(2)}</div>
+                  <div className="font-mono tabular-nums text-base">€{money(pz.margheritaPrice)}</div>
                   <div className="flex items-center gap-1 justify-end text-on-surface-variant">
                     <span className="material-symbols-outlined text-sm">star</span>
                     <span className="font-mono tabular-nums text-sm">{pz.rating}</span>

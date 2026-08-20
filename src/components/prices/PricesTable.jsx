@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import { PAGE_SIZE, priceTier, tierLabel } from '../../config/pricesConfig';
 import Pagination from '../ui/Pagination';
 
@@ -12,6 +13,7 @@ const tierColors = {
 };
 
 export default function PricesTable({ sorted, stats, page, setPage, t, editingId, editForm, setEditForm, onStartEdit, onSaveEdit, onCancelEdit, onDelete, editMode, setSelected }) {
+  const { money } = useI18n();
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -98,7 +100,7 @@ export default function PricesTable({ sorted, stats, page, setPage, t, editingId
                            flap qui — venti palette in colonna smettono di
                            essere «l'unica cosa nera della pagina». */
                         <span className={`font-mono text-lg font-semibold tabular-nums tracking-tight ${tc.text}`}>
-                          &euro;{pz.margheritaPrice?.toFixed(2)}
+                          &euro;{money(pz.margheritaPrice)}
                         </span>
                       )}
                     </td>

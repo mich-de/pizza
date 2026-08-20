@@ -2,7 +2,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useDateTime } from '../prefs/DateTimeContext';
 
 export default function CommentList({ comments }) {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const { formatRelative } = useDateTime();
 
   if (!comments || comments.length === 0) {
@@ -55,7 +55,7 @@ export default function CommentList({ comments }) {
               <span className="badge badge-success">
                 <span className="material-symbols-outlined text-sm">payments</span>
                 {t('comments.proposalLabel')}
-                <span className="font-mono tabular-nums">€{c.proposedPrice.toFixed(2)}</span>
+                <span className="font-mono tabular-nums">€{money(c.proposedPrice)}</span>
               </span>
             </div>
           )}

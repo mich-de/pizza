@@ -14,9 +14,9 @@ import ExploreNetwork from '../components/explore/ExploreNetwork';
 import MarketMovers from '../components/ui/MarketMovers';
 import { CHIP_ACTIVE } from '../config/uiTokens';
 import { PageHeader } from '../components/ui';
-import { formatAmount } from '../utils/formatAmount';
 
-function ExploreHero({ t, lang, search, setSearch, exportCSV, networkStats, setPage }) {
+function ExploreHero({ t, search, setSearch, exportCSV, networkStats, setPage }) {
+  const { money } = useI18n();
   return (
     <>
       {/* La testatina e' identica a quella di Prezzi: occhiello, titolo in
@@ -40,7 +40,7 @@ function ExploreHero({ t, lang, search, setSearch, exportCSV, networkStats, setP
             <span className="block font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant mb-1.5">
               {t('network.avgPrice')}
             </span>
-            <span className="flap flap-lg">{formatAmount(networkStats.avgPrice, lang)}</span><span className="unit">EUR</span>
+            <span className="flap flap-lg">{money(networkStats.avgPrice)}</span><span className="unit">EUR</span>
           </div>
 
           <ul className="kv flex-1 min-w-0 md:grid-cols-3">
@@ -160,7 +160,7 @@ function ExplorePriceReport({ selected, t }) {
 
 export default function Explore() {
   const { data, loading } = useStitchedData();
-  const { t, lang } = useI18n();
+  const { t, lang, money } = useI18n();
 
   const [view, setView] = useState('cards');
   const [search, setSearch] = useState('');
@@ -284,11 +284,8 @@ export default function Explore() {
   return (
     /* Vedi Prices: `.container` governa la colonna, non un max-w locale. */
     <div className="container fade-in">
-      {/* `lang` mancava: `formatAmount` lo riceveva `undefined` e il prezzo
-          medio della rete usciva col punto decimale anche in italiano. */}
       <ExploreHero
         t={t}
-        lang={lang}
         search={search}
         setSearch={setSearch}
         exportCSV={exportCSV}
@@ -405,8 +402,8 @@ export default function Explore() {
             </div>
 
             <div className="flex items-center flex-wrap gap-2 mt-3 pt-3 border-t border-outline-variant">
-              <span className="badge badge-ghost">{t('prices.avgPrice')} &euro;{stats.avg.toFixed(2)}</span>
-              <span className="badge badge-ghost">{t('prices.medianTitle')} &euro;{stats.median.toFixed(2)}</span>
+              <span className="badge badge-ghost">{t('prices.avgPrice')} &euro;{money(stats.avg)}</span>
+              <span className="badge badge-ghost">{t('prices.medianTitle')} &euro;{money(stats.median)}</span>
               <span className="badge badge-primary">{t('common.filter')}: {sorted.length}</span>
             </div>
           </div>
@@ -465,7 +462,7 @@ export default function Explore() {
               <span className="font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant">
                 {t('prices.margherita')}
               </span>
-              <span className="flap flap-lg">{formatAmount(selected.margheritaPrice, lang)}</span><span className="unit">EUR</span>
+              <span className="flap flap-lg">{money(selected.margheritaPrice)}</span><span className="unit">EUR</span>
             </div>
 
             <ul className="kv mt-4">
@@ -528,7 +525,7 @@ export default function Explore() {
               <span className="font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant">
                 {t('explore.currentLabel')}
               </span>
-              <span className="flap">{formatAmount(reportPz.margheritaPrice, lang)}</span><span className="unit">EUR</span>
+              <span className="flap">{money(reportPz.margheritaPrice)}</span><span className="unit">EUR</span>
             </div>
 
             <PriceProposalForm

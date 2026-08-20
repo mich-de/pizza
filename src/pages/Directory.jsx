@@ -6,13 +6,13 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import VenueEditModal from '../components/explore/VenueEditModal';
 import { CHIP_ACTIVE } from '../config/uiTokens';
 import { PageHeader } from '../components/ui';
-import { formatAmount } from '../utils/formatAmount';
 
 /* Il segnaposto non e' piu' un rettangolo colorato per categoria (quattro tinte
    piene erano il linguaggio di prima): e' una targa di tabellone — inchiostro,
    filetto ambra, iniziale in monospaziato. Cosi' anche l'assenza di foto resta
    dentro al sistema invece di bucarlo. */
 function PlaceholderImage({ pz }) {
+  const { money } = useI18n();
   const initial = (pz.name || 'P')[0].toUpperCase();
   const shortName = pz.name?.length > 22 ? pz.name.slice(0, 20) + '…' : pz.name;
   return (
@@ -21,7 +21,7 @@ function PlaceholderImage({ pz }) {
       <rect y="98" width="400" height="1" fill="rgba(255,255,255,0.07)" />
       <text x="200" y="80" textAnchor="middle" fontSize="52" fontWeight="600" fill="#e0a72b" fontFamily="Cascadia Mono, Consolas, monospace">{initial}</text>
       <text x="200" y="132" textAnchor="middle" fontSize="13" letterSpacing="2" fill="rgba(233,232,228,0.9)" fontFamily="Bahnschrift, DIN Alternate, sans-serif">{shortName?.toUpperCase()}</text>
-      <text x="200" y="158" textAnchor="middle" fontSize="11" letterSpacing="1" fill="rgba(233,232,228,0.5)" fontFamily="Cascadia Mono, Consolas, monospace">€{pz.margheritaPrice?.toFixed(2)} · ★ {pz.rating}</text>
+      <text x="200" y="158" textAnchor="middle" fontSize="11" letterSpacing="1" fill="rgba(233,232,228,0.5)" fontFamily="Cascadia Mono, Consolas, monospace">€{money(pz.margheritaPrice)} · ★ {pz.rating}</text>
       <rect x="150" y="172" width="100" height="3" fill="#e0a72b" />
     </svg>
   );
@@ -29,7 +29,7 @@ function PlaceholderImage({ pz }) {
 
 export default function Directory() {
   const { data, loading } = useStitchedData();
-  const { t, lang } = useI18n();
+  const { t, lang, money } = useI18n();
   const [filter, setFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [frazioneFilter, setFrazioneFilter] = useState('all');
@@ -249,7 +249,7 @@ export default function Directory() {
                 <p className="eyebrow mt-1.5">{pz.cityName}</p>
               </div>
               <div className="price shrink-0">
-                <span className="flap">{formatAmount(pz.margheritaPrice, lang)}</span><span className="unit">EUR</span>
+                <span className="flap">{money(pz.margheritaPrice)}</span><span className="unit">EUR</span>
                 <span className="flex items-center justify-end gap-1 mt-1.5 font-mono text-xs tabular-nums text-on-surface-variant">
                   <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                   {pz.rating}

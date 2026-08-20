@@ -2,12 +2,11 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { formatAmount } from '../utils/formatAmount';
 import { fetchWithAuth, fetchCSRF } from '../services/adminApi';
 import { useDateTime } from '../prefs/DateTimeContext';
 
 export default function AdminProposals({ onDataChange }) {
-  const { t, lang } = useI18n();
+  const { t, lang, money } = useI18n();
   const { formatDateTime } = useDateTime();
   const navigate = useNavigate();
   const [proposals, setProposals] = useState([]);
@@ -280,12 +279,12 @@ export default function AdminProposals({ onDataChange }) {
                         su cui si decide. Attuale e delta restano in monospaziato. */}
                     <div className="flex items-center gap-4 flex-wrap">
                       <span className="font-mono tabular-nums text-on-surface-variant line-through">
-                        &euro;{p.currentPrice != null ? formatAmount(p.currentPrice, lang) : '---'}
+                        &euro;{p.currentPrice != null ? money(p.currentPrice) : '---'}
                       </span>
                       <span className="material-symbols-outlined text-base text-on-surface-variant">arrow_forward</span>
-                      <span className="flap flap-lg">{formatAmount(p.proposedPrice, lang)}</span><span className="unit">EUR</span>
+                      <span className="flap flap-lg">{money(p.proposedPrice)}</span><span className="unit">EUR</span>
                       <span className="font-mono tabular-nums text-sm text-on-surface-variant">
-                        Δ {diff > 0 ? '+' : ''}{diff.toFixed(2)}
+                        Δ {diff > 0 ? '+' : ''}{money(diff)}
                       </span>
                     </div>
                     {/* La nota di chi segnala: sta qui, sotto il prezzo che

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { formatAmount } from '../utils/formatAmount';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const I18nContext = createContext();
@@ -47,8 +48,16 @@ export function I18nProvider({ children }) {
     [translations]
   );
 
+  /* Il denaro esce da qui come il testo, e per la stessa ragione.
+     `formatAmount(valore, lang)` esisteva gia', ma voleva `lang` in mano: chi
+     stava tre componenti sotto non ce l'aveva e ripiegava su `toFixed(2)`, che
+     scrive il punto anche in italiano — «€ 7.85» in una pagina dove tutto il
+     resto dice «7,85». Passandolo per il contesto la lingua se la prende da
+     sola, e nessuno ha piu' motivo di arrangiarsi. */
+  const money = useCallback((value) => formatAmount(value, lang), [lang]);
+
   return (
-    <I18nContext.Provider value={{ lang, setLang, t, loading }}>
+    <I18nContext.Provider value={{ lang, setLang, t, money, loading }}>
       {children}
     </I18nContext.Provider>
   );

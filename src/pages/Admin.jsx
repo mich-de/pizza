@@ -9,7 +9,7 @@ import { CATEGORIES } from '../config/adminConfig';
 import { fetchWithAuth, fetchCSRF } from '../services/adminApi';
 
 export default function Admin() {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const { pizzerias, prices, locations, loading, error: fetchError } = useAllData();
 
   const [rows, setRows] = useState([]);
@@ -262,7 +262,7 @@ export default function Admin() {
         <StatTile icon="storefront" label={t('admin.totalVenues')} value={stats.total} />
         <StatTile icon="check_circle" label={t('admin.openVenues')} value={stats.open} />
         <StatTile icon="sell" label={t('admin.withPrice')} value={stats.withPrice} />
-        <StatTile icon="trending_up" label={t('admin.avgPrice')} value={`${t('common.euro')}${stats.avgPrice.toFixed(2)}`} />
+        <StatTile icon="trending_up" label={t('admin.avgPrice')} value={`${t('common.euro')}${money(stats.avgPrice)}`} />
       </div>
 
       {error && (

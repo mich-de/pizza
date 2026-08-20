@@ -9,7 +9,6 @@ import BrandMark from '../components/BrandMark';
 import { PageHeader } from '../components/ui';
 
 import { groupByCity } from '../utils/groupByCity';
-import { formatAmount } from '../utils/formatAmount';
 
 function timeAgo(timestamp, t) {
   if (!timestamp) return '';
@@ -30,7 +29,7 @@ function getInitials(name) {
 
 export default function Dashboard() {
   const { data, loading, error } = useStitchedData();
-  const { t, lang } = useI18n();
+  const { t, lang, money } = useI18n();
   const [reviews, setReviews] = useState([]);
   const [revLoading, setRevLoading] = useState(true);
   const [expandedCity, setExpandedCity] = useState(null);
@@ -100,11 +99,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         <StatTile icon="local_pizza" label={t('dashboard.totalPizzerias')} value={data.length} />
         <StatTile icon="location_city" label={t('dashboard.citiesCount')} value={Object.keys(grouped).length} />
-        <StatTile icon="trending_up" label={t('dashboard.avgPrice')} value={`${t('common.euro')}${globalAvg.toFixed(2)}`} />
+        <StatTile icon="trending_up" label={t('dashboard.avgPrice')} value={`${t('common.euro')}${money(globalAvg)}`} />
         <StatTile
           icon="leaderboard"
           label={t('dashboard.priceRange')}
-          value={`${t('common.euro')}${globalMin.toFixed(2)}–${globalMax.toFixed(2)}`}
+          value={`${t('common.euro')}${money(globalMin)}–${money(globalMax)}`}
           sub={`${t('dashboard.bestPrice')}: ${bestPick.name}`}
         />
       </div>
@@ -122,8 +121,8 @@ export default function Dashboard() {
                 </p>
                 <ul className="kv mt-4 md:grid-cols-3">
                   <li><span className="k">{t('dashboard.totalPizzerias')}</span><span className="v">{data.length}</span></li>
-                  <li><span className="k">{t('dashboard.avgPrice')}</span><span className="v">{t('common.euro')}{globalAvg.toFixed(2)}</span></li>
-                  <li><span className="k">{t('dashboard.priceRange')}</span><span className="v">{t('common.euro')}{globalMin.toFixed(2)}&ndash;{globalMax.toFixed(2)}</span></li>
+                  <li><span className="k">{t('dashboard.avgPrice')}</span><span className="v">{t('common.euro')}{money(globalAvg)}</span></li>
+                  <li><span className="k">{t('dashboard.priceRange')}</span><span className="v">{t('common.euro')}{money(globalMin)}&ndash;{money(globalMax)}</span></li>
                 </ul>
               </div>
               <div className="shrink-0">
@@ -131,7 +130,7 @@ export default function Dashboard() {
                   {t('dashboard.margheritaLabel')}
                 </span>
                 <span className="flap flap-lg">
-                  {bestPick.margheritaPrice > 0 ? `${t('common.euro')}${bestPick.margheritaPrice.toFixed(2)}` : '—'}
+                  {bestPick.margheritaPrice > 0 ? `${t('common.euro')}${money(bestPick.margheritaPrice)}` : '—'}
                 </span>
                 {/* Stelle neutre: l'ambra e' gia' impegnata dal flap. */}
                 <div className="flex gap-0.5 mt-2 text-on-surface-variant">
@@ -171,7 +170,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <div className="price shrink-0">
-                        <span className="flap">{formatAmount(pz.margheritaPrice, lang)}</span><span className="unit">EUR</span>
+                        <span className="flap">{money(pz.margheritaPrice)}</span><span className="unit">EUR</span>
                         <span className="flex items-center justify-end gap-1 mt-1.5 font-mono text-xs tabular-nums text-on-surface-variant">
                           <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                           {pz.rating}
@@ -230,12 +229,12 @@ export default function Dashboard() {
                     {/* Barra della fascia: un filetto neutro con il segno della
                         media in ambra. L'ambra segnala il punto, non riempie. */}
                     <div className="flex items-center gap-3 mt-4 mb-4 font-mono text-xs tabular-nums text-on-surface-variant">
-                      <span>{t('common.euro')}{cityMin.toFixed(2)}</span>
+                      <span>{t('common.euro')}{money(cityMin)}</span>
                       <span className="relative flex-1 h-1.5 bg-surface-dim border border-outline-variant">
                         <span className="absolute top-0 bottom-0 w-[3px] bg-accent"
                           style={{ left: `${globalMax > globalMin ? Math.min(100, Math.max(0, ((cityAvg - globalMin) / (globalMax - globalMin)) * 100)) : 50}%` }} />
                       </span>
-                      <span>{t('common.euro')}{cityMax.toFixed(2)}</span>
+                      <span>{t('common.euro')}{money(cityMax)}</span>
                     </div>
 
                     <ul className="kv">
@@ -245,7 +244,7 @@ export default function Dashboard() {
                             onClick={(e) => { e.stopPropagation(); setSelectedPizzeria(pz); }}>
                             {pz.name}
                           </span>
-                          <span className="v">{t('common.euro')}{(pz.margheritaPrice || 0).toFixed(2)}</span>
+                          <span className="v">{t('common.euro')}{money(pz.margheritaPrice || 0)}</span>
                         </li>
                       ))}
                     </ul>
@@ -312,8 +311,8 @@ export default function Dashboard() {
             </div>
 
             <div className="flex justify-between font-mono text-xs tabular-nums text-on-surface-variant mb-1.5">
-              <span>{t('common.euro')}{globalMin.toFixed(2)}</span>
-              <span>{t('common.euro')}{globalMax.toFixed(2)}</span>
+              <span>{t('common.euro')}{money(globalMin)}</span>
+              <span>{t('common.euro')}{money(globalMax)}</span>
             </div>
             {/* Il segno della media e' l'unica ambra della barra. */}
             <div className="relative h-2 bg-surface-dim border border-outline-variant">
@@ -321,7 +320,7 @@ export default function Dashboard() {
                 style={{ left: `${globalMax > globalMin ? Math.min(100, Math.max(0, ((globalAvg - globalMin) / (globalMax - globalMin)) * 100)) : 50}%` }} />
             </div>
             <p className="font-label text-[0.7rem] uppercase tracking-[0.09em] text-on-surface-variant mt-2 mb-0">
-              {t('dashboard.avgPrice')} <span className="font-mono tabular-nums">{t('common.euro')}{globalAvg.toFixed(2)}</span>
+              {t('dashboard.avgPrice')} <span className="font-mono tabular-nums">{t('common.euro')}{money(globalAvg)}</span>
               {' · '}
               {t('dashboard.bestPrice')}: {bestPick.name.slice(0, 22)}
             </p>
@@ -341,7 +340,7 @@ export default function Dashboard() {
                     return (
                       <li key={city}>
                         <span className="k truncate">{city} &middot; {cityCheapest?.name}</span>
-                        <span className="v">{t('common.euro')}{(cityCheapest?.margheritaPrice || 0).toFixed(2)}</span>
+                        <span className="v">{t('common.euro')}{money(cityCheapest?.margheritaPrice || 0)}</span>
                       </li>
                     );
                   })}
@@ -383,7 +382,7 @@ export default function Dashboard() {
               <span className="block font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant mb-1.5">
                 {t('prices.margherita')}
               </span>
-              <span className="flap flap-lg">{formatAmount(selectedPizzeria.margheritaPrice, lang)}</span><span className="unit">EUR</span>
+              <span className="flap flap-lg">{money(selectedPizzeria.margheritaPrice)}</span><span className="unit">EUR</span>
             </div>
 
             <ul className="kv mt-5">

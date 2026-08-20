@@ -9,10 +9,10 @@ import MarketMovers from '../components/ui/MarketMovers';
 import { DetailModal } from '../components/prices/PricesDetail';
 import { priceTier } from '../config/pricesConfig';
 import { PageHeader } from '../components/ui';
-import { formatAmount } from '../utils/formatAmount';
 import { fetchWithAuth, fetchCSRF } from '../services/adminApi';
 
 function PriceHeatMap({ sorted, stats }) {
+  const { money } = useI18n();
   const maxBars = 120;
   const step = Math.max(1, Math.floor(sorted.length / maxBars));
   const samples = sorted.filter((_, i) => i % step === 0).slice(0, maxBars);
@@ -35,7 +35,7 @@ function PriceHeatMap({ sorted, stats }) {
               key={i}
               className={`flex-1 ${color} hover:scale-y-125 hover:opacity-100 transition-all cursor-crosshair origin-bottom`}
               style={{ opacity, borderRadius: 0 }}
-              title={`${p.name}: \u20AC${p.margheritaPrice?.toFixed(2)}`}
+              title={`${p.name}: \u20AC${money(p.margheritaPrice)}`}
             />
           );
         })
@@ -44,7 +44,8 @@ function PriceHeatMap({ sorted, stats }) {
   );
 }
 
-function IndexHero({ stats, allData, sorted, editMode, t, lang, isAdmin, exportCSV, exportJSON, toggleEdit }) {
+function IndexHero({ stats, allData, sorted, editMode, t, isAdmin, exportCSV, exportJSON, toggleEdit }) {
+  const { money } = useI18n();
   return (
     <>
       {/* La testatina e' la stessa componente su ogni pagina: occhiello,
@@ -84,29 +85,29 @@ function IndexHero({ stats, allData, sorted, editMode, t, lang, isAdmin, exportC
               {t('prices.avgPrice')}
             </span>
             <div className="flex items-baseline">
-              <span className="flap flap-lg">{formatAmount(stats.avg, lang)}</span>
+              <span className="flap flap-lg">{money(stats.avg)}</span>
               <span className="unit">EUR</span>
             </div>
             {/* La mediana e' un dato derivato, non l'unita' di misura della
                 media: sta sotto, dove il sistema mette i derivati. */}
             <span className="estimate">
-              {t('prices.medianTitle')} <strong>&euro;{formatAmount(stats.median, lang)}</strong>
+              {t('prices.medianTitle')} <strong>&euro;{money(stats.median)}</strong>
             </span>
           </div>
 
           <ul className="kv flex-1 min-w-0 md:grid-cols-2">
-            <li><span className="k">{t('prices.minPrice')}</span><span className="v text-tertiary">&euro;{stats.min.toFixed(2)}</span></li>
-            <li><span className="k">{t('prices.maxPrice')}</span><span className="v text-secondary">&euro;{stats.max.toFixed(2)}</span></li>
-            <li><span className="k">{t('prices.rangeTitle')}</span><span className="v">&euro;{stats.range.toFixed(2)}</span></li>
+            <li><span className="k">{t('prices.minPrice')}</span><span className="v text-tertiary">&euro;{money(stats.min)}</span></li>
+            <li><span className="k">{t('prices.maxPrice')}</span><span className="v text-secondary">&euro;{money(stats.max)}</span></li>
+            <li><span className="k">{t('prices.rangeTitle')}</span><span className="v">&euro;{money(stats.range)}</span></li>
             <li><span className="k">{t('nav.network')}</span><span className="v">{allData.length}</span></li>
           </ul>
         </div>
 
         <div className="mt-6 space-y-1.5">
           <div className="flex items-center justify-between font-label text-[0.68rem] font-semibold uppercase tracking-[0.1em]">
-            <span className="text-tertiary">{t('prices.cheapestTitle')} &euro;{stats.min.toFixed(2)}</span>
-            <span className="text-on-surface-variant">{t('prices.medianTitle')} &euro;{stats.median.toFixed(2)}</span>
-            <span className="text-secondary">{t('prices.priciestTitle')} &euro;{stats.max.toFixed(2)}</span>
+            <span className="text-tertiary">{t('prices.cheapestTitle')} &euro;{money(stats.min)}</span>
+            <span className="text-on-surface-variant">{t('prices.medianTitle')} &euro;{money(stats.median)}</span>
+            <span className="text-secondary">{t('prices.priciestTitle')} &euro;{money(stats.max)}</span>
           </div>
           <PriceHeatMap sorted={sorted} stats={stats} />
         </div>
@@ -473,7 +474,6 @@ export default function Prices() {
         sorted={sorted}
         editMode={editMode}
         t={t}
-        lang={lang}
         isAdmin={isAdmin}
         exportCSV={exportCSV}
         exportJSON={exportJSON}

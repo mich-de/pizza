@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { checkAuth } from '../services/authService';
 import BrandPlate from './BrandPlate';
 import LangToggle from './ui/LangToggle';
-import { formatAmount } from '../utils/formatAmount';
 
 const drawerLinkBase = 'flex items-center gap-3 px-5 py-2.5 font-label text-[0.82rem] font-medium uppercase tracking-[0.075em] transition-colors duration-150 border-l-2';
 const activeLinkClassMobile = `${drawerLinkBase} text-accent border-accent bg-white/[0.05]`;
@@ -49,7 +48,7 @@ export default function TopBar({ onMenuToggle }) {
 }
 
 export function MobileDrawer({ open, onClose }) {
-  const { t, lang } = useI18n();
+  const { t, money } = useI18n();
   const { data } = useStitchedData();
   const { total: pendingTotal, isAdmin } = usePendingCounts();
   const year = new Date().getFullYear();
@@ -101,14 +100,14 @@ export function MobileDrawer({ open, onClose }) {
               {t('sidebar.mediaMargherita')}
             </span>
             <div className="flex items-baseline">
-              <span className="flap flap-lg">{formatAmount(globalAvg, lang)}</span>
+              <span className="flap flap-lg">{money(globalAvg)}</span>
               <span className="unit">EUR</span>
             </div>
             {cheapest && (
               <div className="flex items-center gap-1.5 mt-2.5 text-on-ink/55">
                 <span className="material-symbols-outlined text-sm">trending_down</span>
                 <span className="font-label text-[0.7rem] tracking-wide">
-                  {t('sidebar.fromPrice', { price: cheapest.margheritaPrice?.toFixed(2) })}
+                  {t('sidebar.fromPrice', { price: money(cheapest.margheritaPrice) })}
                 </span>
               </div>
             )}

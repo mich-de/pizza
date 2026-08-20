@@ -1,6 +1,7 @@
-import { formatAmount } from '../../utils/formatAmount';
+import { useI18n } from '../../i18n/I18nContext';
 
-export default function ExploreNetwork({ data, networkStats, grouped, cityNames, selectedCity, setSelectedCity, t, lang, onSelect }) {
+export default function ExploreNetwork({ data, networkStats, grouped, cityNames, selectedCity, setSelectedCity, t, onSelect }) {
+  const { money } = useI18n();
   const selectedData = selectedCity ? (grouped[selectedCity] || []) : data;
 
   return (
@@ -14,7 +15,7 @@ export default function ExploreNetwork({ data, networkStats, grouped, cityNames,
             <span className="block font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant mb-1.5">
               {t('network.avgPrice')}
             </span>
-            <span className="flap flap-lg">{formatAmount(networkStats.avgPrice, lang)}</span><span className="unit">EUR</span>
+            <span className="flap flap-lg">{money(networkStats.avgPrice)}</span><span className="unit">EUR</span>
           </div>
 
           <ul className="kv flex-1 min-w-0 md:grid-cols-3">
@@ -56,7 +57,7 @@ export default function ExploreNetwork({ data, networkStats, grouped, cityNames,
                   </div>
                 </div>
                 <div className="price shrink-0">
-                  <p className="font-mono text-lg font-semibold tabular-nums tracking-tight">&euro;{formatAmount(pz.margheritaPrice, lang)}</p>
+                  <p className="font-mono text-lg font-semibold tabular-nums tracking-tight">&euro;{money(pz.margheritaPrice)}</p>
                   {/* Stella neutra: l'ambra segnala, e un segnale su ogni riga
                       non segnala piu' niente. */}
                   <p className="flex items-center justify-end gap-1 mt-0.5 font-mono text-xs tabular-nums text-on-surface-variant">
@@ -109,7 +110,7 @@ export default function ExploreNetwork({ data, networkStats, grouped, cityNames,
                       {t('network.avg')}
                     </span>
                     <span className="font-mono text-base font-semibold tabular-nums tracking-tight">
-                      &euro;{avgCityPrice.toFixed(2)}
+                      &euro;{money(avgCityPrice)}
                     </span>
                   </div>
                 </button>

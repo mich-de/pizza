@@ -1,9 +1,10 @@
+import { useI18n } from '../../i18n/I18nContext';
 import ContributeBox from '../ContributeBox';
 import { createPortal } from 'react-dom';
-import { formatAmount } from '../../utils/formatAmount';
 import { useDateTime } from '../../prefs/DateTimeContext';
 
 export function DetailModal({ selected, setSelected, stats, t, lang }) {
+  const { money } = useI18n();
   const { formatDate } = useDateTime();
   if (!selected) return null;
 
@@ -52,11 +53,11 @@ export function DetailModal({ selected, setSelected, stats, t, lang }) {
           <span className="block font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant mb-1.5">
             {t('prices.margherita')}
           </span>
-          <span className="flap flap-lg">{formatAmount(selected.margheritaPrice, lang)}</span><span className="unit">EUR</span>
+          <span className="flap flap-lg">{money(selected.margheritaPrice)}</span><span className="unit">EUR</span>
           <p className="font-label text-[0.72rem] uppercase tracking-[0.09em] text-on-surface-variant mt-2.5">
             {delta < 0 ? t('prices.belowAvg') : delta > 0 ? t('prices.aboveAvg') : t('prices.atAvg')}
             {' '}
-            <span className="font-mono tabular-nums">({delta < 0 ? '' : '+'}{delta.toFixed(2)})</span>
+            <span className="font-mono tabular-nums">({delta < 0 ? '' : '+'}{money(delta)})</span>
           </p>
         </div>
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../../i18n/I18nContext';
 
 export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPrice, onSubmitted }) {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const [author, setAuthor] = useState('');
   const [proposedPrice, setProposedPrice] = useState('');
   const [content, setContent] = useState('');
@@ -125,7 +125,7 @@ export default function PriceProposalForm({ pizzeriaId, pizzeriaName, currentPri
         <h2 className="text-base">{pizzeriaName}</h2>
         {currentPrice > 0 && (
           <span className="badge badge-ghost">
-            {t('priceProposal.currentPrice')} &euro;{currentPrice.toFixed(2)}
+            {t('priceProposal.currentPrice')} &euro;{money(currentPrice)}
           </span>
         )}
       </div>

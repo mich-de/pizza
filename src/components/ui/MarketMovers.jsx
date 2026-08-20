@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 /* I due estremi del filtro corrente come tessere: era lo stesso blocco su
    Prezzi e su Esplora, e tenerne due copie significava avere due posti dove
    sbagliare la regola del flap.
@@ -35,6 +36,7 @@ export default function MarketMovers({ cheapest, priciest, stats, t, className =
 }
 
 function Mover({ pz, icon, label, tone, stats, t }) {
+  const { money } = useI18n();
   const delta = stats.avg > 0 ? (pz.margheritaPrice / stats.avg - 1) * 100 : 0;
   return (
     <div className="tile">
@@ -48,7 +50,7 @@ function Mover({ pz, icon, label, tone, stats, t }) {
           <p className="font-label text-[0.72rem] uppercase tracking-[0.09em] text-on-surface-variant mt-1">{pz.cityName}</p>
         </div>
         <div className="price">
-          <p className={`font-mono text-3xl font-semibold leading-none tracking-tight ${tone}`}>&euro;{pz.margheritaPrice?.toFixed(2)}</p>
+          <p className={`font-mono text-3xl font-semibold leading-none tracking-tight ${tone}`}>&euro;{money(pz.margheritaPrice)}</p>
           <p className="font-label text-[0.7rem] uppercase tracking-[0.08em] text-on-surface-variant mt-1.5">
             {delta > 0 ? '+' : ''}{delta.toFixed(1)}% vs {t('prices.avgPrice')}
           </p>

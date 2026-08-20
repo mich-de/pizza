@@ -1,5 +1,5 @@
+import { useI18n } from '../../i18n/I18nContext';
 import { priceTier } from '../../config/pricesConfig';
-import { formatAmount } from '../../utils/formatAmount';
 
 /* La categoria di prezzo e' un tratto di colore a sinistra, non una cornice
    colorata: la tessera resta una tessera di tabellone e il tratto dice, prima
@@ -11,6 +11,7 @@ const TIER_ACCENT = {
 };
 
 export default function ExploreCards({ filtered, stats, t, lang, onSelect, onReportPrice }) {
+  const { money } = useI18n();
 
   const handleCardClick = (pz) => {
     onSelect?.(pz);
@@ -47,7 +48,7 @@ export default function ExploreCards({ filtered, stats, t, lang, onSelect, onRep
                   sta cercando. Il punteggio gli sta sotto in glifo neutro —
                   due palette accanto competono e non si legge piu' nessuna. */}
               <div className="price shrink-0">
-                <span className="flap">{formatAmount(pz.margheritaPrice, lang)}</span><span className="unit">EUR</span>
+                <span className="flap">{money(pz.margheritaPrice)}</span><span className="unit">EUR</span>
                 <span className="flex items-center justify-end gap-1 mt-1.5 font-mono text-xs tabular-nums text-on-surface-variant">
                   <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                   {pz.rating}

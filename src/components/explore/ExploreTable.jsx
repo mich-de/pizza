@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/I18nContext';
 import { PAGE_SIZE, priceTier, tierLabel } from '../../config/pricesConfig';
 import Pagination from '../ui/Pagination';
 
@@ -7,6 +8,7 @@ const tierColors = { cheap: 'text-tertiary', mid: 'text-on-surface', expensive: 
 const tierBarColors = { cheap: 'bg-tertiary', mid: 'bg-primary-fixed-dim', expensive: 'bg-secondary' };
 
 export default function ExploreTable({ sorted, stats, page, setPage, t, onSelect }) {
+  const { money } = useI18n();
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -59,7 +61,7 @@ export default function ExploreTable({ sorted, stats, page, setPage, t, onSelect
                   </td>
                   <td className="text-right">
                     <span className={`font-mono text-lg font-semibold tabular-nums tracking-tight ${tierColors[tier]}`}>
-                      &euro;{pz.margheritaPrice?.toFixed(2)}
+                      &euro;{money(pz.margheritaPrice)}
                     </span>
                   </td>
                   <td className="hidden md:table-cell">
