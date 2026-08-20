@@ -1,7 +1,9 @@
 import { useI18n } from '../i18n/I18nContext';
+import { useDateTime } from '../prefs/DateTimeContext';
 
 export default function CommentList({ comments }) {
   const { t } = useI18n();
+  const { formatRelative } = useDateTime();
 
   if (!comments || comments.length === 0) {
     return (
@@ -13,19 +15,15 @@ export default function CommentList({ comments }) {
     );
   }
 
-  const formatDate = (iso) => {
-    const d = new Date(iso);
-    const now = new Date();
-    const diff = now - d;
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (mins < 1) return t('common.justNow');
-    if (mins < 60) return `${mins} ${t('common.minsAgo')}`;
-    if (hours < 24) return `${hours} ${t('common.hrsAgo')}`;
-    return `${days} ${t('common.daysAgo')}`;
-  };
+  /* Prima si contavano i giorni all'infinito: dopo un mese diceva «43 giorni
+     fa», che nessuno riconverte a mente in una data. Oltre la settimana ora
+     scrive la data vera, nel fuso e nel formato scelti in Impostazioni. */
+  const formatDate = (iso) => formatRelative(iso, {
+    justNow: t('common.justNow'),
+    minsAgo: t('common.minsAgo'),
+    hrsAgo: t('common.hrsAgo'),
+    daysAgo: t('common.daysAgo'),
+  });
 
   return (
     <div className="flex flex-col gap-3">
@@ -52,9 +50,12 @@ export default function CommentList({ comments }) {
           </p>
           {c.proposedPrice && (
             <div className="mt-2 pl-10">
-              <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-tertiary/10 text-tertiary text-[11px] font-semibold rounded-sm">
+              {/* Il prezzo proposto qualifica il commento: badge, non flap —
+                  il flap della scheda e' gia' altrove. */}
+              <span className="badge badge-success">
                 <span className="material-symbols-outlined text-sm">payments</span>
-                {t('comments.proposalLabel')} €{c.proposedPrice.toFixed(2)}
+                {t('comments.proposalLabel')}
+                <span className="font-mono tabular-nums">€{c.proposedPrice.toFixed(2)}</span>
               </span>
             </div>
           )}

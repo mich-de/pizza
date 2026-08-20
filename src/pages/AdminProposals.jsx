@@ -2,33 +2,13 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-
-const API_BASE = globalThis.process?.env?.VITE_API_BASE || '';
-
-async function fetchWithAuth(url, options = {}) {
-  const res = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-  });
-  if (res.status === 401) {
-    try {
-      const refreshRes = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
-      if (refreshRes.ok) {
-        return fetch(`${API_BASE}${url}`, {
-          ...options,
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json', ...options.headers },
-        });
-      }
-    } catch (e) { console.error(e); }
-    throw new Error('SESSION_EXPIRED');
-  }
-  return res;
-}
+import { formatAmount } from '../utils/formatAmount';
+import { fetchWithAuth, fetchCSRF } from '../services/adminApi';
+import { useDateTime } from '../prefs/DateTimeContext';
 
 export default function AdminProposals({ onDataChange }) {
   const { t, lang } = useI18n();
+  const { formatDateTime } = useDateTime();
   const navigate = useNavigate();
   const [proposals, setProposals] = useState([]);
   const [pendingComments, setPendingComments] = useState([]);
@@ -45,11 +25,6 @@ export default function AdminProposals({ onDataChange }) {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchCSRF = async () => {
-    const res = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
-    const data = await res.json();
-    return data.csrfToken;
-  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -194,85 +169,73 @@ export default function AdminProposals({ onDataChange }) {
 
   if (loading) return <LoadingSpinner fullScreen />;
 
+  // Data e ora nella forma scelta in Impostazioni, non in quella della macchina.
+  const fmtDate = (d) => formatDateTime(d);
+
   return (
     <div className="w-full">
       {toast && (
-        <div className={`fixed top-4 right-4 z-[100] font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] ${toast.isError ? 'bg-secondary text-on-tertiary' : 'bg-primary text-on-primary'}`}>
-          {toast.msg}
+        <div className="fixed top-4 right-4 z-[100] max-w-sm bg-surface shadow-lg no-print">
+          <div className={`alert ${toast.isError ? 'alert-error' : 'alert-success'}`}>
+            <span className="material-symbols-outlined text-base leading-none">
+              {toast.isError ? 'error' : 'check_circle'}
+            </span>
+            <span>{toast.msg}</span>
+          </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-8 border-b-4 border-primary pb-4">
-        <div>
-          <h1 className="font-headline font-black text-3xl uppercase text-primary">{t('nav.approvals')}</h1>
-          <p className="font-body text-on-surface-variant mt-1">
-            {t('admin.proposalsSummary', { proposals: proposals.length, comments: pendingComments.length, posts: pendingFeedPosts.length })}
-          </p>
-        </div>
-        <button
-          onClick={fetchData}
-          className="flex items-center gap-2 bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-colors"
-        >
-          <span className="material-symbols-outlined">refresh</span> {t('admin.refresh')}
+      {/* Vedi Admin: scheda dentro il Pannello, la testatina e' gia' sopra.
+          Il pulsante di ricarica sta in fondo alla riga del titolo, dopo il
+          filetto, e resta fuori di stampa perche' compone la richiesta. */}
+      <div className="section-title">
+        <h2 className="text-base">{t('nav.approvals')}</h2>
+        <button onClick={fetchData} className="btn btn-ghost btn-sm no-print">
+          <span className="material-symbols-outlined text-sm">refresh</span>
+          {t('admin.refresh')}
         </button>
       </div>
+      <p className="muted small mb-6">{t('admin.proposalsSubtitle')}</p>
 
       {error && (
-        <div className="bg-error-container border-2 border-error p-6 text-center mb-6">
-          <p className="font-label font-bold text-on-error-container">{error}</p>
+        <div className="alert alert-error mb-6">
+          <span className="material-symbols-outlined text-base leading-none">error</span>
+          <span>{error}</span>
         </div>
       )}
 
       {pendingComments.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-headline font-black text-xl uppercase text-primary mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary">chat_bubble</span>
-            {t('admin.commentsPendingTitle')} ({pendingComments.length})
-          </h2>
-          <div className="space-y-3">
+          <div className="section-title">
+            <h2 className="text-base">{t('admin.commentsPendingTitle')}</h2>
+            <span className="badge badge-ghost font-mono tabular-nums">{pendingComments.length}</span>
+          </div>
+          <div className="stack">
             {pendingComments.map(c => (
-              <div key={c.id} className="bg-surface border-2 border-primary p-4 shadow-[3px_3px_0px_0px_rgba(26,26,26,1)] relative">
-                {confirmAction?.type === 'comment' && confirmAction.id === c.id && (
-                  <div className="absolute inset-0 bg-surface/95 border-2 border-primary p-4 flex flex-col items-center justify-center z-10">
-                    <p className="font-headline font-bold text-sm text-primary mb-3">
-                      {t('admin.confirmPrompt', { action: confirmAction.action === 'approve' ? t('admin.confirmApprove') : t('admin.confirmReject'), item: 'commento' })}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => confirmAction.action === 'approve' ? handleApproveComment(c.id) : handleRejectComment(c.id)}
-                        className={`font-label font-bold uppercase py-2 px-4 border-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm ${confirmAction.action === 'approve' ? 'bg-tertiary text-on-tertiary border-primary' : 'bg-error text-on-error border-error'}`}
-                      >
-                        {t('common.confirm')}
-                      </button>
-                      <button onClick={() => setConfirmAction(null)} className="bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm">
-                        {t('common.cancel')}
-                      </button>
+              <div key={c.id} className="tile relative">
+                <ConfirmOverlay
+                  open={confirmAction?.type === 'comment' && confirmAction.id === c.id}
+                  action={confirmAction?.action}
+                  item={t('admin.itemComment')}
+                  onConfirm={() => confirmAction.action === 'approve' ? handleApproveComment(c.id) : handleRejectComment(c.id)}
+                  onCancel={() => setConfirmAction(null)}
+                  t={t}
+                />
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[16rem]">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="font-display uppercase tracking-[0.04em] text-sm">{c.author}</span>
+                      <span className="font-mono text-xs text-on-surface-variant">{fmtDate(c.createdAt)}</span>
                     </div>
+                    <p className="font-body text-sm mt-1 mb-1">{c.content}</p>
+                    <p className="font-mono text-xs text-on-surface-variant mb-0">Post: {c.postId}</p>
                   </div>
-                )}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-headline font-bold text-sm text-primary">{c.author}</span>
-                      <span className="text-xs text-on-surface-variant">{new Date(c.createdAt).toLocaleString(lang === 'it' ? 'it-IT' : 'en-US')}</span>
-                    </div>
-                    <p className="font-body text-sm text-on-surface">{c.content}</p>
-                    <p className="text-xs text-on-surface-variant mt-1">Post: {c.postId}</p>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => setConfirmAction({ type: 'comment', id: c.id, action: 'approve' })}
-                      className="bg-tertiary text-on-tertiary font-label font-bold uppercase py-2 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-tertiary-container transition-colors text-xs"
-                    >
-                      <span className="material-symbols-outlined text-sm">check_circle</span> {t('admin.publish')}
-                    </button>
-                    <button
-                      onClick={() => setConfirmAction({ type: 'comment', id: c.id, action: 'reject' })}
-                      className="bg-error text-on-error font-label font-bold uppercase py-2 px-3 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
-                    >
-                      <span className="material-symbols-outlined text-sm">cancel</span> {t('admin.hide')}
-                    </button>
-                  </div>
+                  <ActionPair
+                    onApprove={() => setConfirmAction({ type: 'comment', id: c.id, action: 'approve' })}
+                    onReject={() => setConfirmAction({ type: 'comment', id: c.id, action: 'reject' })}
+                    approveLabel={t('admin.publish')}
+                    rejectLabel={t('admin.hide')}
+                  />
                 </div>
               </div>
             ))}
@@ -280,145 +243,162 @@ export default function AdminProposals({ onDataChange }) {
         </section>
       )}
 
-      <section>
-        <h2 className="font-headline font-black text-xl uppercase text-primary mb-4 flex items-center gap-2">
-          <span className="material-symbols-outlined text-tertiary">edit_note</span>
-          {t('admin.proposalsTitle')} ({proposals.length})
-        </h2>
+      <section className="mb-10">
+        <div className="section-title">
+          <h2 className="text-base">{t('admin.proposalsTitle')}</h2>
+          <span className="badge badge-ghost font-mono tabular-nums">{proposals.length}</span>
+        </div>
 
         {proposals.length === 0 && (
-          <div className="bg-surface-variant border-2 border-primary p-12 text-center">
-            <span className="material-symbols-outlined text-6xl text-primary/30">task_alt</span>
-            <p className="font-headline font-black text-2xl text-primary mt-4">{t('admin.noProposals')}</p>
-            <p className="font-body text-on-surface-variant mt-2">{t('admin.noProposalsDesc')}</p>
+          <div className="panel text-center py-12">
+            <span className="material-symbols-outlined text-5xl text-on-surface-variant">task_alt</span>
+            <h3 className="mt-3 mb-1">{t('admin.noProposals')}</h3>
+            <p className="font-body text-sm text-on-surface-variant mb-0">{t('admin.noProposalsDesc')}</p>
           </div>
         )}
 
-        <div className="space-y-4">
-          {proposals.map(p => (
-            <div key={p.id} className="bg-surface border-2 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] relative">
-              {confirmAction?.type === 'proposal' && confirmAction.id === p.id && (
-                <div className="absolute inset-0 bg-surface/95 border-2 border-primary p-4 flex flex-col items-center justify-center z-10">
-                  <p className="font-headline font-bold text-sm text-primary mb-3">
-                    {t('admin.confirmPrompt', { action: confirmAction.action === 'approve' ? t('admin.confirmApprove') : t('admin.confirmReject'), item: 'proposta' })}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => confirmAction.action === 'approve' ? handleApprovePrice(p) : handleRejectProposal(p.id)}
-                      disabled={saving}
-                      className={`font-label font-bold uppercase py-2 px-4 border-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm disabled:opacity-50 ${confirmAction.action === 'approve' ? 'bg-tertiary text-on-tertiary border-primary' : 'bg-error text-on-error border-error'}`}
-                    >
-                      {saving ? (t('admin.saving')) : t('common.confirm')}
-                    </button>
-                    <button onClick={() => setConfirmAction(null)} className="bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm">
-                      {t('common.cancel')}
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <h3 className="font-headline font-bold text-lg text-primary mb-1">{getVenueName(p.pizzeriaId)}</h3>
-                  <p className="text-xs text-on-surface-variant mb-2">{p.author} · {new Date(p.createdAt).toLocaleString(lang === 'it' ? 'it-IT' : 'en-US')}</p>
-                  <div className="flex items-center gap-6">
-                    <div>
-                      <p className="text-xs font-black font-headline uppercase text-on-surface-variant">{t('admin.current')}</p>
-                      <p className="font-headline font-bold text-lg text-on-surface-variant">€{p.currentPrice?.toFixed(2) || '---'}</p>
+        <div className="stack">
+          {proposals.map(p => {
+            const diff = p.proposedPrice - (p.currentPrice || 0);
+            return (
+              <div key={p.id} className="tile relative">
+                <ConfirmOverlay
+                  open={confirmAction?.type === 'proposal' && confirmAction.id === p.id}
+                  action={confirmAction?.action}
+                  item={t('admin.itemProposal')}
+                  busy={saving}
+                  busyLabel={t('admin.saving')}
+                  onConfirm={() => confirmAction.action === 'approve' ? handleApprovePrice(p) : handleRejectProposal(p.id)}
+                  onCancel={() => setConfirmAction(null)}
+                  t={t}
+                />
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[16rem]">
+                    <h3 className="mb-1">{getVenueName(p.pizzeriaId)}</h3>
+                    <p className="font-mono text-xs text-on-surface-variant mb-3">{p.author} · {fmtDate(p.createdAt)}</p>
+                    {/* Un solo flap per tessera: il prezzo proposto, cioe' il dato
+                        su cui si decide. Attuale e delta restano in monospaziato. */}
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <span className="font-mono tabular-nums text-on-surface-variant line-through">
+                        &euro;{p.currentPrice != null ? formatAmount(p.currentPrice, lang) : '---'}
+                      </span>
+                      <span className="material-symbols-outlined text-base text-on-surface-variant">arrow_forward</span>
+                      <span className="flap flap-lg">{formatAmount(p.proposedPrice, lang)}</span><span className="unit">EUR</span>
+                      <span className="font-mono tabular-nums text-sm text-on-surface-variant">
+                        Δ {diff > 0 ? '+' : ''}{diff.toFixed(2)}
+                      </span>
                     </div>
-                    <span className="material-symbols-outlined text-2xl text-secondary">arrow_forward</span>
-                    <div>
-                      <p className="text-xs font-black font-headline uppercase text-primary">{t('admin.proposed')}</p>
-                      <p className="font-headline font-bold text-lg text-primary">€{p.proposedPrice.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-black font-headline uppercase text-tertiary">Δ</p>
-                      <p className={`font-headline font-bold text-lg ${(p.proposedPrice - (p.currentPrice || 0)) > 0 ? 'text-secondary' : 'text-tertiary'}`}>
-                        {(p.proposedPrice - (p.currentPrice || 0)) > 0 ? '+' : ''}€{(p.proposedPrice - (p.currentPrice || 0)).toFixed(2)}
+                    {/* La nota di chi segnala: sta qui, sotto il prezzo che
+                        spiega, e non e' piu' un messaggio da approvare a
+                        parte. Il filetto a sinistra la lega al dato senza
+                        aprire un secondo riquadro. */}
+                    {p.note && (
+                      <p className="font-body text-sm text-on-surface-variant mt-3 mb-0 pl-3 border-l border-outline-variant">
+                        {p.note}
                       </p>
-                    </div>
+                    )}
                   </div>
-                </div>
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => setConfirmAction({ type: 'proposal', id: p.id, action: 'approve' })}
+                  <ActionPair
                     disabled={saving}
-                    className="bg-tertiary text-on-tertiary font-label font-bold uppercase py-2 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-tertiary-container transition-colors text-xs disabled:opacity-50"
-                  >
-                      <span className="material-symbols-outlined text-sm">check_circle</span> {t('admin.publish')}
-                    </button>
-                    <button
-                      onClick={() => setConfirmAction({ type: 'proposal', id: p.id, action: 'reject' })}
-                      className="bg-error text-on-error font-label font-bold uppercase py-2 px-3 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
-                    >
-                      <span className="material-symbols-outlined text-sm">cancel</span> {t('admin.hide')}
-                  </button>
+                    onApprove={() => setConfirmAction({ type: 'proposal', id: p.id, action: 'approve' })}
+                    onReject={() => setConfirmAction({ type: 'proposal', id: p.id, action: 'reject' })}
+                    approveLabel={t('admin.publish')}
+                    rejectLabel={t('admin.hide')}
+                  />
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
       {pendingFeedPosts.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-headline font-black text-xl uppercase text-primary mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary">add_a_photo</span>
-            {t('admin.feedPostsTitle')} ({pendingFeedPosts.length})
-          </h2>
-          <div className="space-y-3">
+          <div className="section-title">
+            <h2 className="text-base">{t('admin.feedPostsTitle')}</h2>
+            <span className="badge badge-ghost font-mono tabular-nums">{pendingFeedPosts.length}</span>
+          </div>
+          <div className="stack">
             {pendingFeedPosts.map(p => (
-              <div key={p.id} className="bg-surface border-2 border-primary p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] relative">
-                {confirmAction?.type === 'feedPost' && confirmAction.id === p.id && (
-                  <div className="absolute inset-0 bg-surface/95 border-2 border-primary p-4 flex flex-col items-center justify-center z-10">
-                    <p className="font-headline font-bold text-sm text-primary mb-3">
-                      {t('admin.confirmPrompt', { action: confirmAction.action === 'approve' ? t('admin.confirmApprove') : t('admin.confirmReject'), item: 'post' })}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => confirmAction.action === 'approve' ? handleApproveFeedPost(p.id) : handleRejectFeedPost(p.id)}
-                        className={`font-label font-bold uppercase py-2 px-4 border-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm ${confirmAction.action === 'approve' ? 'bg-tertiary text-on-tertiary border-primary' : 'bg-error text-on-error border-error'}`}
-                      >
-                        {t('common.confirm')}
-                      </button>
-                      <button onClick={() => setConfirmAction(null)} className="bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] text-sm">
-                        {t('common.cancel')}
-                      </button>
+              <div key={p.id} className="tile relative">
+                <ConfirmOverlay
+                  open={confirmAction?.type === 'feedPost' && confirmAction.id === p.id}
+                  action={confirmAction?.action}
+                  item={t('admin.itemPost')}
+                  onConfirm={() => confirmAction.action === 'approve' ? handleApproveFeedPost(p.id) : handleRejectFeedPost(p.id)}
+                  onCancel={() => setConfirmAction(null)}
+                  t={t}
+                />
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[16rem]">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="font-display uppercase tracking-[0.04em] text-sm">{p.author}</span>
+                      <span className="font-mono text-xs text-on-surface-variant">{fmtDate(p.createdAt)}</span>
                     </div>
-                  </div>
-                )}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-headline font-bold text-sm text-primary">{p.author}</span>
-                      <span className="text-xs text-on-surface-variant">{new Date(p.createdAt).toLocaleString(lang === 'it' ? 'it-IT' : 'en-US')}</span>
-                    </div>
-                    <h3 className="font-headline font-bold text-lg text-secondary mt-1">{p.title}</h3>
+                    <h3 className="mt-1 mb-1">{p.title}</h3>
                     {p.description_it || p.description_en || p.description ? (
-                      <p className="font-body text-sm text-on-surface mt-1">
+                      <p className="font-body text-sm mb-0">
                         {lang === 'it' ? (p.description_it || p.description) : (p.description_en || p.description)}
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => setConfirmAction({ type: 'feedPost', id: p.id, action: 'approve' })}
-                      className="bg-tertiary text-on-tertiary font-label font-bold uppercase py-2 px-3 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-tertiary-container transition-colors text-xs"
-                    >
-                      <span className="material-symbols-outlined text-sm">check_circle</span> {t('admin.publishBtn')}
-                    </button>
-                    <button
-                      onClick={() => setConfirmAction({ type: 'feedPost', id: p.id, action: 'reject' })}
-                      className="bg-error text-on-error font-label font-bold uppercase py-2 px-3 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-xs"
-                    >
-                      <span className="material-symbols-outlined text-sm">cancel</span> {t('admin.hideBtn')}
-                    </button>
-                  </div>
+                  <ActionPair
+                    onApprove={() => setConfirmAction({ type: 'feedPost', id: p.id, action: 'approve' })}
+                    onReject={() => setConfirmAction({ type: 'feedPost', id: p.id, action: 'reject' })}
+                    approveLabel={t('admin.publishBtn')}
+                    rejectLabel={t('admin.hideBtn')}
+                  />
                 </div>
               </div>
             ))}
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+/* Approva e rifiuta comparivano identici in tre punti: una sola coppia.
+   Il rosso sta sul rifiuto perche' li' si toglie qualcosa. */
+function ActionPair({ onApprove, onReject, approveLabel, rejectLabel, disabled }) {
+  return (
+    <div className="flex gap-2 shrink-0 no-print">
+      <button onClick={onApprove} disabled={disabled} className="btn btn-primary btn-sm">
+        <span className="material-symbols-outlined text-sm">check_circle</span>
+        {approveLabel}
+      </button>
+      <button onClick={onReject} disabled={disabled} className="btn btn-secondary btn-sm">
+        <span className="material-symbols-outlined text-sm">cancel</span>
+        {rejectLabel}
+      </button>
+    </div>
+  );
+}
+
+/* La conferma copre la tessera invece di aprire una finestra: si decide dove
+   si sta guardando. Fondo pieno, non trasparente, altrimenti si legge doppio. */
+function ConfirmOverlay({ open, action, item, onConfirm, onCancel, busy, busyLabel, t }) {
+  if (!open) return null;
+  return (
+    <div className="absolute inset-0 z-10 bg-surface border border-outline-variant flex flex-col items-center justify-center gap-3 p-4 text-center no-print">
+      <p className="font-display uppercase tracking-[0.06em] text-sm mb-0">
+        {t('admin.confirmPrompt', {
+          action: action === 'approve' ? t('admin.confirmApprove') : t('admin.confirmReject'),
+          item,
+        })}
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={onConfirm}
+          disabled={busy}
+          className={`btn btn-sm ${action === 'approve' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          {busy ? busyLabel : t('common.confirm')}
+        </button>
+        <button onClick={onCancel} className="btn btn-ghost btn-sm">
+          {t('common.cancel')}
+        </button>
+      </div>
     </div>
   );
 }
