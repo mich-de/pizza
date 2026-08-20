@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { useStitchedData } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PageHeader, StatCard } from '../components/ui';
+import { PageHeader } from '../components/ui';
+import StatTile from '../components/StatTile';
 import { groupByCity } from '../utils/groupByCity';
 
 export default function Network() {
@@ -31,25 +32,27 @@ export default function Network() {
   if (loading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
+    <div className="container fade-in">
       <PageHeader
+        eyebrow={t('common.peninsula')}
         title={t('network.title')}
         subtitle={t('network.subtitle')}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        <StatCard title={t('network.totalNodes')} value={stats.totalPizzerias} icon="store" color="primary" />
-        <StatCard title={t('network.clusters')} value={stats.clusters} icon="hub" color="primaryContainer" />
-        <StatCard title={t('network.avgRating')} value={stats.avgRating.toFixed(1)} icon="star" color="tertiary" />
-        <StatCard title={t('network.avgPrice')} value={`€${stats.avgPrice.toFixed(2)}`} icon="euro" color="secondary" />
+      {/* Quattro conteggi in monospaziato, non quattro flap: il flap resta uno
+          solo, sulla testatina dell'elenco a destra. */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
+        <StatTile icon="store" label={t('network.totalNodes')} value={stats.totalPizzerias} />
+        <StatTile icon="hub" label={t('network.clusters')} value={stats.clusters} />
+        <StatTile icon="star" label={t('network.avgRating')} value={stats.avgRating.toFixed(1)} />
+        <StatTile icon="euro" label={t('network.avgPrice')} value={`€${stats.avgPrice.toFixed(2)}`} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5">
-          <h3 className="text-2xl font-display font-bold border-b border-outline-variant pb-2 mb-6 inline-block">
-            {t('network.cityClusters')}
-          </h3>
-          <div className="flex flex-col gap-3">
+        {/* Scegliere il cluster compone la richiesta: su carta sparisce. */}
+        <div className="lg:col-span-5 no-print">
+          <div className="section-title">{t('network.cityClusters')}</div>
+          <div className="stack">
             {cityNames.map((city) => {
               const pizzerias = grouped[city];
               const avgCityPrice = pizzerias.reduce((s, p) => s + (p.margheritaPrice || 0), 0) / pizzerias.length;
@@ -58,25 +61,19 @@ export default function Network() {
                 <button
                   key={city}
                   onClick={() => setSelectedCity(isActive ? null : city)}
-                  className={`w-full text-left border rounded-sm p-5 transition-all ${
-                    isActive
-                      ? 'bg-primary text-on-primary border-primary'
-                      : 'bg-surface border-outline-variant hover:bg-surface-variant'
-                  }`}
+                  aria-pressed={isActive}
+                  className={`tile w-full text-left ${isActive ? 'highlight' : ''}`}
                 >
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className={`font-display font-bold text-xl ${isActive ? 'text-on-primary' : ''}`}>{city}</h4>
-                    <div className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-lg">store</span>
-                      <span className="font-label font-semibold text-base">{pizzerias.length}</span>
-                    </div>
+                  <div className="tile-head">
+                    <span className="tile-title">{city}</span>
+                    <span className="badge badge-ghost font-mono tabular-nums">{pizzerias.length}</span>
                   </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className={`font-label text-sm tracking-wider ${isActive ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>
-                      {pizzerias.length} {t('network.pizzerias')}
+                  <div className="flex justify-between items-center gap-3 mt-2">
+                    <span className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant">
+                      {t('network.pizzerias')}
                     </span>
-                    <span className={`font-display font-bold text-lg ${isActive ? 'text-on-primary' : ''}`}>
-                      €{avgCityPrice.toFixed(2)} {t('network.avg')}
+                    <span className="font-mono tabular-nums text-sm">
+                      €{avgCityPrice.toFixed(2)} <span className="text-on-surface-variant">{t('network.avg')}</span>
                     </span>
                   </div>
                 </button>
@@ -86,39 +83,38 @@ export default function Network() {
         </div>
 
         <div className="lg:col-span-7">
-          <h3 className="text-2xl font-display font-bold border-b border-outline-variant pb-2 mb-6 inline-block">
-            {selectedCity ? t('network.cityConnections', { city: selectedCity }) : t('network.allConnections')}
-          </h3>
-          <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+            <div className="section-title mb-0">
+              {selectedCity ? t('network.cityConnections', { city: selectedCity }) : t('network.allConnections')}
+            </div>
+            {/* L'unico flap della schermata: quanti nodi si stanno leggendo. */}
+            <span className="flap">{(selectedCity ? selectedData : data).length}</span>
+          </div>
+          <div className="stack">
             {(selectedCity ? selectedData : data).map((pz) => (
-              <div
-                key={pz.id}
-                className="bg-surface border border-outline-variant rounded-sm p-4 flex items-center gap-4 hover-lift"
-              >
-                <div className="w-11 h-11 bg-primary/10 text-primary rounded-sm flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined">store</span>
-                </div>
+              <div key={pz.id} className="tile flex items-center gap-4">
+                <span className="material-symbols-outlined text-on-surface-variant shrink-0">store</span>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-label font-semibold text-sm truncate">{pz.name}</h4>
-                  <p className="text-xs font-body text-on-surface-variant/60 truncate">{pz.address}</p>
-                  <div className="flex items-center gap-3 text-xs font-label text-on-surface-variant/70 mt-0.5">
-                    <span>{pz.cityName}</span>
-                    <span>·</span>
-                    <span>{categoryLabels[pz.category] || pz.category}</span>
+                  <h4 className="tile-title truncate mb-0.5">{pz.name}</h4>
+                  <p className="tile-desc truncate mb-1">{pz.address}</p>
+                  <div className="chips">
+                    <span className="chip">{pz.cityName}</span>
+                    <span className="chip">{categoryLabels[pz.category] || pz.category}</span>
                   </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="font-display font-bold text-lg">€{pz.margheritaPrice?.toFixed(2)}</div>
-                  <div className="flex items-center gap-1 justify-end text-primary/70">
-                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="font-label font-semibold text-sm">{pz.rating}</span>
+                <div className="text-right shrink-0">
+                  <div className="font-mono tabular-nums text-base">€{pz.margheritaPrice?.toFixed(2)}</div>
+                  <div className="flex items-center gap-1 justify-end text-on-surface-variant">
+                    <span className="material-symbols-outlined text-sm">star</span>
+                    <span className="font-mono tabular-nums text-sm">{pz.rating}</span>
                   </div>
                 </div>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pz.name + ' ' + pz.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 border border-outline-variant rounded-sm flex items-center justify-center hover:bg-primary hover:text-on-primary hover:border-primary transition-colors flex-shrink-0 text-on-surface-variant"
+                  className="btn btn-ghost btn-icon btn-sm shrink-0 no-print"
+                  aria-label={pz.name}
                 >
                   <span className="material-symbols-outlined text-lg">map</span>
                 </a>

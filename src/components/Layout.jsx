@@ -9,7 +9,10 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <div className="bg-background text-on-background font-body min-h-screen flex flex-col md:flex-row">
+    /* Nessun bg qui: il fondo avorio sta su <html> e la trama diagonale su
+       body::before, a z-index negativo. Un colore pieno su questo contenitore
+       li coprirebbe entrambi e il fondo tornerebbe una superficie piatta. */
+    <div className="text-on-background font-body min-h-screen flex flex-col md:flex-row">
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <TopBar onMenuToggle={() => setDrawerOpen(true)} />
       <Sidebar />

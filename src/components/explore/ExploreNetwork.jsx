@@ -1,33 +1,90 @@
-export default function ExploreNetwork({ data, networkStats, grouped, cityNames, selectedCity, setSelectedCity, t, onSelect }) {
+import { formatAmount } from '../../utils/formatAmount';
+
+export default function ExploreNetwork({ data, networkStats, grouped, cityNames, selectedCity, setSelectedCity, t, lang, onSelect }) {
   const selectedData = selectedCity ? (grouped[selectedCity] || []) : data;
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        <div className="bg-surface border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <div className="font-label font-bold text-xs uppercase tracking-widest text-on-surface-variant mb-1">{t('network.totalNodes')}</div>
-          <div className="font-headline font-black text-4xl text-primary">{networkStats.totalPizzerias}</div>
-        </div>
-        <div className="bg-primary-container border-4 border-primary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <div className="font-label font-bold text-xs uppercase tracking-widest text-primary/70 mb-1">{t('network.clusters')}</div>
-          <div className="font-headline font-black text-4xl text-primary">{networkStats.clusters}</div>
-        </div>
-        <div className="bg-tertiary-container border-4 border-tertiary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <div className="font-label font-bold text-xs uppercase tracking-widest text-tertiary/70 mb-1">{t('network.avgRating')}</div>
-          <div className="font-headline font-black text-4xl text-tertiary">{networkStats.avgRating.toFixed(1)}</div>
-        </div>
-        <div className="bg-secondary-container border-4 border-secondary p-5 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <div className="font-label font-bold text-xs uppercase tracking-widest text-secondary/70 mb-1">{t('network.avgPrice')}</div>
-          <div className="font-headline font-black text-4xl text-secondary">&euro;{networkStats.avgPrice.toFixed(2)}</div>
+      {/* Il quadro della rete: un flap solo — il prezzo medio, che e' la
+          risposta che si viene a cercare — e gli altri conteggi in colonna
+          chiave/valore accanto. Due palette affiancate competono. */}
+      <div className="panel mb-8">
+        <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-9">
+          <div className="shrink-0">
+            <span className="block font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant mb-1.5">
+              {t('network.avgPrice')}
+            </span>
+            <span className="flap flap-lg">{formatAmount(networkStats.avgPrice, lang)}</span><span className="unit">EUR</span>
+          </div>
+
+          <ul className="kv flex-1 min-w-0 md:grid-cols-3">
+            <li><span className="k">{t('network.totalNodes')}</span><span className="v">{networkStats.totalPizzerias}</span></li>
+            <li><span className="k">{t('network.clusters')}</span><span className="v">{networkStats.clusters}</span></li>
+            <li><span className="k">{t('network.avgRating')}</span><span className="v">{networkStats.avgRating.toFixed(1)}</span></li>
+          </ul>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5">
-          <h3 className="font-headline font-black text-2xl md:text-3xl uppercase text-primary border-b-4 border-primary pb-3 mb-6">
-            {t('network.cityClusters')}
-          </h3>
-          <div className="flex flex-col gap-3">
+      {/* 7/5, non 1/1: la colonna dove si legge il risultato comanda. */}
+      <div className="split">
+        <div>
+          <div className="section-title">
+            <h2>{selectedCity ? t('network.cityConnections', { city: selectedCity }) : t('network.allConnections')}</h2>
+          </div>
+          <div className="flex flex-col gap-2 fade-in">
+            {selectedData.map((pz) => (
+              <div
+                key={pz.id}
+                onClick={() => onSelect?.(pz)}
+                className="tile flex items-center gap-4 cursor-pointer"
+              >
+                <span className="w-10 h-10 shrink-0 flex items-center justify-center border border-outline-variant bg-surface-dim text-on-surface-variant">
+                  <span className="material-symbols-outlined text-lg">store</span>
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="tile-title text-base truncate flex items-center gap-2">
+                    <span className={pz.status === 'closed' ? 'text-on-surface-variant/50 line-through' : ''}>{pz.name}</span>
+                    {pz.status === 'closed' && (
+                      <span className="badge badge-error">{t('explore.closedPermanently')}</span>
+                    )}
+                  </h3>
+                  <p className="font-body text-xs text-on-surface-variant/70 truncate mt-0.5">{pz.address}</p>
+                  <div className="flex items-center gap-2 mt-1 font-label text-[0.68rem] uppercase tracking-[0.09em] text-on-surface-variant">
+                    <span>{pz.cityName}</span>
+                    <span className="text-outline">&middot;</span>
+                    <span>{t(`common.${pz.category === 'wood-fired' ? 'woodFired' : pz.category}`)}</span>
+                  </div>
+                </div>
+                <div className="price shrink-0">
+                  <p className="font-mono text-lg font-semibold tabular-nums tracking-tight">&euro;{formatAmount(pz.margheritaPrice, lang)}</p>
+                  {/* Stella neutra: l'ambra segnala, e un segnale su ogni riga
+                      non segnala piu' niente. */}
+                  <p className="flex items-center justify-end gap-1 mt-0.5 font-mono text-xs tabular-nums text-on-surface-variant">
+                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                    {pz.rating}
+                  </p>
+                </div>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pz.name + ' ' + pz.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="btn btn-ghost btn-sm btn-icon shrink-0 no-print"
+                  title={t('explore.maps')}
+                >
+                  <span className="material-symbols-outlined text-base">map</span>
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="section-title">
+            <h2>{t('network.cityClusters')}</h2>
+          </div>
+          {/* Scegliere il cluster e' comporre la richiesta: su carta sparisce. */}
+          <div className="flex flex-col gap-2 no-print">
             {cityNames.map((city) => {
               const pizzerias = grouped[city];
               const avgCityPrice = pizzerias.reduce((s, p) => s + (p.margheritaPrice || 0), 0) / pizzerias.length;
@@ -36,85 +93,28 @@ export default function ExploreNetwork({ data, networkStats, grouped, cityNames,
                 <button
                   key={city}
                   onClick={() => setSelectedCity(isActive ? null : city)}
-                  className={`w-full text-left border-4 transition-all ${
-                    isActive
-                      ? 'bg-primary text-on-primary border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]'
-                      : 'bg-surface border-primary shadow-[3px_3px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_rgba(26,26,26,1)]'
-                  }`}
+                  /* Il cluster attivo prende la barra ambra interna di
+                     `.tile.highlight`: e' un segnale di stato, non un fondo. */
+                  className={`tile text-left w-full ${isActive ? 'highlight' : ''}`}
                 >
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-1">
-                      <h4 className={`font-headline font-black text-xl ${isActive ? 'text-on-primary' : 'text-primary'}`}>{city}</h4>
-                      <div className={`flex items-center gap-1.5 text-sm ${isActive ? 'text-on-primary/80' : 'text-primary'}`}>
-                        <span className="material-symbols-outlined text-lg">store</span>
-                        <span className="font-headline font-bold">{pizzerias.length}</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className={`font-label font-bold text-xs uppercase ${isActive ? 'text-on-primary/60' : 'text-on-surface-variant/60'}`}>
-                        {t('network.pizzerias')}
-                      </span>
-                      <span className={`font-headline font-black text-lg ${isActive ? 'text-on-primary' : 'text-primary'}`}>
-                        &euro;{avgCityPrice.toFixed(2)} <span className={`font-label text-xs font-bold uppercase ${isActive ? 'text-on-primary/60' : 'text-on-surface-variant/60'}`}>{t('network.avg')}</span>
-                      </span>
-                    </div>
+                  <div className="tile-head">
+                    <h3 className="tile-title text-base">{city}</h3>
+                    <span className="inline-flex items-center gap-1.5 font-mono text-sm tabular-nums text-on-surface-variant">
+                      <span className="material-symbols-outlined text-base">store</span>
+                      {pizzerias.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-baseline mt-2">
+                    <span className="font-label text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant">
+                      {t('network.avg')}
+                    </span>
+                    <span className="font-mono text-base font-semibold tabular-nums tracking-tight">
+                      &euro;{avgCityPrice.toFixed(2)}
+                    </span>
                   </div>
                 </button>
               );
             })}
-          </div>
-        </div>
-
-        <div className="lg:col-span-7">
-          <h3 className="font-headline font-black text-2xl md:text-3xl uppercase text-primary border-b-4 border-primary pb-3 mb-6">
-            {selectedCity ? t('network.cityConnections', { city: selectedCity }) : t('network.allConnections')}
-          </h3>
-          <div className="flex flex-col gap-3">
-            {selectedData.map((pz) => (
-              <div
-                key={pz.id}
-                onClick={() => onSelect?.(pz)}
-                className="bg-surface border-4 border-primary shadow-[3px_3px_0px_0px_rgba(26,26,26,1)] p-4 flex items-center gap-4 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_rgba(26,26,26,1)] transition-all cursor-pointer"
-              >
-                <div className="w-12 h-12 bg-primary text-on-primary flex items-center justify-center border-2 border-primary flex-shrink-0">
-                  <span className="material-symbols-outlined text-xl">store</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-headline font-bold text-base truncate flex items-center gap-2">
-                    <span className={pz.status === 'closed' ? 'text-on-surface-variant/50' : 'text-primary'}>{pz.name}</span>
-                    {pz.status === 'closed' && (
-                      <span className="bg-error text-on-error font-headline font-black text-[10px] uppercase tracking-wider px-1.5 py-0.5">{t('explore.closedPermanently')}</span>
-                    )}
-                  </h4>
-                  <p className="font-label text-xs text-on-surface-variant/70 truncate">{pz.address}</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="font-label font-bold text-xs uppercase text-on-surface-variant/50">{pz.cityName}</span>
-                    <span className="font-label text-xs text-on-surface-variant/30">&middot;</span>
-                    <span className="font-label font-bold text-xs uppercase text-on-surface-variant/50">
-                      {t(`common.${pz.category === 'wood-fired' ? 'woodFired' : pz.category}`)}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="font-headline font-black text-xl text-primary">
-                    &euro;{pz.margheritaPrice?.toFixed(2)}
-                  </div>
-                  <div className="flex items-center gap-1 justify-end mt-0.5">
-                    <span className="material-symbols-outlined text-amber-600 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="font-headline font-bold text-sm text-primary">{pz.rating}</span>
-                  </div>
-                </div>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pz.name + ' ' + pz.address)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-10 h-10 flex items-center justify-center border-2 border-primary bg-background text-primary hover:bg-primary hover:text-on-primary transition-colors flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"
-                >
-                  <span className="material-symbols-outlined text-lg">map</span>
-                </a>
-              </div>
-            ))}
           </div>
         </div>
       </div>

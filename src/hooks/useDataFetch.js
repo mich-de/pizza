@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { silentFetch } from '../utils/silentFetch';
 import { checkAuth } from '../services/authService';
 
@@ -144,6 +144,14 @@ const COUNTS_TTL = 15000; // 15 seconds cache for badge counts
 export function usePendingCounts() {
   const [pendingCount, setPendingCount] = useState({ proposals: 0, comments: 0, posts: 0, total: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Dopo approvare o rifiutare, la cache dei conteggi e' vecchia: si butta e si rilegge.
+  const refresh = useCallback(() => {
+    countsCache = null;
+    countsCacheTime = 0;
+    setReloadKey(k => k + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,7 +209,7 @@ export function usePendingCounts() {
     }
     verify();
     return () => { cancelled = true; };
-  }, []);
+  }, [reloadKey]);
 
-  return { ...pendingCount, isAdmin };
+  return { ...pendingCount, isAdmin, refresh };
 }

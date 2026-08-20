@@ -2,41 +2,11 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { useAllData } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
+import StatTile from '../components/StatTile';
 import PizzeriaRow from '../components/admin/PizzeriaRow';
 import AddModal from '../components/admin/AddModal';
 import { CATEGORIES } from '../config/adminConfig';
-
-const API_BASE = globalThis.process?.env?.VITE_API_BASE || '';
-
-async function fetchWithAuth(url, options = {}) {
-  const res = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-  });
-  if (res.status === 401) {
-    try {
-      const refreshRes = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
-      if (refreshRes.ok) {
-        return fetch(`${API_BASE}${url}`, {
-          ...options,
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json', ...options.headers },
-        });
-      }
-    } catch (err) {
-      console.debug('Token refresh failed', err);
-    }
-    throw new Error('SESSION_EXPIRED');
-  }
-  return res;
-}
-
-async function fetchCSRF() {
-  const res = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
-  const data = await res.json();
-  return data.csrfToken;
-}
+import { fetchWithAuth, fetchCSRF } from '../services/adminApi';
 
 export default function Admin() {
   const { t } = useI18n();
@@ -266,113 +236,92 @@ export default function Admin() {
   return (
     <div className="w-full">
       {toast && (
-        <div key={toast.id} className="fixed top-4 right-4 z-[100]">
-          <div className={`font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] flex items-center gap-3 ${
-            toast.isError ? 'bg-error text-on-error' : 'bg-primary text-on-primary'
-          }`}>
-            <span className="material-symbols-outlined">
+        <div key={toast.id} className="fixed top-4 right-4 z-[100] max-w-sm bg-surface shadow-lg no-print">
+          <div className={`alert ${toast.isError ? 'alert-error' : 'alert-success'}`}>
+            <span className="material-symbols-outlined text-base leading-none">
               {toast.isError ? 'error' : 'check_circle'}
             </span>
-            {toast.msg}
+            <span>{toast.msg}</span>
           </div>
         </div>
       )}
 
-      {/* Page header */}
-      <header className="mb-14 border-b-4 border-primary pb-8">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="w-3 h-3 rounded-full bg-primary animate-pulse-soft" />
-              <span className="font-headline font-bold text-sm uppercase tracking-widest text-primary">
-                {t('admin.subtitle')}
-              </span>
-            </div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tight leading-[1.05] text-primary">
-              {t('admin.title')}
-            </h1>
-            <p className="text-lg md:text-xl font-body text-on-surface-variant mt-4 max-w-3xl leading-relaxed">
-              {rows.length} {t('admin.pizzeriaPlural')}
-            </p>
-          </div>
-        </div>
-      </header>
+      {/* Niente `PageHeader` qui: questa e' una scheda dentro il Pannello, che
+          la sua testatina ce l'ha gia'. Due testatine impilate vogliono dire
+          due foto, due tratti tricolore e lo stesso occhiello scritto due
+          volte a quattro centimetri di distanza. Qui basta il titolo di
+          sezione, col conteggio nel badge — che e' dove vanno i conteggi. */}
+      <div className="section-title">
+        <h2 className="text-base">{t('admin.title')}</h2>
+        <span className="badge badge-ghost font-mono tabular-nums">{rows.length}</span>
+      </div>
+      <p className="muted small mb-6">{t('admin.subtitle')}</p>
 
-      {/* Stats banner */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-primary stat-hover">{stats.total}</div>
-          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.totalVenues')}</div>
-        </div>
-        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-tertiary stat-hover">{stats.open}</div>
-          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.openVenues')}</div>
-        </div>
-        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-primary stat-hover">{stats.withPrice}</div>
-          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.withPrice')}</div>
-        </div>
-        <div className="group flex-1 min-w-[160px] bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-5 relative overflow-hidden card-glow">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-bl-full" />
-          <div className="font-headline font-black text-4xl md:text-5xl text-secondary stat-hover">&euro;{stats.avgPrice.toFixed(1)}</div>
-          <div className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant mt-1">{t('admin.avgPrice')}</div>
-        </div>
+      {/* Quattro conteggi in monospaziato: il flap resta ai prezzi delle righe. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <StatTile icon="storefront" label={t('admin.totalVenues')} value={stats.total} />
+        <StatTile icon="check_circle" label={t('admin.openVenues')} value={stats.open} />
+        <StatTile icon="sell" label={t('admin.withPrice')} value={stats.withPrice} />
+        <StatTile icon="trending_up" label={t('admin.avgPrice')} value={`${t('common.euro')}${stats.avgPrice.toFixed(2)}`} />
       </div>
 
-      {/* Error banner */}
       {error && (
-        <div className="mb-6 bg-error-container text-on-error-container border-4 border-error p-4 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <span className="material-symbols-outlined text-2xl">error</span>
-          <span className="font-headline font-bold uppercase text-sm">{error}</span>
+        <div className="alert alert-error mb-6">
+          <span className="material-symbols-outlined text-base leading-none">error</span>
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Actions bar */}
-      <div className="mb-6 flex gap-3 flex-wrap items-center justify-between">
-        <div className="flex gap-3 flex-wrap items-center">
-          <button onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-primary text-on-primary font-headline font-bold uppercase py-3.5 px-7 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-secondary hover:border-secondary transition-all">
-            <span className="material-symbols-outlined">add</span> {t('admin.addNew')}
+      {/* Tutto quel che compone la richiesta — azioni, ricerca, impaginazione —
+          non va su carta. */}
+      <div className="panel mb-6 no-print">
+        <div className="flex gap-3 flex-wrap items-center mb-4">
+          <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
+            <span className="material-symbols-outlined text-base">add</span>
+            {t('admin.addNew')}
           </button>
-          <button onClick={() => window.location.reload()}
-            className="flex items-center gap-2 bg-surface text-primary font-headline font-bold uppercase py-3.5 px-7 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:bg-primary hover:text-on-primary transition-all">
-            <span className="material-symbols-outlined">refresh</span> {t('admin.reload')}
+          <button onClick={() => window.location.reload()} className="btn btn-ghost">
+            <span className="material-symbols-outlined text-base">refresh</span>
+            {t('admin.reload')}
           </button>
         </div>
-      </div>
 
-      {/* Search & filters */}
-      <div className="mb-6 flex gap-4 flex-wrap items-center">
-        <div className="relative flex-1 md:max-w-md">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary/60 text-xl">search</span>
-          <input className="w-full bg-surface border-4 border-primary py-3.5 pl-12 pr-4 font-body font-bold text-primary uppercase focus:outline-none focus:border-secondary shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]"
-            placeholder={t('admin.searchPlaceholder')} type="text" value={search}
-            onChange={(e) => setSearch(e.target.value)} />
+        <div className="flex gap-3 flex-wrap items-end">
+          <label className="field flex-1 min-w-[14rem] mb-0">
+            <span>{t('admin.searchPlaceholder')}</span>
+            <input
+              className="w-full"
+              placeholder={t('admin.searchPlaceholder')}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <label className="field mb-0">
+            <span>{t('admin.rowsPerPage')}</span>
+            <select
+              value={pageSize === Infinity ? 'all' : pageSize}
+              onChange={(e) => setPageSize(e.target.value === 'all' ? Infinity : Number(e.target.value))}
+            >
+              <option value="10">{t('admin.pageSize', { n: 10 })}</option>
+              <option value="25">{t('admin.pageSize', { n: 25 })}</option>
+              <option value="50">{t('admin.pageSize', { n: 50 })}</option>
+              <option value="all">{t('admin.allPages')}</option>
+            </select>
+          </label>
           {search && (
-            <button onClick={() => setSearch('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/60 hover:text-primary">
-              <span className="material-symbols-outlined">close</span>
+            <button onClick={() => setSearch('')} className="btn btn-ghost">
+              <span className="material-symbols-outlined text-base">close</span>
             </button>
           )}
+          <span className="badge badge-ghost font-mono tabular-nums mb-[.7rem]">
+            {filteredRows.length}/{rows.length}
+          </span>
         </div>
-        <select value={pageSize === Infinity ? 'all' : pageSize}
-          onChange={(e) => setPageSize(e.target.value === 'all' ? Infinity : Number(e.target.value))}
-          className="bg-surface border-4 border-primary py-3.5 px-5 font-body font-bold text-primary uppercase focus:outline-none focus:border-secondary cursor-pointer shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
-          <option value="10">{t('admin.pageSize', { n: 10 })}</option>
-          <option value="25">{t('admin.pageSize', { n: 25 })}</option>
-          <option value="50">{t('admin.pageSize', { n: 50 })}</option>
-          <option value="all">{t('admin.allPages')}</option>
-        </select>
-        <span className="font-headline font-bold text-sm uppercase text-on-surface-variant bg-surface-variant border-2 border-primary px-3 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
-          {filteredRows.length}/{rows.length}
-        </span>
       </div>
 
       {/* Pizzeria list */}
-      <div className="space-y-5">
+      <div className="stack">
         {paginatedRows.map((row) => (
           <PizzeriaRow
             key={row.id}
@@ -392,31 +341,30 @@ export default function Admin() {
       </div>
 
       {filteredRows.length === 0 && (
-        <div className="text-center py-16 bg-surface border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-          <span className="material-symbols-outlined text-6xl text-outline mb-4 block">search_off</span>
-          <div className="font-headline font-black text-2xl uppercase text-on-surface-variant">{t('admin.noResult')}</div>
-          <p className="font-body text-sm text-on-surface-variant/60 mt-2">{t('admin.noResultHint')}</p>
+        <div className="panel text-center py-16">
+          <span className="material-symbols-outlined text-5xl text-on-surface-variant block">search_off</span>
+          <h3 className="mt-3 mb-1">{t('admin.noResult')}</h3>
+          <p className="font-body text-sm text-on-surface-variant mb-0">{t('admin.noResultHint')}</p>
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-8 pt-6 border-t-4 border-primary">
-          <span className="font-body font-bold text-sm text-on-surface-variant">
+        <div className="flex items-center justify-between gap-4 flex-wrap mt-8 pt-6 border-t border-outline-variant no-print">
+          <span className="font-mono text-sm tabular-nums text-on-surface-variant">
             {t('admin.paginationOf', {
               from: (page - 1) * pageSize + 1,
               to: Math.min(page * pageSize, filteredRows.length),
               total: filteredRows.length,
             })}
           </span>
-          <div className="flex gap-3">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="px-6 py-3 border-4 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-all shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn btn-ghost btn-sm">
+              <span className="material-symbols-outlined text-sm">chevron_left</span>
               {t('admin.previous')}
             </button>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-              className="px-6 py-3 border-4 border-primary font-headline font-bold uppercase text-sm disabled:opacity-30 hover:bg-primary hover:text-on-primary transition-all shadow-[3px_3px_0px_0px_rgba(26,26,26,1)]">
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn btn-ghost btn-sm">
               {t('admin.next')}
+              <span className="material-symbols-outlined text-sm">chevron_right</span>
             </button>
           </div>
         </div>
@@ -431,28 +379,23 @@ export default function Admin() {
       />
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4">
-          <div className="bg-surface border-4 border-error shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-3xl text-error">warning</span>
-                <h2 className="text-xl font-headline font-black uppercase text-error leading-tight">
-                  {t('admin.deleteConfirmTitle', { name: rows.find(r => r.id === deleteId)?.name })}
-                </h2>
-              </div>
-              <p className="font-body text-sm text-on-surface-variant mb-6 leading-relaxed">
-                {t('admin.deleteWarning')}
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button onClick={cancelDelete}
-                  className="bg-surface text-on-surface font-headline font-bold uppercase text-sm py-3 px-6 border-2 border-outline-variant shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-surface-variant transition-all">
-                  {t('admin.cancel')}
-                </button>
-                <button onClick={() => confirmDelete(deleteId)}
-                  className="bg-error text-on-error font-headline font-bold uppercase text-sm py-3 px-6 border-2 border-error shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error/80 transition-all flex items-center gap-2">
-                  <span className="material-symbols-outlined">delete_forever</span> {t('common.delete')}
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black/55 z-[200] flex items-center justify-center p-4 no-print">
+          <div className="card card-accent w-full max-w-md">
+            <span className="eyebrow">{t('common.delete')}</span>
+            <h2 className="mt-1">{t('admin.deleteConfirmTitle', { name: rows.find(r => r.id === deleteId)?.name })}</h2>
+            {/* L'ambra avverte, il rosso sta solo sul pulsante che cancella. */}
+            <div className="alert alert-warning mb-5">
+              <span className="material-symbols-outlined text-base leading-none">warning</span>
+              <span>{t('admin.deleteWarning')}</span>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={cancelDelete} className="btn btn-ghost">
+                {t('admin.cancel')}
+              </button>
+              <button onClick={() => confirmDelete(deleteId)} className="btn btn-secondary">
+                <span className="material-symbols-outlined text-base">delete_forever</span>
+                {t('common.delete')}
+              </button>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CHIP_ACTIVE } from '../config/uiTokens';
 
 export default function SocialActions({ fires, onCommentClick, t }) {
   const [isLiked, setIsLiked] = useState(false);
@@ -59,7 +60,8 @@ export default function SocialActions({ fires, onCommentClick, t }) {
 
       <button 
         onClick={() => setIsSaved(!isSaved)}
-        className={`ml-auto flex items-center justify-center w-9 h-9 border border-outline-variant rounded-sm transition-colors duration-150 ${isSaved ? 'bg-tertiary/10 text-tertiary border-tertiary/30' : 'bg-surface text-on-surface-variant hover:bg-surface-variant'}`}
+        aria-pressed={isSaved}
+        className={`btn btn-icon btn-sm ml-auto ${isSaved ? CHIP_ACTIVE : 'btn-ghost'}`}
       >
         <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}>
           bookmark

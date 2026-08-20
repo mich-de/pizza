@@ -63,6 +63,7 @@
     "subtitle": "Tutti gli eventi, le sagre e i festival della pizza nella Penisola Sorrentina",
     "when": "QUANDO",
     "where": "DOVE",
+    "venue": "Sede",
     "highlights": "IN EVIDENZA",
     "pastEvent": "EVENTO PASSATO",
     "upcoming": "IN ARRIVO",
@@ -93,7 +94,7 @@
   },
   "feed": {
     "title": "Pizza Feed",
-    "subtitle": "Analisi e Intel Pizzerie Live",
+    "subtitle": "Recensioni e scoperte della community: le pizze provate nella Penisola Sorrentina.",
     "whatsNew": "Condividi la tua scoperta...",
     "latest": "RECENTI",
     "topRated": "TOP",
@@ -143,7 +144,8 @@
     "maps": "Maps",
     "currentLabel": "(attuale)",
     "tripAdvisor": "TripAdvisor",
-    "closedPermanently": "CHIUSO DEFINITIVAMENTE"
+    "closedPermanently": "CHIUSO DEFINITIVAMENTE",
+    "perPage": "Per pagina"
   },
   "directory": {
     "title": "Elenco Pizzerie",
@@ -297,6 +299,9 @@
     "confirmApprove": "Approvare",
     "confirmReject": "Rifiutare",
     "confirmPrompt": "{action} questo {item}?",
+    "itemProposal": "proposta",
+    "itemComment": "commento",
+    "itemPost": "post",
     "proposalsSummary": "{proposals} proposte + {comments} commenti + {posts} scoperte in attesa",
     "open": "Aperta",
     "closed": "Chiusa",
@@ -311,6 +316,7 @@
     "loggedInAs": "Loggato come:",
     "logout": "Esci",
     "pageSize": "{n} / pag.",
+    "rowsPerPage": "Righe per pagina",
     "allPages": "Tutti",
     "paginationOf": "{from}–{to} di {total}",
     "previous": "Precedente",
@@ -370,7 +376,50 @@
     "descriptions": "DESCRIZIONI",
     "extras": "EXTRA",
     "addPrice": "Aggiungi prezzo",
-    "margheritaPrice": "Prezzo margherita (€)"
+    "margheritaPrice": "Prezzo margherita (€)",
+    "panelSubtitle": "Gestione del sistema: pizzerie, approvazioni e utenti in un solo posto.",
+    "proposalsSubtitle": "Proposte, commenti e scoperte in attesa di revisione. Approva o rifiuta."
+  },
+  "adminEvents": {
+    "title": "Eventi",
+    "subtitle": "Inserisci, modifica ed elimina gli eventi del calendario.",
+    "new": "Nuovo evento",
+    "newTitle": "Nuovo evento",
+    "editTitle": "Modifica evento",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "confirmDelete": "Eliminare questo evento? Non si torna indietro.",
+    "empty": "Nessun evento in calendario",
+    "emptyDesc": "Premi «Nuovo evento» per aggiungerne uno.",
+    "created": "Evento creato",
+    "updated": "Evento aggiornato",
+    "deleted": "Evento eliminato",
+    "loadError": "Impossibile caricare gli eventi",
+    "saveError": "Salvataggio non riuscito",
+    "deleteError": "Eliminazione non riuscita",
+    "errorRequired": "Titolo, date e comune sono obbligatori",
+    "errorDateOrder": "La data di fine precede quella di inizio",
+    "fieldTitle": "Titolo",
+    "fieldDateStart": "Data di inizio",
+    "fieldDateEnd": "Data di fine",
+    "fieldCity": "Comune",
+    "chooseCity": "Scegli un comune",
+    "fieldType": "Tipo",
+    "fieldVenue": "Luogo",
+    "fieldDescription": "Descrizione",
+    "fieldHighlights": "In evidenza",
+    "highlightsPlaceholder": "Una voce per riga",
+    "fieldImage": "Immagine",
+    "posterDrop": "Trascina qui la locandina",
+    "posterHint": "oppure premi per sceglierla — PNG, JPEG, WebP o GIF, fino a 4 MB",
+    "posterUploading": "Caricamento…",
+    "posterReplace": "Sostituisci",
+    "posterRemove": "Togli",
+    "posterNotImage": "Il file non è un’immagine",
+    "posterTooBig": "Immagine troppo pesante: il limite è 4 MB",
+    "posterFailed": "Caricamento non riuscito"
   },
   "settings": {
     "title": "Impostazioni",
@@ -445,6 +494,7 @@
     "verifyCodeDesc": "Inserisci il codice a 6 cifre dalla tua app autenticatore",
     "verifyCodePlaceholder": "000000",
     "verifyAndEnable": "Verifica e Attiva",
+    "verifying": "Verifica in corso…",
     "disable2FA": "Disattiva 2FA",
     "disable2FADesc": "Inserisci la password per disattivare l'autenticazione a due fattori",
     "disabling": "Disattivazione...",
@@ -460,7 +510,28 @@
     "regenerationError": "Errore rigenerazione",
     "validationError": "Errore validazione",
     "exportError": "Errore esportazione",
-    "purgeError": "Errore svuotamento cache"
+    "purgeError": "Errore svuotamento cache",
+    "dateTime": "Data e Ora",
+    "dateTimeSample": "Come si legge ora",
+    "dateTimeZoneNow": "Fuso in uso: {zone}",
+    "dateTimeEventSample": "Evento",
+    "dateTimeReset": "Ripristina i valori iniziali",
+    "dateFormat": "Formato data",
+    "dateFormat_auto": "Automatico (segue la lingua)",
+    "dateFormat_dmy": "Giorno/Mese/Anno",
+    "dateFormat_mdy": "Mese/Giorno/Anno",
+    "dateFormat_iso": "ISO 8601",
+    "dateFormat_medium": "Mese abbreviato",
+    "dateFormat_long": "Mese per esteso",
+    "timeFormat": "Formato ora",
+    "timeFormat_auto": "Automatico (segue la lingua)",
+    "timeFormat_h24": "24 ore — 18:30",
+    "timeFormat_h12": "12 ore — 6:30 PM",
+    "timeZone": "Fuso orario",
+    "zoneDevice": "Fuso del dispositivo",
+    "timeZoneSearch": "Cerca un fuso orario",
+    "timeZoneEmpty": "Nessun fuso corrisponde",
+    "timeZoneNote": "Scrivi per cercare fra tutti i fusi"
   },
   "sidebar": {
     "mediaMargherita": "Media Margherita",
@@ -500,7 +571,8 @@
     "minLengthError": "Il commento deve essere di almeno 5 caratteri.",
     "proposalLabel": "Proposta:",
     "fetchCaptchaError": "Impossibile caricare la verifica. Riprova.",
-    "invalidRequest": "Richiesta non valida."
+    "invalidRequest": "Richiesta non valida.",
+    "leaveComment": "Lascia un commento"
   },
   "loading": {
     "margherita": "Caricamento Margherita…"
@@ -517,8 +589,6 @@
     "verify": "Verifica",
     "verifying": "Verifica in corso…",
     "pizzaRadar": "PizzaRadar Sorrento",
-    "penisola": "Penisola Sorrentina",
-    "areaRiservata": "Area Riservata",
     "username": "Username",
     "usernamePlaceholder": "Nome utente",
     "password": "Password",
@@ -542,7 +612,8 @@
     "passwordsMatch": "Le password corrispondono",
     "passwordChangeError": "Errore nel cambio password",
     "saving": "Salvataggio…",
-    "saveAndContinue": "Salva e Continua"
+    "saveAndContinue": "Salva e Continua",
+    "loginDesc": "Accesso riservato alla redazione. Servono le credenziali di amministratore."
   },
   "priceProposal": {
     "errorFetchCaptcha": "Impossibile caricare la verifica. Riprova.",
@@ -606,6 +677,9 @@
     "events": "Eventi",
     "posts": "Post",
     "votes": "voto",
-    "sortBy": "Ordina Per"
+    "sortBy": "Ordina Per",
+    "peninsula": "Penisola Sorrentina",
+    "restrictedArea": "Area Riservata",
+    "restaurant": "Ristorante"
   }
 }

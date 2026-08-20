@@ -10,6 +10,7 @@ export const navItems = [
 export const adminTabs = [
   { key: 'pizzerias', icon: 'store', labelKey: 'nav.admin' },
   { key: 'proposals', icon: 'fact_check', labelKey: 'nav.approvals' },
+  { key: 'events', icon: 'local_activity', labelKey: 'nav.events' },
   { key: 'settings', icon: 'settings', labelKey: 'nav.settings' },
 ];
 

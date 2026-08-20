@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nContext';
 import { checkAuth, logout } from '../services/authService';
@@ -7,7 +7,9 @@ import { usePendingCounts } from '../hooks/useDataFetch';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Admin from '../pages/Admin';
 import AdminProposals from '../pages/AdminProposals';
+import AdminEvents from '../pages/AdminEvents';
 import Settings from '../pages/Settings';
+import { PageHeader } from '../components/ui';
 
 export default function AdminPanel() {
   const { t } = useI18n();
@@ -17,7 +19,7 @@ export default function AdminPanel() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('pizzerias');
   const [dismissed, setDismissed] = useState(false);
-  const { proposals, comments, total: totalPending } = usePendingCounts();
+  const { proposals, comments, total: totalPending, refresh: refreshCounts } = usePendingCounts();
 
   useEffect(() => {
     let cancelled = false;
@@ -38,12 +40,6 @@ export default function AdminPanel() {
     return () => { cancelled = true; };
   }, []);
 
-  const refreshCounts = useCallback(async () => {
-    // Counts will refresh automatically via the hook if we implement a way to trigger it,
-    // but for now the hook runs on mount. 
-    // Actually AdminProposals calls onDataChange, so we might want the hook to have a refresh function.
-  }, []);
-
   if (checking) return <LoadingSpinner fullScreen />;
   if (!authenticated) return <Navigate to="/login" replace />;
 
@@ -53,89 +49,90 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto w-full p-6 md:p-12">
+    <div className="container fade-in">
       {totalPending > 0 && !dismissed && (
-        <div className="mb-10 bg-secondary border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] relative">
-          <button
-            onClick={() => setDismissed(true)}
-            className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center hover:bg-primary/20 transition-colors"
-          >
-            <span className="material-symbols-outlined text-primary">close</span>
-          </button>
-          <div className="p-4 md:p-6 flex items-start gap-4">
-            <span className="material-symbols-outlined text-3xl text-primary mt-1">notifications_active</span>
-            <div className="flex-1">
-              <h3 className="font-headline font-bold uppercase text-primary text-lg">
-                {t('admin.pendingActivity')}
-              </h3>
-              <p className="font-body text-on-surface-variant mt-1">
-                {proposals > 0 && (
-                  <>
-                    <span className="font-bold text-primary">{proposals}</span> {t('admin.pendingProposals')}{comments > 0 ? ` ${t('common.and')} ` : ''}
-                  </>
-                )}
-                {comments > 0 && (
-                  <>
-                    <span className="font-bold text-primary">{comments}</span> {t('admin.pendingComments')}
-                  </>
-                )}
-                {' '}{t('admin.pendingReview')}
-              </p>
-            </div>
-            <button
-              onClick={() => { setActiveTab('proposals'); setDismissed(true); }}
-              className="flex items-center gap-2 bg-primary text-on-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-primary-container transition-colors flex-shrink-0"
-            >
-              <span className="material-symbols-outlined">arrow_forward</span> {t('admin.go')}
-            </button>
-          </div>
+        /* Forma «icona + testo» dell'avviso: due <span>, il flex si accende da
+           solo. L'ambra qui segnala e basta, non e' un fondo esteso. */
+        <div className="alert alert-warning mt-8">
+          <span className="material-symbols-outlined text-base leading-none">notifications_active</span>
+          <span className="flex-1">
+            <strong>{t('admin.pendingActivity')}</strong>{' '}
+            {proposals > 0 && (
+              <>
+                <span className="font-mono tabular-nums">{proposals}</span> {t('admin.pendingProposals')}{comments > 0 ? ` ${t('common.and')} ` : ''}
+              </>
+            )}
+            {comments > 0 && (
+              <>
+                <span className="font-mono tabular-nums">{comments}</span> {t('admin.pendingComments')}
+              </>
+            )}
+            {' '}{t('admin.pendingReview')}
+            <span className="flex gap-2 mt-2.5 no-print">
+              <button
+                onClick={() => { setActiveTab('proposals'); setDismissed(true); }}
+                className="btn btn-primary btn-sm"
+              >
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                {t('admin.go')}
+              </button>
+              <button onClick={() => setDismissed(true)} className="btn btn-ghost btn-sm">
+                {t('common.close')}
+              </button>
+            </span>
+          </span>
         </div>
       )}
 
-      <div className="flex items-center justify-between pb-8">
-        <div>
-          <h1 className="font-headline font-black text-4xl md:text-5xl lg:text-6xl uppercase text-primary flex items-center gap-3">
-            <span className="material-symbols-outlined text-4xl md:text-5xl">admin_panel_settings</span>
-            {t('admin.panelTitle')}
-          </h1>
-          <p className="font-body text-on-surface-variant mt-1 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-base">person</span>
-            {t('admin.loggedInAs')} <span className="font-bold text-primary">{user?.username}</span>
-          </p>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 bg-surface text-primary font-label font-bold uppercase py-2 px-4 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error hover:text-on-error hover:border-error transition-colors"
-        >
-          <span className="material-symbols-outlined">logout</span> {t('admin.logout')}
+      <PageHeader
+        eyebrow={t('common.restrictedArea')}
+        title={t('admin.panelTitle')}
+        subtitle={t('admin.panelSubtitle')}
+      >
+        {/* Chi sei sta accanto al pulsante per smettere di esserlo, non
+            nell'occhiello: li' ci va la sezione, uguale su tutte le pagine
+            riservate. Su carta non serve nessuno dei due. */}
+        <span className="font-label text-[0.7rem] uppercase tracking-[0.08em] text-on-surface-variant hidden sm:inline">
+          {t('admin.loggedInAs')} <strong className="text-on-surface">{user?.username}</strong>
+        </span>
+        <button onClick={handleLogout} className="btn btn-ghost btn-sm">
+          <span className="material-symbols-outlined text-sm">logout</span>
+          {t('admin.logout')}
         </button>
-      </div>
+      </PageHeader>
 
-      <div className="flex gap-2 mb-10 border-b-4 border-primary">
-        {adminTabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-6 py-3 font-headline font-bold uppercase transition-all border-2 border-primary ${
-              activeTab === tab.key
-                ? 'bg-primary text-on-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] -mb-[4px]'
-                : 'bg-surface text-on-surface-variant hover:bg-secondary-container -mb-[4px]'
-            }`}
-          >
-            <span className="material-symbols-outlined">{tab.icon}</span>
-            {t(tab.labelKey)}
-            {tab.key === 'proposals' && totalPending > 0 && (
-              <span className="ml-1 w-6 h-6 rounded-full bg-secondary text-primary text-xs font-bold flex items-center justify-center border-2 border-primary">
-                {totalPending}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Stesse linguette di Esplora: filetto sotto, tratto ambra da 3px sulla
+          voce attiva. Scegliere una scheda e' comporre la richiesta. */}
+      {/* `overflow-x-auto`: con quattro linguette, su uno schermo da 390 la
+          quarta finiva fuori dalla finestra e non c'era modo di raggiungerla.
+          Scorrono, e `shrink-0` impedisce che si stringano fino a spezzare le
+          parole invece di scorrere. */}
+      <div className="flex mb-8 border-b border-outline-variant no-print overflow-x-auto">
+        {adminTabs.map(tab => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative shrink-0 flex items-center gap-2 px-4 py-2.5 font-display uppercase tracking-[0.06em] text-sm transition-colors ${
+                isActive ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-base">{tab.icon}</span>
+              {t(tab.labelKey)}
+              {tab.key === 'proposals' && totalPending > 0 && (
+                <span className="badge badge-ghost font-mono tabular-nums">{totalPending}</span>
+              )}
+              {isActive && <span className="absolute left-0 right-0 -bottom-px h-[3px] bg-accent" />}
+            </button>
+          );
+        })}
       </div>
 
       <div className="pb-12">
         {activeTab === 'pizzerias' && <Admin />}
         {activeTab === 'proposals' && <AdminProposals onDataChange={refreshCounts} />}
+        {activeTab === 'events' && <AdminEvents onDataChange={refreshCounts} />}
         {activeTab === 'settings' && <Settings user={user} />}
       </div>
     </div>

@@ -1,136 +1,330 @@
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+/* Solo l'icon font resta su CDN: e' il set di glifi usato da tutta l'app.
+   I font di testo (Playfair, DM Sans, Dancing Script) sono stati rimossi:
+   Quadro Partenze compone con i caratteri gia' installati sul sistema. */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
 
+/* Il sistema Quadro Partenze entra nel layer `components`, cioe' DOPO il
+   preflight di Tailwind (che neutralizza) e PRIMA delle utility (che quindi
+   continuano a vincere). Senza il layer, regole di elemento come `td` o `h1`
+   scavalcherebbero `p-4` e `text-5xl` su tutta l'app. */
+@import "./styles/quadro-partenze.css" layer(components);
+
+/* ---------------------------------------------------------------------------
+   Token — i nomi restano quelli Material 3 gia' usati in tutto il JSX,
+   i valori diventano quelli del tabellone. Cambiare qui ridipinge ogni pagina.
+
+   Le assegnazioni non sono meccaniche, seguono le cinque regole:
+   - `primary` e' la STRUTTURA (blu-ardesia): bordi, testate, stato attivo.
+   - `action` e' il rosso, e sta SOLO dove si preme (regola 1).
+   - `secondary` e' inchiostro, non rosso: qualifica il "caro" senza rubare il
+     colore d'azione. `tertiary` e' il verde e qualifica l'"economico".
+   - `accent` e' l'ambra e segnala e basta (regola 2).
+   --------------------------------------------------------------------------- */
+
 @theme {
-  --color-primary: #C84C09;
-  --color-on-primary: #FFF9F0;
-  --color-primary-container: #FEF0E4;
-  --color-on-primary-container: #7A2E05;
-  --color-primary-fixed: #FDBD8C;
-  --color-primary-fixed-dim: #E87B2A;
-  --color-on-primary-fixed: #FFF9F0;
+  --color-primary: oklch(42% 0.085 218);
+  --color-on-primary: oklch(98% 0.008 90);
+  --color-primary-container: oklch(93% 0.022 218);
+  --color-on-primary-container: oklch(33% 0.07 218);
+  --color-primary-fixed: oklch(80% 0.05 218);
+  --color-primary-fixed-dim: oklch(52% 0.075 218);
+  --color-on-primary-fixed: oklch(98% 0.008 90);
 
-  --color-secondary: #1B2838;
-  --color-on-secondary: #EBF0F5;
-  --color-secondary-container: #E0E8F0;
-  --color-on-secondary-container: #0E1724;
-  --color-secondary-fixed: #8BA3C4;
-  --color-secondary-fixed-dim: #3D5570;
-  --color-on-secondary-fixed: #EBF0F5;
+  --color-secondary: oklch(30% 0.028 250);
+  --color-on-secondary: oklch(94% 0.012 86);
+  --color-secondary-container: oklch(91% 0.014 250);
+  --color-on-secondary-container: oklch(24% 0.026 250);
+  --color-secondary-fixed: oklch(72% 0.03 250);
+  --color-secondary-fixed-dim: oklch(42% 0.03 250);
+  --color-on-secondary-fixed: oklch(94% 0.012 86);
 
-  --color-tertiary: #5C7A3E;
-  --color-on-tertiary: #F6FBF0;
-  --color-tertiary-container: #EAF5DC;
-  --color-on-tertiary-container: #2D4220;
-  --color-tertiary-fixed: #9CBF78;
-  --color-tertiary-fixed-dim: #5C7A3E;
-  --color-on-tertiary-fixed: #F6FBF0;
+  --color-tertiary: oklch(47% 0.11 148);
+  --color-on-tertiary: oklch(98% 0.008 90);
+  --color-tertiary-container: oklch(93% 0.04 148);
+  --color-on-tertiary-container: oklch(33% 0.08 148);
+  --color-tertiary-fixed: oklch(78% 0.08 148);
+  --color-tertiary-fixed-dim: oklch(55% 0.1 148);
+  --color-on-tertiary-fixed: oklch(98% 0.008 90);
 
-  --color-background: #F5F0E8;
-  --color-on-background: #2C1810;
-  --color-surface: #FFFAF5;
-  --color-on-surface: #2C1810;
-  --color-surface-variant: #F0EAE0;
-  --color-on-surface-variant: #7A6E64;
-  --color-surface-bright: #FFFFFF;
-  --color-surface-dim: #E8E0D5;
-  --color-surface-container: #F5F0E8;
-  --color-surface-container-low: #FCF8F2;
-  --color-surface-container-high: #EDE5DA;
-  --color-surface-container-highest: #E5DDD2;
-  --color-surface-tint: #C84C09;
-  --color-outline: #B8AFA4;
-  --color-outline-variant: #D6CDC2;
-  --color-inverse-surface: #2C1810;
-  --color-inverse-on-surface: #F5F0E8;
-  --color-inverse-primary: #FDBD8C;
+  --color-background: oklch(95.2% 0.015 84);
+  --color-on-background: oklch(22% 0.018 62);
+  --color-surface: oklch(98.6% 0.006 86);
+  --color-on-surface: oklch(22% 0.018 62);
+  --color-surface-variant: oklch(93% 0.018 83);
+  --color-on-surface-variant: oklch(46% 0.016 62);
+  --color-surface-bright: oklch(99.5% 0.004 86);
+  --color-surface-dim: oklch(90% 0.02 82);
+  --color-surface-container: oklch(95.2% 0.015 84);
+  --color-surface-container-low: oklch(97% 0.01 85);
+  --color-surface-container-high: oklch(92.5% 0.018 83);
+  --color-surface-container-highest: oklch(90% 0.02 82);
+  --color-surface-tint: oklch(42% 0.085 218);
+  --color-outline: oklch(22% 0.018 62 / 0.3);
+  --color-outline-variant: oklch(22% 0.018 62 / 0.16);
+  --color-inverse-surface: oklch(20% 0.022 252);
+  --color-inverse-on-surface: oklch(94% 0.012 86);
+  --color-inverse-primary: oklch(70% 0.1 215);
 
-  --color-error: #A03030;
-  --color-on-error: #FFF5F5;
-  --color-error-container: #FFE0E0;
-  --color-on-error-container: #5C1010;
+  --color-error: oklch(50% 0.2 27);
+  --color-on-error: oklch(98% 0.008 90);
+  --color-error-container: oklch(93% 0.05 27);
+  --color-on-error-container: oklch(38% 0.14 27);
 
-  --font-headline: 'Playfair Display', Georgia, serif;
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-script: 'Dancing Script', cursive;
-  --font-body: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
-  --font-label: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+  /* Token nuovi, esposti come utility (bg-ink, text-accent, bg-flap...).
+     Sono i pezzi che il vocabolario Material non prevede. */
+  --color-accent: oklch(70% 0.155 68);
+  --color-on-accent: oklch(20% 0.04 60);
+  --color-ink: oklch(20% 0.022 252);
+  --color-on-ink: oklch(94% 0.012 86);
+  --color-flap: oklch(18% 0.018 252);
+  --color-flap-ink: oklch(88% 0.13 80);
+  --color-action: oklch(51% 0.21 27);
+  --color-on-action: oklch(98% 0.008 90);
+
+  /* Il display e' un DIN preso fra i caratteri gia' installati; il corpo del
+     testo resta un carattere da lettura. Nessun download, funziona offline. */
+  --font-display: "Bahnschrift SemiCondensed", "Bahnschrift", "DIN Alternate",
+                  "Liberation Sans Narrow", "DejaVu Sans Condensed",
+                  "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-headline: "Bahnschrift SemiCondensed", "Bahnschrift", "DIN Alternate",
+                   "Liberation Sans Narrow", "DejaVu Sans Condensed",
+                   "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-label: "Bahnschrift SemiCondensed", "Bahnschrift", "DIN Alternate",
+                "Liberation Sans Narrow", "DejaVu Sans Condensed",
+                "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+               "Helvetica Neue", sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, ui-monospace, "SF Mono",
+               "DejaVu Sans Mono", monospace;
 }
+
+[data-theme="dark"] {
+  --color-primary: oklch(70% 0.1 215);
+  --color-on-primary: oklch(16% 0.02 250);
+  --color-primary-container: oklch(30% 0.05 215);
+  --color-on-primary-container: oklch(85% 0.06 215);
+  --color-primary-fixed: oklch(85% 0.06 215);
+  --color-primary-fixed-dim: oklch(60% 0.09 215);
+  --color-on-primary-fixed: oklch(16% 0.02 250);
+
+  --color-secondary: oklch(72% 0.035 250);
+  --color-on-secondary: oklch(16% 0.02 250);
+  --color-secondary-container: oklch(27% 0.025 252);
+  --color-on-secondary-container: oklch(88% 0.02 250);
+  --color-secondary-fixed: oklch(88% 0.02 250);
+  --color-secondary-fixed-dim: oklch(55% 0.03 250);
+  --color-on-secondary-fixed: oklch(16% 0.02 250);
+
+  --color-tertiary: oklch(71% 0.13 150);
+  --color-on-tertiary: oklch(16% 0.02 250);
+  --color-tertiary-container: oklch(30% 0.07 150);
+  --color-on-tertiary-container: oklch(85% 0.09 150);
+  --color-tertiary-fixed: oklch(85% 0.09 150);
+  --color-tertiary-fixed-dim: oklch(60% 0.11 150);
+  --color-on-tertiary-fixed: oklch(16% 0.02 250);
+
+  --color-background: oklch(14% 0.015 254);
+  --color-on-background: oklch(92% 0.012 86);
+  --color-surface: oklch(19.5% 0.018 252);
+  --color-on-surface: oklch(92% 0.012 86);
+  --color-surface-variant: oklch(24% 0.02 252);
+  --color-on-surface-variant: oklch(72% 0.012 86);
+  --color-surface-bright: oklch(30% 0.022 252);
+  --color-surface-dim: oklch(11% 0.012 254);
+  --color-surface-container: oklch(14% 0.015 254);
+  --color-surface-container-low: oklch(17% 0.016 253);
+  --color-surface-container-high: oklch(24% 0.02 252);
+  --color-surface-container-highest: oklch(27% 0.022 252);
+  --color-surface-tint: oklch(70% 0.1 215);
+  --color-outline: oklch(92% 0.012 86 / 0.3);
+  --color-outline-variant: oklch(92% 0.012 86 / 0.15);
+  --color-inverse-surface: oklch(92% 0.012 86);
+  --color-inverse-on-surface: oklch(14% 0.015 254);
+  --color-inverse-primary: oklch(42% 0.085 218);
+
+  --color-error: oklch(67% 0.17 27);
+  --color-on-error: oklch(16% 0.02 250);
+  --color-error-container: oklch(30% 0.1 27);
+  --color-on-error-container: oklch(85% 0.1 27);
+
+  --color-accent: oklch(79% 0.15 72);
+  --color-on-accent: oklch(16% 0.03 60);
+  --color-ink: oklch(10.5% 0.012 252);
+  --color-on-ink: oklch(93% 0.012 86);
+  --color-flap: oklch(9% 0.01 252);
+  --color-flap-ink: oklch(85% 0.14 80);
+  --color-action: oklch(66% 0.19 27);
+  --color-on-action: oklch(16% 0.02 250);
+}
+
+/* ---------------------------------------------------------------------------
+   Il tricolore — definito qui una volta e riusato dove serve.
+
+   Fermate doppie e non sfumate: `#009246 0 33.333%` chiude la banda dove la
+   successiva apre, quindi i tre campi restano netti. Con fermate singole il
+   verde slaverebbe nel bianco e il bianco nel rosso, e a 3px di altezza il
+   risultato e' una macchia sporca invece di una bandiera.
+   --------------------------------------------------------------------------- */
+:root {
+  --tricolore: linear-gradient(to right,
+    #009246 0 33.333%,
+    #f1f2f1 33.333% 66.667%,
+    #ce2b37 66.667% 100%);
+}
+
+/* Il tratto della testatina passa dall'ambra al tricolore, su ogni pagina.
+
+   L'anello da 1px attorno serve al campo bianco: su carta avorio il bianco
+   della bandiera e' quasi lo stesso colore del fondo, e senza un margine il
+   tratto si leggerebbe come due trattini staccati — verde, buco, rosso. */
+.hero::after {
+  background: var(--tricolore);
+  box-shadow: 0 0 0 1px oklch(var(--bc) / .12);
+}
+
+/* ---------------------------------------------------------------------------
+   Riallineamenti globali — fuori da ogni layer, quindi vincono anche sulle
+   utility Tailwind. Servono a spegnere il linguaggio precedente (neobrutalista:
+   pastiglie, ombre piene sfalsate, cornici spesse) su tutte le pagine in una
+   volta, senza passare a mano 274 ombre e 357 bordi.
+   --------------------------------------------------------------------------- */
+
+/* Anche Tailwind ha una sua `.container`, e sta nel layer `utilities`, che batte
+   il layer `components` dove vive Quadro Partenze. Vinceva lei: `width:100%` e
+   nessun margine, cioe' la colonna incollata alla barra di navigazione a
+   sinistra e appoggiata al bordo della finestra a destra — dove i comandi
+   della testatina finivano tagliati. Qui, fuori da ogni layer, torna la
+   geometria del sistema: tetto di 1240px e un margine di 1.25rem per lato. */
+.container {
+  width: min(1240px, 100% - 2.5rem);
+  max-width: none;
+  margin-inline: auto;
+}
+
+/* Regola 3: niente angoli morbidi. I cartelli hanno spigoli. */
+[class*="rounded-"], [class~="rounded"] { border-radius: 3px; }
+/* Eccezione unica: i pallini di stato, che sono cerchi e non pastiglie. */
+[class*="rounded-full"] { border-radius: 9999px; }
+
+/* Le ombre piene sfalsate (`shadow-[6px_6px_0px_0px_...]`) erano la firma del
+   linguaggio precedente. Qui il rilievo lo fa il filetto, non il blocco nero. */
+[class*="shadow-["] { box-shadow: 0 1px 0 oklch(22% 0.018 62 / 0.06); }
+[data-theme="dark"] [class*="shadow-["] { box-shadow: 0 1px 0 oklch(0% 0 0 / 0.4); }
+
+/* Le cornici da 2 e 4px erano l'altra meta' di quel linguaggio: 357 elementi
+   incorniciati allo stesso modo, dove tutto grida e quindi niente segnala.
+   Qui separano e basta, e separare e' un filetto da un pixel. */
+[class~="border-2"], [class~="border-4"], [class~="border-8"] { border-width: 1px; }
+
+/* Le direzionali sopravvivono come segnale, non come cornice: le `-2` sono
+   divisori (un filetto), le `-4` e `-8` sono accenti deliberati — la barra in
+   testa a una scheda, il tratto di categoria a sinistra — e restano a 3px,
+   lo stesso spessore del tratto ambra della testatina.
+   Longhand dopo lo shorthand: e' cosi' che sopravvivono alla riga sopra. */
+[class~="border-t-2"] { border-top-width: 1px; }
+[class~="border-r-2"] { border-right-width: 1px; }
+[class~="border-b-2"] { border-bottom-width: 1px; }
+[class~="border-l-2"] { border-left-width: 1px; }
+[class~="border-t-4"] { border-top-width: 3px; }
+[class~="border-r-4"] { border-right-width: 3px; }
+[class~="border-b-4"] { border-bottom-width: 3px; }
+[class~="border-l-4"], [class~="border-l-8"] { border-left-width: 3px; }
+[class~="border-t-0"] { border-top-width: 0; }
+[class~="border-b-0"] { border-bottom-width: 0; }
+
+/* La riga di tabella in modifica prende la stessa barra ambra interna di
+   `.tile.highlight`: e' un segnale di stato, non un fondo colorato (regola 2),
+   e stando dentro al box non sposta di un pixel il contenuto della riga. */
+tr.row-editing > td { background: oklch(var(--a) / .07); }
+tr.row-editing > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
 
 body {
   margin: 0;
-  background-color: var(--color-background);
+  /* Fondo e trama diagonale arrivano da Quadro Partenze, su <html> e
+     body::before: un colore pieno qui li coprirebbe entrambi. */
+  background-color: transparent;
   color: var(--color-on-background);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 512px 512px;
-}
-
-[data-theme="dark"] {
-  --color-background: #1A120E;
-  --color-on-background: #EBE0D8;
-  --color-primary: #E87B2A;
-  --color-on-primary: #1A120E;
-  --color-primary-container: #4A2408;
-  --color-on-primary-container: #FDBD8C;
-  --color-primary-fixed: #FDBD8C;
-  --color-primary-fixed-dim: #C84C09;
-  --color-on-primary-fixed: #1A120E;
-
-  --color-secondary: #8BA3C4;
-  --color-on-secondary: #1A120E;
-  --color-secondary-container: #1E2E42;
-  --color-on-secondary-container: #C4D4EA;
-  --color-secondary-fixed: #C4D4EA;
-  --color-secondary-fixed-dim: #6A84A8;
-  --color-on-secondary-fixed: #1A120E;
-
-  --color-tertiary: #9CBF78;
-  --color-on-tertiary: #1A120E;
-  --color-tertiary-container: #2D4220;
-  --color-on-tertiary-container: #C8E2B0;
-  --color-tertiary-fixed: #C8E2B0;
-  --color-tertiary-fixed-dim: #7BA058;
-  --color-on-tertiary-fixed: #1A120E;
-
-  --color-surface: #241A14;
-  --color-on-surface: #EBE0D8;
-  --color-surface-variant: #2E241E;
-  --color-on-surface-variant: #B0A498;
-  --color-surface-bright: #3A2E26;
-  --color-surface-container: #1A120E;
-  --color-surface-container-low: #261C16;
-  --color-surface-container-high: #2E241E;
-  --color-surface-container-highest: #382C24;
-  --color-surface-dim: #1A120E;
-  --color-surface-tint: #E87B2A;
-  --color-error: #F08080;
-  --color-on-error: #1A120E;
-  --color-error-container: #4A1818;
-  --color-on-error-container: #FFC0C0;
-  --color-outline: #6A5E54;
-  --color-outline-variant: #3E342E;
-  --color-inverse-surface: #EBE0D8;
-  --color-inverse-on-surface: #1A120E;
-  --color-inverse-primary: #7A2E05;
+  transition: color 0.3s ease;
 }
 
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+/* ---------------------------------------------------------------------------
+   `.hero-media` — la fotografia della testatina.
+
+   Estensione di progetto, non del sistema: Quadro Partenze la testatina la fa
+   senza immagini. Qui c'e', ed e' su OGNI pagina — una testatina che su una
+   schermata porta la marina e sull'altra no sono due testatine diverse, e
+   allora non e' piu' il punto fisso a cui l'occhio torna.
+
+   La foto attraversa tutta la testatina e il testo ci passa sopra. La sfumatura
+   parte da prima della meta' e sale piano fino al bordo destro: a quel punto,
+   dove c'e' il titolo la foto vale il 3% ed e' un'ombra di carta, mentre a
+   destra e' una fotografia. Un solo passaggio continuo, nessun bordo dove
+   l'immagine "comincia".
+
+   Grigio e non a colori: il colore in una schermata di prezzi lo porta l'ambra
+   del flap, e una marina azzurra in testata se lo mangerebbe (regola 2).
+   --------------------------------------------------------------------------- */
+
+/* Niente `overflow: hidden` qui: il tratto ambra di `.hero::after` sta a
+   `bottom: -1px` per scavalcare il filetto, e un ritaglio se ne mangerebbe un
+   terzo. La foto sta dentro da sola, perche' e' in `inset: 0`. */
+
+/* Il contenuto sale di un piano: titolo e comandi passano sopra la foto anche
+   nel tratto dove la maschera l'ha lasciata piena. */
+.hero-media > * { position: relative; z-index: 1; }
+
+.hero-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--hero-image) center / cover no-repeat;
+  filter: grayscale(1) contrast(1.05);
+  opacity: .2;
+  /* Sette fermate invece di due. Con due, la rampa e' una retta e si vede la
+     riga dove attacca; le fermate seguono una curva che parte quasi piatta,
+     cosi' l'immagine emerge senza un punto d'inizio riconoscibile. */
+  --hero-fade: linear-gradient(to right,
+    #0000 0%,
+    #0000000d 34%,
+    #0000002b 48%,
+    #00000059 62%,
+    #00000094 76%,
+    #000000d1 89%,
+    #000 100%);
+  -webkit-mask-image: var(--hero-fade);
+  mask-image: var(--hero-fade);
+  pointer-events: none;
+}
+/* Su inchiostro la foto va schiarita, non scurita: a parita' di opacita' una
+   marina scura sul fondo blu-nero sparisce e resta solo una macchia sporca. */
+[data-theme="dark"] .hero-media::before {
+  filter: grayscale(1) brightness(1.35) contrast(.85);
+  opacity: .16;
+}
+
+/* Sul telefono la testatina e' alta e stretta: la foto quadrata ritagliata a
+   quella forma diventa un dettaglio irriconoscibile dietro al testo, e in piu'
+   il titolo va a capo proprio dove la maschera e' piena. Meglio senza. */
+@media (max-width: 47.99rem) { .hero-media::before { display: none; } }
+/* Su carta il fondo e' bianco e l'inchiostro costa: la foto non stampa. */
+@media print { .hero-media::before { display: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-media::before { animation: fade-in .8s ease .15s both; }
+}
+
+/* ---------------------------------------------------------------------------
+   Movimento — invariato rispetto a prima, salvo l'entrata delle tessere che
+   ora ruota dall'alto come una paletta che gira (vedi `flap-in` nel sistema).
+   --------------------------------------------------------------------------- */
 
 @keyframes fade-in {
   from { opacity: 0; }
@@ -157,11 +351,6 @@ body::before {
   to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes pizza-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -169,7 +358,7 @@ body::before {
 
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.6; }
 }
 
 @keyframes draw-line {
@@ -214,7 +403,7 @@ main > * {
 }
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(44, 24, 16, 0.12);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Animation utilities */
@@ -233,24 +422,20 @@ main > * {
 .animate-float-slow {
   animation: float 3s ease-in-out infinite;
 }
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
 
 /* Scrollbar styling */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-surface-container); }
-::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-outline); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
 
-/* Card glow - subtle radial gradient spot */
+/* Il velo sulla scheda in evidenza: ambra bassissima, non piu' terracotta. */
 .card-glow::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(circle at 20% 50%, rgba(200,76,9,0.06) 0%, transparent 60%);
+  background-image: radial-gradient(circle at 20% 50%, oklch(70% 0.155 68 / 0.06) 0%, transparent 60%);
 }
 
 /* Stat number hover scale */
@@ -275,5 +460,9 @@ main > * {
 }
 .group:hover .icon-btn {
   transform: scale(1.15);
-  background: rgba(200, 76, 9, 0.08);
+  background: oklch(70% 0.155 68 / 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main > *, .page-enter, .stagger-children > * { animation: none; opacity: 1; }
 }

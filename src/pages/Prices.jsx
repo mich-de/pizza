@@ -5,38 +5,12 @@ import { useStitchedData } from '../hooks/useDataFetch';
 import { checkAuth } from '../services/authService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PricesTable from '../components/prices/PricesTable';
+import MarketMovers from '../components/ui/MarketMovers';
 import { DetailModal } from '../components/prices/PricesDetail';
 import { priceTier } from '../config/pricesConfig';
-
-const API_BASE = globalThis.process?.env?.VITE_API_BASE || '';
-
-async function fetchWithAuth(url, options = {}) {
-  const res = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-  });
-  if (res.status === 401) {
-    try {
-      const refreshRes = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
-      if (refreshRes.ok) {
-        return fetch(`${API_BASE}${url}`, {
-          ...options,
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json', ...options.headers },
-        });
-      }
-    } catch (e) { console.error(e); }
-    throw new Error('SESSION_EXPIRED');
-  }
-  return res;
-}
-
-async function fetchCSRF() {
-  const res = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
-  const data = await res.json();
-  return data.csrfToken;
-}
+import { PageHeader } from '../components/ui';
+import { formatAmount } from '../utils/formatAmount';
+import { fetchWithAuth, fetchCSRF } from '../services/adminApi';
 
 function PriceHeatMap({ sorted, stats }) {
   const maxBars = 120;
@@ -44,7 +18,9 @@ function PriceHeatMap({ sorted, stats }) {
   const samples = sorted.filter((_, i) => i % step === 0).slice(0, maxBars);
 
   return (
-    <div className="flex gap-[2px] items-stretch h-10 w-full">
+    /* Il pettine dei prezzi: barre a spigolo vivo, senza raggio. Su una barra
+       larga due pixel un raggio di tre la trasforma in un puntino. */
+    <div className="flex gap-px items-stretch h-9 w-full">
       {samples.length === 0 ? (
         <div className="w-full bg-surface-dim" />
       ) : (
@@ -53,12 +29,12 @@ function PriceHeatMap({ sorted, stats }) {
           const color = tier === 'cheap' ? 'bg-tertiary'
             : tier === 'expensive' ? 'bg-secondary'
             : 'bg-primary-fixed-dim';
-          const opacity = 0.5 + (i / samples.length) * 0.5;
+          const opacity = 0.45 + (i / samples.length) * 0.5;
           return (
             <div
               key={i}
-              className={`flex-1 ${color} rounded-sm hover:scale-y-125 hover:opacity-100 transition-all cursor-crosshair origin-bottom`}
-              style={{ opacity }}
+              className={`flex-1 ${color} hover:scale-y-125 hover:opacity-100 transition-all cursor-crosshair origin-bottom`}
+              style={{ opacity, borderRadius: 0 }}
               title={`${p.name}: \u20AC${p.margheritaPrice?.toFixed(2)}`}
             />
           );
@@ -68,114 +44,97 @@ function PriceHeatMap({ sorted, stats }) {
   );
 }
 
-function IndexHero({ stats, allData, sorted, editMode, t, isAdmin, exportCSV, exportJSON, toggleEdit }) {
+function IndexHero({ stats, allData, sorted, editMode, t, lang, isAdmin, exportCSV, exportJSON, toggleEdit }) {
   return (
-    <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] mb-8">
-      <div className="bg-primary text-on-primary p-6 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="font-headline font-black uppercase text-sm md:text-base tracking-[0.2em] text-on-primary/80">
-                {t('prices.subtitle')}
-              </span>
-              <span className="w-8 h-[2px] bg-on-primary/40" />
-              <span className="font-label font-bold uppercase text-xs tracking-wider text-on-primary/60">
-                {allData.length} {t('nav.network')}
-              </span>
-            </div>
-            <h1 className="font-headline font-black text-5xl md:text-7xl lg:text-8xl uppercase tracking-tight leading-none">
-              {t('prices.title')}
-            </h1>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {editMode && (
-              <button onClick={exportJSON} className="flex items-center gap-2 bg-on-primary/20 text-on-primary font-headline font-bold uppercase py-2 px-4 border-2 border-on-primary/40 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] hover:bg-on-primary hover:text-primary transition-colors text-sm">
-                <span className="material-symbols-outlined text-sm">download</span>
-                {t('admin.exportJSON')}
-              </button>
-            )}
-            <button onClick={exportCSV} className="flex items-center gap-2 bg-on-primary text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-on-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:bg-on-primary/80 transition-colors">
-              <span className="material-symbols-outlined">download</span>
-              {t('prices.exportCSV')}
-            </button>
-            {isAdmin && (
-              <button onClick={toggleEdit} className={`flex items-center gap-2 font-headline font-bold uppercase py-3 px-6 border-2 border-on-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] transition-colors ${editMode ? 'bg-tertiary text-on-tertiary hover:bg-tertiary/80' : 'bg-on-primary/20 text-on-primary hover:bg-on-primary hover:text-primary'}`}>
-                <span className="material-symbols-outlined">{editMode ? 'visibility' : 'edit'}</span>
-                {editMode ? t('common.view') : t('common.edit')}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+    <>
+      {/* La testatina e' la stessa componente su ogni pagina: occhiello,
+          titolo in condensato, filetto a tutta larghezza col tratto ambra.
+          I comandi stanno a destra ed escono di stampa da soli, perche'
+          compongono la richiesta e non leggono il risultato. */}
+      <PageHeader
+        eyebrow={t('common.peninsula')}
+        title={t('prices.title')}
+        subtitle={t('prices.subtitle')}
+      >
+        {editMode && (
+          <button onClick={exportJSON} className="btn btn-ghost btn-sm">
+            <span className="material-symbols-outlined text-sm">download</span>
+            {t('admin.exportJSON')}
+          </button>
+        )}
+        <button onClick={exportCSV} className="btn btn-primary btn-sm">
+          <span className="material-symbols-outlined text-sm">download</span>
+          {t('prices.exportCSV')}
+        </button>
+        {isAdmin && (
+          <button onClick={toggleEdit} className={`btn btn-sm ${editMode ? 'btn-primary' : 'btn-ghost'}`}>
+            <span className="material-symbols-outlined text-sm">{editMode ? 'visibility' : 'edit'}</span>
+            {editMode ? t('common.view') : t('common.edit')}
+          </button>
+        )}
+      </PageHeader>
 
-      <div className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-6">
-          <div>
-            <div className="text-sm font-headline font-black uppercase tracking-widest text-on-surface-variant mb-1">
+      <div className="panel mb-8">
+        <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-9">
+          {/* IL FLAP della pagina: la media del filtro corrente e' la risposta
+              che si viene a cercare qui. Gli altri numeri stanno in colonna
+              accanto, in chiaro: due flap affiancati non si leggono piu'. */}
+          <div className="shrink-0">
+            <span className="block font-label text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-on-surface-variant mb-1.5">
               {t('prices.avgPrice')}
+            </span>
+            <div className="flex items-baseline">
+              <span className="flap flap-lg">{formatAmount(stats.avg, lang)}</span>
+              <span className="unit">EUR</span>
             </div>
-            <div className="flex items-baseline gap-3">
-              <span className="font-headline font-black text-6xl md:text-7xl lg:text-8xl text-primary leading-none tracking-tight">
-                &euro;{stats.avg.toFixed(2)}
-              </span>
-              <span className="bg-primary-container text-primary font-headline font-bold text-sm uppercase px-3 py-1 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
-                {t('prices.medianTitle')} &euro;{stats.median.toFixed(2)}
-              </span>
-            </div>
+            {/* La mediana e' un dato derivato, non l'unita' di misura della
+                media: sta sotto, dove il sistema mette i derivati. */}
+            <span className="estimate">
+              {t('prices.medianTitle')} <strong>&euro;{formatAmount(stats.median, lang)}</strong>
+            </span>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <div className="bg-surface-variant border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
-              <span className="font-label font-bold text-xs uppercase text-on-surface-variant">{t('prices.minPrice')}</span>
-              <span className="font-headline font-black text-xl md:text-2xl text-tertiary ml-2">&euro;{stats.min.toFixed(2)}</span>
-            </div>
-            <div className="bg-surface-variant border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
-              <span className="font-label font-bold text-xs uppercase text-on-surface-variant">{t('prices.maxPrice')}</span>
-              <span className="font-headline font-black text-xl md:text-2xl text-secondary ml-2">&euro;{stats.max.toFixed(2)}</span>
-            </div>
-            <div className="bg-primary-container border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
-              <span className="font-label font-bold text-xs uppercase text-primary">{t('prices.rangeTitle')}</span>
-              <span className="font-headline font-black text-xl md:text-2xl text-primary ml-2">&euro;{stats.range.toFixed(2)}</span>
-            </div>
-            <div className="bg-surface-variant border-2 border-primary px-4 py-2 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]">
-              <span className="font-label font-bold text-xs uppercase text-on-surface-variant">{t('nav.network')}</span>
-              <span className="font-headline font-black text-xl md:text-2xl text-primary ml-2">{allData.length}</span>
-            </div>
-          </div>
+
+          <ul className="kv flex-1 min-w-0 md:grid-cols-2">
+            <li><span className="k">{t('prices.minPrice')}</span><span className="v text-tertiary">&euro;{stats.min.toFixed(2)}</span></li>
+            <li><span className="k">{t('prices.maxPrice')}</span><span className="v text-secondary">&euro;{stats.max.toFixed(2)}</span></li>
+            <li><span className="k">{t('prices.rangeTitle')}</span><span className="v">&euro;{stats.range.toFixed(2)}</span></li>
+            <li><span className="k">{t('nav.network')}</span><span className="v">{allData.length}</span></li>
+          </ul>
         </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs font-label font-bold uppercase tracking-wider">
+        <div className="mt-6 space-y-1.5">
+          <div className="flex items-center justify-between font-label text-[0.68rem] font-semibold uppercase tracking-[0.1em]">
             <span className="text-tertiary">{t('prices.cheapestTitle')} &euro;{stats.min.toFixed(2)}</span>
-            <span className="text-primary">{t('prices.medianTitle')} &euro;{stats.median.toFixed(2)}</span>
+            <span className="text-on-surface-variant">{t('prices.medianTitle')} &euro;{stats.median.toFixed(2)}</span>
             <span className="text-secondary">{t('prices.priciestTitle')} &euro;{stats.max.toFixed(2)}</span>
           </div>
           <PriceHeatMap sorted={sorted} stats={stats} />
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
 function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilter, availableFrazioni, catFilter, setCatFilter, searchQuery, setSearchQuery, priceMin, setPriceMin, priceMax, setPriceMax, sortBy, setSortBy, cities, categories, t, setPage, allData, filtered, editMode }) {
   return (
-    <div className="bg-surface border-4 border-primary shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] p-4 md:p-6 mb-8">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="md:col-span-1">
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">
-            <span className="material-symbols-outlined text-sm align-text-bottom mr-1">search</span>
-            {t('prices.searchPlaceholder')}
-          </label>
+    /* I filtri servono a comporre la richiesta, non a leggere il risultato:
+       `no-print` li toglie dalla carta, dove un campo vuoto e' solo rumore. */
+    <div className="panel mb-8 no-print">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-x-4 gap-y-1">
+        <label className="field">
+          <span>{t('prices.searchPlaceholder')}</span>
           <input
-            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:outline-none focus:border-secondary"
+            type="search"
+            className="w-full"
             placeholder={t('prices.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
           />
-        </div>
-        <div>
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.zoneFilter')}</label>
+        </label>
+        <label className="field">
+          <span>{t('prices.zoneFilter')}</span>
           <select
-            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+            className="w-full"
             value={zoneFilter}
             onChange={(e) => { setZoneFilter(e.target.value); setPage(0); }}
           >
@@ -183,12 +142,12 @@ function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilte
               <option key={c} value={c}>{c === 'all' ? t('prices.allZones') : c}</option>
             ))}
           </select>
-        </div>
+        </label>
         {zoneFilter !== 'all' && availableFrazioni.length > 1 && (
-          <div>
-            <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.frazione')}</label>
+          <label className="field">
+            <span>{t('prices.frazione')}</span>
             <select
-              className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+              className="w-full"
               value={frazioneFilter}
               onChange={(e) => { setFrazioneFilter(e.target.value); setPage(0); }}
             >
@@ -196,13 +155,13 @@ function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilte
                 <option key={f} value={f}>{f === 'all' ? t('prices.allFrazioni') : f}</option>
               ))}
             </select>
-          </div>
+          </label>
         )}
         {zoneFilter === 'all' && <div />}
-        <div>
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.category')}</label>
+        <label className="field">
+          <span>{t('prices.category')}</span>
           <select
-            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+            className="w-full"
             value={catFilter}
             onChange={(e) => { setCatFilter(e.target.value); setPage(0); }}
           >
@@ -210,12 +169,12 @@ function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilte
               <option key={c} value={c}>{c === 'all' ? t('prices.allCategories') : t(`common.${c === 'wood-fired' ? 'woodFired' : c}`)}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.priceRange')}</label>
+        </label>
+        <label className="field">
+          <span>{t('prices.priceRange')}</span>
           <div className="flex gap-1.5 items-center">
             <input
-              className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:outline-none focus:border-secondary"
+              className="w-full"
               placeholder={t('prices.from')}
               type="number"
               min="0"
@@ -223,9 +182,9 @@ function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilte
               value={priceMin}
               onChange={(e) => { setPriceMin(e.target.value); setPage(0); }}
             />
-            <span className="font-headline font-black text-primary">—</span>
+            <span className="font-display text-on-surface-variant">&ndash;</span>
             <input
-              className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:outline-none focus:border-secondary"
+              className="w-full"
               placeholder={t('prices.to')}
               type="number"
               min="0"
@@ -234,11 +193,11 @@ function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilte
               onChange={(e) => { setPriceMax(e.target.value); setPage(0); }}
             />
           </div>
-        </div>
-        <div>
-          <label className="block text-xs font-black font-headline uppercase tracking-widest mb-1.5 text-primary">{t('prices.sortBy')}</label>
+        </label>
+        <label className="field">
+          <span>{t('prices.sortBy')}</span>
           <select
-            className="w-full bg-background border-2 border-primary p-2.5 font-body font-bold text-primary focus:ring-0 focus:border-secondary cursor-pointer"
+            className="w-full"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -247,76 +206,22 @@ function FilterBar({ zoneFilter, setZoneFilter, frazioneFilter, setFrazioneFilte
             <option value="name-asc">{t('prices.sortNameAsc')}</option>
             <option value="rating-desc">{t('prices.sortRatingDesc')}</option>
           </select>
-        </div>
+        </label>
       </div>
 
-      <div className="flex items-center gap-3 mt-3 pt-3 border-t-2 border-outline-variant">
-        <span className="font-headline font-black uppercase text-xs tracking-wider text-on-surface-variant">
-          {allData.length} {t('prices.pizzeriaPlural')}
-        </span>
-        <span className="w-[2px] h-4 bg-outline-variant" />
-        <span className="font-headline font-bold uppercase text-xs text-on-surface-variant">
+      <div className="flex items-center flex-wrap gap-2 mt-2 pt-3 border-t border-outline-variant">
+        <span className="badge badge-ghost">{allData.length} {t('prices.pizzeriaPlural')}</span>
+        <span className="badge badge-ghost">
           {[...new Set(allData.map(d => d.cityName))].length} {t('nav.network')}
         </span>
-        <span className="w-[2px] h-4 bg-outline-variant" />
-        <span className="font-headline font-bold uppercase text-xs bg-tertiary-container text-tertiary px-2 py-0.5">
-          {t('common.filter').toLowerCase()}: {filtered.length}
+        <span className="badge badge-primary">
+          {t('common.filter')}: {filtered.length}
         </span>
-        {editMode && (
-          <>
-            <span className="w-[2px] h-4 bg-outline-variant" />
-            <span className="font-headline font-bold uppercase text-xs bg-primary-container text-primary px-2 py-0.5 border border-primary">
-              {t('prices.editModeBadge')}
-            </span>
-          </>
-        )}
+        {/* La modalita' modifica cambia quello che i tasti fanno: e' un avviso,
+            e l'avviso e' ambra. */}
+        {editMode && <span className="badge badge-warning">{t('prices.editModeBadge')}</span>}
       </div>
     </div>
-  );
-}
-
-function MarketMovers({ cheapest, priciest, stats, t }) {
-  return (
-    <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      {cheapest && (
-        <div className="group bg-tertiary-container border-4 border-tertiary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden card-glow">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-bl-full" />
-          <div className="flex items-center gap-3 mb-3">
-            <span className="material-symbols-outlined text-tertiary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>trending_down</span>
-            <span className="text-sm font-black font-headline uppercase tracking-widest text-tertiary">{t('prices.cheapestTitle')}</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="font-headline font-black text-xl md:text-2xl text-tertiary">{cheapest.name}</p>
-              <p className="font-label font-bold text-sm text-tertiary/70 uppercase mt-1">{cheapest.cityName}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-headline font-black text-3xl md:text-4xl text-tertiary leading-none stat-hover">&euro;{cheapest.margheritaPrice?.toFixed(2)}</p>
-              <p className="text-xs font-label font-bold text-tertiary/60 mt-1">{((cheapest.margheritaPrice / stats.avg - 1) * 100).toFixed(1)}% vs media</p>
-            </div>
-          </div>
-        </div>
-      )}
-      {priciest && (
-        <div className="group bg-secondary-container border-4 border-secondary p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] relative overflow-hidden card-glow">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-bl-full" />
-          <div className="flex items-center gap-3 mb-3">
-            <span className="material-symbols-outlined text-secondary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
-            <span className="text-sm font-black font-headline uppercase tracking-widest text-secondary">{t('prices.priciestTitle')}</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="font-headline font-black text-xl md:text-2xl text-secondary">{priciest.name}</p>
-              <p className="font-label font-bold text-sm text-secondary/70 uppercase mt-1">{priciest.cityName}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-headline font-black text-3xl md:text-4xl text-secondary leading-none stat-hover">&euro;{priciest.margheritaPrice?.toFixed(2)}</p>
-              <p className="text-xs font-label font-bold text-secondary/60 mt-1">+{((priciest.margheritaPrice / stats.avg - 1) * 100).toFixed(1)}% vs media</p>
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -466,7 +371,7 @@ export default function Prices() {
 
     try {
       const csrfToken = await fetchCSRF();
-      const res = await fetchWithAuth(`${API_BASE}/api/prices/${editingId}`, {
+      const res = await fetchWithAuth(`/api/prices/${editingId}`, {
         method: 'PUT',
         headers: { 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ ...editForm, margheritaPrice: price }),
@@ -497,7 +402,7 @@ export default function Prices() {
   const deletePrice = async (pizzeriaId) => {
     try {
       const csrfToken = await fetchCSRF();
-      const res = await fetchWithAuth(`${API_BASE}/api/prices/${pizzeriaId}`, {
+      const res = await fetchWithAuth(`/api/prices/${pizzeriaId}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': csrfToken },
       });
@@ -543,10 +448,22 @@ export default function Prices() {
   if (loading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="p-6 md:p-12">
+    /* `.container` come tutte le altre: 1240px al massimo, margine automatico,
+       niente padding proprio. Con `p-6 md:p-12` questa pagina era larga 896px
+       invece di 992 e partiva 48px piu' in basso — la colonna si spostava
+       cambiando pagina. */
+    <div className="container fade-in">
       {toast && (
-        <div className={`fixed top-4 right-4 z-[100] font-headline font-bold uppercase px-6 py-3 border-4 border-primary shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] ${toast.isError ? 'bg-secondary text-on-tertiary' : 'bg-primary text-on-primary'}`}>
-          {toast.msg}
+        /* L'avviso e' un `.alert` con la sua barra piena a sinistra. Il fondo
+           dell'alert e' una velatura, quindi sopra al contenuto serve una
+           superficie opaca sotto: senza, il testo si legge attraverso. */
+        <div className="fixed top-4 right-4 z-[100] no-print bg-surface border border-outline-variant max-w-sm">
+          <div className={`alert ${toast.isError ? 'alert-error' : 'alert-success'}`}>
+            <span className="material-symbols-outlined text-base leading-none">
+              {toast.isError ? 'error' : 'check_circle'}
+            </span>
+            <span>{toast.msg}</span>
+          </div>
         </div>
       )}
 
@@ -556,6 +473,7 @@ export default function Prices() {
         sorted={sorted}
         editMode={editMode}
         t={t}
+        lang={lang}
         isAdmin={isAdmin}
         exportCSV={exportCSV}
         exportJSON={exportJSON}
@@ -591,16 +509,17 @@ export default function Prices() {
       />
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4">
-          <div className="bg-surface border-4 border-primary shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] w-full max-w-md">
-            <div className="p-6">
-              <h2 className="text-xl font-headline font-black uppercase text-primary mb-4">
-                {t('prices.deleteConfirmPrice', { name: rows.find(r => r.pizzeriaId === deleteId)?.name })}
-              </h2>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => setDeleteId(null)} className="bg-surface text-primary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-sm">{t('admin.cancel')}</button>
-                <button onClick={() => deletePrice(deleteId)} className="bg-secondary text-on-tertiary font-headline font-bold uppercase py-3 px-6 border-2 border-primary shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] hover:bg-error-container transition-colors text-sm">{t('common.delete')}</button>
-              </div>
+        <div className="fixed inset-0 bg-black/55 z-[200] flex items-center justify-center p-4 no-print">
+          {/* Qui si agisce davvero, e l'azione e' irreversibile: e' l'unico
+              posto della pagina dove compare il rosso (regola 1). */}
+          <div className="card card-accent w-full max-w-md">
+            <span className="eyebrow">{t('common.delete')}</span>
+            <h2 className="mt-1 mb-5">
+              {t('prices.deleteConfirmPrice', { name: rows.find(r => r.pizzeriaId === deleteId)?.name })}
+            </h2>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setDeleteId(null)} className="btn btn-ghost">{t('admin.cancel')}</button>
+              <button onClick={() => deletePrice(deleteId)} className="btn btn-secondary">{t('common.delete')}</button>
             </div>
           </div>
         </div>
