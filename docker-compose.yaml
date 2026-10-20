@@ -1,0 +1,27 @@
+services:
+  pizza-radar:
+    build: .
+    container_name: pizza-radar
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - TRUST_PROXY=1
+      - JWT_SECRET=${JWT_SECRET:?}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:?}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-sorrento}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-pizza}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+    volumes:
+      - pizza-data:/app/server/private
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+
+volumes:
+  pizza-data:

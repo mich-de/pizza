@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+
+    <!-- Il tema va deciso prima del primo pixel dipinto, o al ricaricamento la
+         pagina lampeggia in chiaro prima che React monti il ThemeProvider.
+         La chiave e' la stessa che usa src/theme/ThemeContext.jsx. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('pizza-peninsula-theme');
+          var dark = stored !== null
+            ? stored === 'true'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+    <meta name="description" content="PizzaRadar Sorrento - Guida completa alle pizzerie della Penisola Sorrentina. Confronta prezzi, recensioni e scopri le nuove aperture di Margherita a Sorrento, Meta, Piano di Sorrento, Sant'Agnello, Vico Equense e Massa Lubrense." />
+    <meta name="keywords" content="pizza, sorrento, penisola sorrentina, pizzerie, margherita, prezzi, ristorante, napoli, campania" />
+    <meta name="author" content="PizzaRadar Sorrento" />
+    <meta name="robots" content="index, follow" />
+
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <meta property="og:title" content="PizzaRadar Sorrento — Penisola Sorrentina" />
+    <meta property="og:description" content="Confronta i prezzi della Margherita nelle pizzerie della Penisola Sorrentina. Directory completa con recensioni e nuove aperture." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="PizzaRadar Sorrento — Penisola Sorrentina" />
+    <meta name="twitter:description" content="Confronta i prezzi della Margherita nelle pizzerie della Penisola Sorrentina." />
+
+    <!-- I font di testo non si scaricano piu': Quadro Partenze compone con i
+         caratteri di sistema (Bahnschrift / DIN per la segnaletica, Segoe UI
+         Variable Text per la lettura). Resta solo l'icon font, caricato da
+         src/index.css. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <title>PizzaRadar Sorrento — Penisola Sorrentina</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

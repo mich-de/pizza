@@ -1,0 +1,50 @@
+[
+  {
+    "id": "#001",
+    "title_it": "Classica Sorrentina",
+    "title_en": "Sorrento Classic",
+    "author": "@MarioBros_Pie",
+    "time": "2H",
+    "rating": "9.2/10",
+    "description_it": "Architettura della crosta ottimale con un cornicione alveolato.",
+    "description_en": "Optimal crust architecture with high hydration dough.",
+    "fires": "1.2K",
+    "img": "/images/pizzerias/pizza-1.png"
+  },
+  {
+    "id": "#002",
+    "title_it": "Pep Industriale",
+    "title_en": "Industrial Pep",
+    "author": "@IronOven",
+    "time": "4H",
+    "rating": "8.8/10",
+    "description_it": "Carbonizzazione aggressiva sui pepperoni e crosta croccante.",
+    "description_en": "Aggressive charring on pepperoni cups and crispy crust.",
+    "fires": "890",
+    "img": "/images/pizzerias/pizza-2.png"
+  },
+  {
+    "id": "#003",
+    "title_it": "Pizza a Metro Vico",
+    "title_en": "Vico Metro Stack",
+    "author": "@DoughEngineer",
+    "time": "6H",
+    "rating": "9.0/10",
+    "description_it": "La tradizione del metro di Vico Equense in tutto il suo splendore.",
+    "description_en": "The tradition of pizza by the meter from Vico Equense.",
+    "fires": "1.5K",
+    "img": "/images/pizzerias/pizza-3.png"
+  },
+  {
+    "id": "#004",
+    "title_it": "Minimalista Meta",
+    "title_en": "Meta Minimalist",
+    "author": "@CrustPunk",
+    "time": "8H",
+    "rating": "8.5/10",
+    "description_it": "Pochi ingredienti ma di altissima qualità.",
+    "description_en": "Few ingredients but of the highest quality.",
+    "fires": "670",
+    "img": "/images/pizzerias/pizza-4.png"
+  }
+]

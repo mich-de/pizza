@@ -1,0 +1,23 @@
+# Ignore node and build directories
+node_modules/
+dist/
+.git/
+
+# Ignore static assets and images
+public/images/
+public/favicon.svg
+public/icons.svg
+src/assets/
+
+# Ignore scratch files and temporary test outputs
+scratch/
+tmp_*.txt
+*.test.js
+server/**/*.test.js
+
+# Ignore static data files
+public/data/
+
+# Ignore package locks and environment files
+package-lock.json
+.env*

@@ -1,0 +1,25 @@
+export const PAGE_SIZE = 20;
+
+/* `formatDate` stava qui e ignorava il fuso scelto in Impostazioni. Ora la
+   formattazione e' una sola per tutto il sito: `useDateTime()` in
+   `src/prefs/DateTimeContext.jsx`. */
+
+export function priceTier(price, min, range) {
+  if (range === 0) return 'mid';
+  const ratio = (price - min) / range;
+  if (ratio < 0.33) return 'cheap';
+  if (ratio < 0.66) return 'mid';
+  return 'expensive';
+}
+
+export function tierLabel(tier) {
+  switch (tier) {
+    case 'cheap': return '€';
+    case 'mid': return '€€';
+    case 'expensive': return '€€€';
+  }
+}
+
+export function delta(pz, avg) {
+  return pz.margheritaPrice - avg;
+}
